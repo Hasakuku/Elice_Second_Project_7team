@@ -8,7 +8,11 @@ const CocktailSchema = new Schema({
    image: { type: String },
    description: { type: String },
    ingredient: { type: String, required: true }, // 재료
-   recipe: { type: String, required: true },
+   tag: [{ type: String }],
+   recipe: [{
+      image: { type: String },
+      content: { type: String }
+   }],
    abv: { type: Number, required: true }, // 도수
    sweet: { type: Number, min: 1, max: 5, required: true, }, // 당도
    bitter: { type: Number, min: 1, max: 5, required: true, }, //쓴맛

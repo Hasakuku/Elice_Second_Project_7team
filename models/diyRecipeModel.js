@@ -6,9 +6,14 @@ const DiyRecipeSchema = new Schema({
    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, },
    base: { type: mongoose.Schema.Types.ObjectId, ref: 'Base', required: true, },
    name: { type: String, required: true, },
+   image: { type: String },
    description: { type: String },
    ingredient: { type: String, required: true, },
-   images: [{ type: String, required: true, }],
+   tag: [{ type: String }],
+   recipe: [{
+      image: { type: String },
+      content: { type: String }
+   }],
    abv: { type: Number, required: true }, // 도수
    sweet: { type: Number, min: 1, max: 5, required: true, }, // 당도
    bitter: { type: Number, min: 1, max: 5, required: true, }, //쓴맛
