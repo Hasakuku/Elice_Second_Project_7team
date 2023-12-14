@@ -3,12 +3,13 @@ const app = express();
 const cors = require('express')
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
-const mongoDB = require('./db')
+const connectMongoDB = require('./db')
 const { port, frontendURI } = require('./config');
 const router = require('./routes')
 
-mongoDB();
+const config = require("./config");
 
+connectMongoDB();
 app.use(
   cors({
     origin: frontendURI, // 출처 허용 옵션
@@ -18,6 +19,13 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+
+//^ 백엔드 테스트시 아래 주석 해제
+// app.use(express.static('public'));
+// app.get('/auth/kakao', (req, res) => {
+//   res.redirect(config.kakaoAuthURI);
+// });
 
 app.use("/api", router);
 

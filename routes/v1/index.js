@@ -5,10 +5,10 @@ const imageRouter = require('./imageRouter')
 const userRouter = require('./userRouter')
 const cocktailRouter = require('./cocktailRouter')
 const diyRecipeRouter = require('./diyRecipeRouter')
-const kakaoConterller = require('./kakaoRouter')
+const kakaoRouter = require('./kakaoRouter')
 
 router.use('/images', imageRouter);
-router.use('/auth', kakaoConterller)
+router.use('/auth', kakaoRouter)
 // router.use('/survey', abc);
 // router.use('/search', abc);
 

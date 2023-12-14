@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { mongodbURI } = require("../config");
 
-const mongoDB = () => {
+const connectMongoDB = () => {
    mongoose
       .connect(mongodbURI)
       .then(console.log(`
@@ -12,7 +12,7 @@ const mongoDB = () => {
       .catch(error => {
          console.error(error.message);
          process.exit(1);
-      })
-}
+      });
+};
 
-module.exports = mongoDB
+module.exports = connectMongoDB;
