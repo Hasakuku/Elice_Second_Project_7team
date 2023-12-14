@@ -7,4 +7,5 @@ module.exports = {
    mongodbURI: process.env.MONGODB_URL,
    jwtSecret: process.env.JWT_SECRET,
    frontendURI: process.env.FRONTEND_URL,
+   redirectURI: process.env.REDIRECT_URI,
 };
