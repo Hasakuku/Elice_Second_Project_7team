@@ -1,7 +1,10 @@
 const express = require('express')
 const router = express.Router()
+const cocktailController = require('../../controllers/cocktailController')
 const Cocktail = require('../../models/cocktailModel')
 
+//개인 맞춤 추천 
+router.get('/custom', cocktailController.customCocktail)
 // 칵테일 등록
 router.post('/', async (req, res) => {
   try {

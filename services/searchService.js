@@ -1,8 +1,16 @@
 const Cocktail = require('../models/cocktailModel');
 const DiyRecipe = require('../models/diyRecipeModel');
 const Base = require('../models/baseModel')
-
+const CocktailReview = require('../models/cocktailReviewModel')
+const DiyRecipeReview = require('../models/diyRecipeReviewModel')
+const Bar = require('../models/barModel');
+const { NotFoundError } = require('../utils/customError');
 const searchService = {
+   async a() {
+      await CocktailReview.find();
+      await DiyRecipeReview.find();
+      await Bar.find();
+   },
    async searchByKeyword(keyword, type, sort, item, page) {
       // 건너뛸 항목 수 계산
       let skipItems = (page - 1) * item;
@@ -24,7 +32,7 @@ const searchService = {
                { base: { $in: baseIds } }
             ],
          }).populate('base').populate({ path: 'review', select: 'rating' }).skip(skipItems).limit(item);
-   
+         if(types.length < 3 && !items.length) throw new NotFoundError("검색 결과가 없음")
          // 평균 별점& 리뷰 숫자 계산
          let itemResults = [];
          for (let item of items) {
@@ -53,6 +61,7 @@ const searchService = {
          }
          results[type] = sortedItems;
       }
+      
 
       return results;
    }
