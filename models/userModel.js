@@ -3,9 +3,9 @@ const { Schema } = mongoose;
 
 //유저
 const UserSchema = new Schema({
-   email: { type: String, required: true },
+   email: { type: String, required: true, unique: true },
    nickname: { type: String, },
-   wishes: {
+   wish: {
       cocktails: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Cocktail', }],
       diyRecipe: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipe', }],
    },
