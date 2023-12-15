@@ -13,5 +13,5 @@ const DiyRecipeReviewSchema = new Schema({
    timestamps: true, versionKey: false
 })
 
-const DiyRecipeReview = mongoose.model('DiyRecipeReview', DiyRecipeReviewSchema);
+const DiyRecipeReview = mongoose.model("DiyRecipeReview", DiyRecipeReviewSchema);
 module.exports = DiyRecipeReview;
