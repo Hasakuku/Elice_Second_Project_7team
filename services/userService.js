@@ -1,6 +1,5 @@
 const User = require('../models/userModel');
-const axios = require('axios');
-const setJwt = require('../utils/jwtToken')
+
 const { BadRequestError, UnauthorizedError } = require('../utils/customError')
 const userService = {
    async updateUser(user, email, nickname) {

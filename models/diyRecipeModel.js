@@ -18,9 +18,8 @@ const DiyRecipeSchema = new Schema({
    sweet: { type: Number, min: 1, max: 5, required: true, }, // 당도
    bitter: { type: Number, min: 1, max: 5, required: true, }, //쓴맛
    sour: { type: Number, min: 1, max: 5, required: true, }, // 신맛
-   level: { type: Number, min: 1, max: 5, required: true, }, // 난이도
    review: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipeReview', }],
-   like: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
+   wish: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
 }, {
    timestamps: true, versionKey: false
 })

@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 //베이스 술
 const BaseSchema = new Schema({
    name: { type: String, required: true },
-   images: { type: String, required: true }
+   image: { type: String, required: true }
 }, {
    versionKey: false
 })

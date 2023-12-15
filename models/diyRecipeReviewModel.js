@@ -6,7 +6,7 @@ const DiyRecipeReviewSchema = new Schema({
    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
    diyRecipe: { type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipe', required: true },
    content: { type: String, required: true, },
-   images: [{ type: String, }],
+   image: [{ type: String, }],
    rating: { type: Number, required: true, },
    like: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
 }, {

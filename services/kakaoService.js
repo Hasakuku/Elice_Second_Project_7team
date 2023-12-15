@@ -1,4 +1,3 @@
-const express = require("express");
 const axios = require('axios');
 const setToken = require('../utils/jwtToken');
 const config = require("../config");
