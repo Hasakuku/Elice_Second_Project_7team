@@ -12,11 +12,10 @@ const searchService = {
       await Bar.find();
    },
    async searchByKeyword(keyword, type, sort, item, page) {
-      // 건너뛸 항목 수 계산
-      let skipItems = (page - 1) * item;
-   
+      let limit = item ? item : 10;
+      let skip = page ? (page - 1) * limit : 0;
       // base 검색
-      let base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id');
+      let base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       let baseIds = base.map(base => base._id);
    
       let types = ['cocktail', 'diyRecipe'];
@@ -31,7 +30,7 @@ const searchService = {
                { name: { $regex: keyword, $options: 'i' } },
                { base: { $in: baseIds } }
             ],
-         }).populate('base').populate({ path: 'review', select: 'rating' }).skip(skipItems).limit(item);
+         }).populate('base').populate({ path: 'review', select: 'rating' }).skip(skip).limit(item).lean();
          if(types.length < 3 && !items.length) throw new NotFoundError("검색 결과가 없음")
          // 평균 별점& 리뷰 숫자 계산
          let itemResults = [];

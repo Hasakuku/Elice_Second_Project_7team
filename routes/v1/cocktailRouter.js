@@ -5,6 +5,8 @@ const Cocktail = require('../../models/cocktailModel')
 
 //개인 맞춤 추천 
 router.get('/custom', cocktailController.customCocktail)
+//칵테일 목록 조회
+router.get('/', cocktailController.getCocktailList)
 // 칵테일 등록
 router.post('/', async (req, res) => {
   try {
@@ -58,5 +60,6 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 })
+
 
 module.exports = router
