@@ -7,7 +7,7 @@ const customCocktail = asyncHandler(async (req, res) => {
    level = Number(level);
    const result = await cocktailService.customCocktail(base, abv, taste, level);
    res.status(200).json(result);
-})
+});
 
 const getCocktailList = asyncHandler(async (req, res) => {
    let { base, sort, abv, sweet, bitter, sour, item, page } = req.query;
@@ -19,6 +19,12 @@ const getCocktailList = asyncHandler(async (req, res) => {
    page = Number(page);
    const result = await cocktailService.getCocktailList(base, sort, abv, sweet, bitter, sour, item, page);
    res.status(200).json(result);
-})
+});
 
-module.exports = { customCocktail, getCocktailList };
+const deleteCocktail = asyncHandler(async (req, res) => {
+   const id = req.params.id;
+   await cocktailService.deleteCocktail(id);
+   res.status(204).json({message: "칵테일 삭제"})
+});
+
+module.exports = { customCocktail, getCocktailList, deleteCocktail };
