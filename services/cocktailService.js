@@ -186,7 +186,6 @@ const cocktailService = {
       });
       return result;
    },
-
-}
+};
 
 module.exports = cocktailService;

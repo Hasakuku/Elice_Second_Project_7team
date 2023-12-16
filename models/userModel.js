@@ -6,7 +6,7 @@ const UserSchema = new Schema({
    email: { type: String, required: true, unique: true },
    nickname: { type: String, },
    wish: {
-      cocktails: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Cocktail', }],
+      cocktail: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Cocktail', }],
       diyRecipe: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipe', }],
    },
    isAdmin: { type: Boolean, default: false },

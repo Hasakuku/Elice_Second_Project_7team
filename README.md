@@ -1,3 +1,5 @@
+포스트맨: https://documenter.getpostman.com/view/30669436/2s9Ykn7gdp#5f2abbc8-4408-4dd8-a01f-215f789f1e63
+
 커밋 컨벤션
 - [ ] `Feat` : 새로운 기능 추가
 - [ ] `Fix` : 버그 수정
