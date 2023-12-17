@@ -54,7 +54,14 @@ class NotModifiedError extends CustomError {
     }
 }
 
+class ConflictError extends CustomError {
+    constructor(message) {
+        super(409, message, 'ConflictError');
+    }
+}
+
 module.exports = {
+    ConflictError,
     NotModifiedError,
     DatabaseError,
     ValidationError,
