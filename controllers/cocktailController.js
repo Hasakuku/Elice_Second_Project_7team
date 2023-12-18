@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const cocktailService = require('../services/cocktailService');
 
+//* 맞춤 추천 칵테일
 const getCustomCocktail = asyncHandler(async (req, res) => {
    let { base, abv, taste, level } = req.query;
    abv = Number(abv);
@@ -9,6 +10,7 @@ const getCustomCocktail = asyncHandler(async (req, res) => {
    res.status(200).json(result);
 });
 
+//* 칵테일 목록 조회
 const getCocktailList = asyncHandler(async (req, res) => {
    let { base, sort, abv, sweet, bitter, sour, item, page } = req.query;
    abv = Number(abv);
