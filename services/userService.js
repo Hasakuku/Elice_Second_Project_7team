@@ -1,11 +1,11 @@
 const User = require('../models/userModel');
-const { BadRequestError, ConflictError, NotFoundError, InternalServerError } = require('../utils/customError');
+const { BadRequestError, ConflictError, NotFoundError, } = require('../utils/customError');
 const mongoose = require('mongoose');
 const userService = {
    //* JWT 토큰에 할당될 사용자 정보
    async getUserTokenPayload(userId) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).select('_id isAdmin isWrite').lean();
-      if(!user) throw new NotFoundError('유저 정보 없음');
+      if (!user) throw new NotFoundError('유저 정보 없음');
       return user;
    },
    //* 사용자 정보 조회
@@ -18,23 +18,29 @@ const userService = {
    //* 사용자 정보 수정
    async updateUser(payload, email, nickname) {
       const userId = payload._id;
-      const updatedUser = await User.findOneAndUpdate(
-         { _id: userId, deletedAt: null },
+      const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
+      if (!user) throw new NotFoundError("사용자 정보 없음");
+
+      const updatedUser = await User.updateOne(
+         { _id: userId },
          { email, nickname },
-         { new: true, runValidators: true }
-      ).lean();
-      if (!updatedUser) throw new NotFoundError("사용자 정보 없음");
+         { runValidators: true }
+      );
+      if (updatedUser.nModified === 0) throw new ConflictError("업데이트 실패");
    },
    //* 사용자 탈퇴
    async withdrawal(payload) {
       const userId = payload._id;
-      const withdrawalUser = await User.findByOneAndUpdate(
-         { _id: userId, deletedAt: null },
-         { deletedAt: new Date() },
-         { new: true, runValidators: true }
-      ).lean();
-      if (!withdrawalUser) throw new NotFoundError("사용자 정보 없음");
-   },
+      const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
+      if (!user) throw new NotFoundError("사용자 정보 없음");
+  
+      const withdrawalUser = await User.updateOne(
+          { _id: userId },
+          { deletedAt: new Date() },
+          { runValidators: true }
+      );
+      if (withdrawalUser.nModified === 0) throw new ConflictError("탈퇴 실패");
+  },  
    //*사용자 찜 목록 조회
    async getWishListByType(payload, type, item, page) {
       type = `${type}s`;
@@ -93,8 +99,8 @@ const userService = {
          { runValidators: true }
       );
       // 삭제 성공 여부 확인
-      if (result.modifiedCount == 0) {
-         throw new InternalServerError('아이템 삭제 실패');
+      if (result.modifiedCount === 0) {
+         throw new ConflictError('아이템 삭제 실패');
       }
    },
 };

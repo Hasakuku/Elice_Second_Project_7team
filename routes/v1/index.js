@@ -7,13 +7,13 @@ const cocktailRouter = require('./cocktailRouter');
 const diyRecipeRouter = require('./diyRecipeRouter');
 const kakaoRouter = require('./kakaoRouter');
 const searchRouter = require('./searchRouter');
+const barRouter = require('./barRouter');
 
 router.use('/search', searchRouter);
 router.use('/images', imageRouter);
 router.use('/auth', kakaoRouter);
-// router.use('/survey', abc);
-// router.use('/search', abc);
 
+router.use('/bars', barRouter);
 router.use('/users', userRouter);
 router.use('/cocktails', cocktailRouter);
 router.use('/diy-recipes', diyRecipeRouter);

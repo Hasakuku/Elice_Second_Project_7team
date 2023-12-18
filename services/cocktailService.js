@@ -3,7 +3,7 @@ const Base = require('../models/baseModel');
 const { BadRequestError, NotFoundError } = require('../utils/customError');
 
 const cocktailService = {
-   // 맞춤 추천 칵테일
+   //* 맞춤 추천 칵테일
    async getCustomCocktail(base, abv, taste, level) {
       let foundBase;
       if (!level || level < 1 || level > 5) throw new BadRequestError("level 값 오류");
@@ -65,7 +65,7 @@ const cocktailService = {
       });
       return result;
    },
-   // 칵테일 목록 조회
+   //* 칵테일 목록 조회
    async getCocktailList(base, sort, abv, sweet, bitter, sour, item, page) {
       let foundBase;
       let option = {};// find할 옵션
@@ -146,7 +146,7 @@ const cocktailService = {
          }
       }
 
-      // 칵테일 조회
+      //* 칵테일 조회
       const cocktails = await Cocktail.find(option)
          .skip(skip)
          .limit(limit)
