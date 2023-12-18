@@ -1,9 +1,9 @@
 const asyncHandler = require('express-async-handler');
 const kakaoService = require('../services/kakaoService');
 const config = require('../config');
-const { NotFoundError,} = require('../utils/customError');
+const { NotFoundError, } = require('../utils/customError');
 
-const redirectKakao = asyncHandler(async (req, res) => {
+const redirectKakaoPage = asyncHandler(async (req, res) => {
     res.redirect(config.kakaoAuthURI);
 });
 
@@ -21,7 +21,7 @@ const loginKakao = asyncHandler(async (req, res) => {
 
 const logoutKakao = asyncHandler(async (req, res) => {
     const kakaoToken = req.cookies.accessToken;
-    if (!kakaoToken) throw new NotFoundError("쿠키에 accessToken 없음");
+    if (!kakaoToken) throw new NotFoundError('쿠키에 accessToken 없음');
     await kakaoService.logoutKakao(kakaoToken);
     res.cookie('accessToken', null, { maxAge: 0 });
     res.cookie('jwtToken', null, { maxAge: 0 });
@@ -30,8 +30,9 @@ const logoutKakao = asyncHandler(async (req, res) => {
 });
 
 const refreshToken = asyncHandler(async (req, res) => {
-    let accessToken = req.cookies.accessToken;
-    let refreshToken = req.cookies.refreshToken;
+    const accessToken = req.cookies.accessToken;
+    const refreshToken = req.cookies.refreshToken;
+    if (!accessToken || !refreshToken) throw new NotFoundError('쿠키에 access/refresh 토큰 없음');
     const result = await kakaoService.refreshToken(accessToken, refreshToken);
     res.cookie('jwtToken', result.jwtToken, { httpOnly: true });
     res.cookie('accessToken', result.accessToken, { httpOnly: true });
@@ -39,14 +40,15 @@ const refreshToken = asyncHandler(async (req, res) => {
     res.status(200).json({ message: "토큰 갱신 성공" });
 });
 
-// const withdrawalKakao = asyncHandler(async (req, res) => {
-//     const headers = req.headers["authorization"];
-//     if (!headers) throw new NotFoundError("헤더에 토큰 없음")
-//     const kakaoToken = headers.split(" ");
-//     await userService.withdrawalKakao(kakaoToken)
-//     res.clearCookie('accessToken')
-//     res.status(204).json({ message: "로그아웃 성공" })
-// });
+const withdrawalKakao = asyncHandler(async (req, res) => {
+    const kakaoToken = req.cookies.accessToken;
+    if (!kakaoToken) throw new NotFoundError('쿠키에 accessToken 없음');
+    await kakaoService.withdrawalKakao(kakaoToken);
+    res.cookie('accessToken', null, { maxAge: 0 });
+    res.cookie('jwtToken', null, { maxAge: 0 });
+    res.cookie('refreshToken', null, { maxAge: 0 });
+    res.status(204).json({ message: "사용자 탈퇴" });
+});
 
 
-module.exports = { loginKakao, logoutKakao, refreshToken, redirectKakao };
+module.exports = { loginKakao, logoutKakao, refreshToken, redirectKakaoPage, withdrawalKakao };

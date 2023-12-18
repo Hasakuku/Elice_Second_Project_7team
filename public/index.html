@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
    <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>kakao login test</title>
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
+
 <body>
    <!-- <button id="login">Login</button> -->
    <a href="/api/v1/auth/kakao">login</a>
@@ -20,23 +22,28 @@
       //    });
       // });
 
-      $('#refresh').click(function() {
-         $.post('/api/v1/auth/kakao/user', function(data) {
+      $('#refresh').click(function () {
+         $.post('/api/v1/auth/kakao/user', function (data) {
             console.log(data);
          });
       });
 
-      $('#logout').click(function() {
-         $.post('/api/v1/auth/kakao/logout', function(data) {
+      $('#logout').click(function () {
+         $.post('/api/v1/auth/kakao/logout', function (data) {
             console.log(data);
          });
       });
 
-      $('#withdrawal').click(function() {
-         $.post('/api/v1/auth/kakao/withdrawal', function(data) {
-            console.log(data);
+      $('#withdrawal').click(function () {
+         $.ajax({
+            url: '/api/v1/auth/kakao/withdrawal',
+            type: 'DELETE',
+            success: function (data) {
+               console.log(data);
+            }
          });
       });
    </script>
 </body>
+
 </html>
