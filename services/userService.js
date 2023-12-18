@@ -11,7 +11,7 @@ const userService = {
    //* 사용자 정보 조회
    async getUser(payload) {
       const userId = payload._id;
-      const user = await User.findOne({ _id: userId, deletedAt: null }).select('-deletedAt wish').lean();
+      const user = await User.findOne({ _id: userId, deletedAt: null }).select('_id email nickname createdAt updatedAt').lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
       return user;
    },
@@ -33,14 +33,14 @@ const userService = {
       const userId = payload._id;
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
-  
+
       const withdrawalUser = await User.updateOne(
-          { _id: userId },
-          { deletedAt: new Date() },
-          { runValidators: true }
+         { _id: userId },
+         { deletedAt: new Date() },
+         { runValidators: true }
       );
       if (withdrawalUser.nModified === 0) throw new ConflictError("탈퇴 실패");
-  },  
+   },
    //*사용자 찜 목록 조회
    async getWishListByType(payload, type, item, page) {
       type = `${type}s`;
@@ -85,10 +85,8 @@ const userService = {
       const userId = payload._id;
       // let userId = new mongoose.Types.ObjectId(payload._id);
       // 사용자 정보 확인
-      const user = await User.findById(userId).lean();
-      if (!user) {
-         throw new NotFoundError('사용자 정보 없음');
-      }
+      const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
+      if (!user) throw new NotFoundError('사용자 정보 없음');
       if (!user.wishes.cocktail.includes(id) && !user.wishes.diyRecipe.includes(id)) {
          throw new NotFoundError('찜 목록에 아이템이 없음');
       }
@@ -102,6 +100,29 @@ const userService = {
       if (result.modifiedCount === 0) {
          throw new ConflictError('아이템 삭제 실패');
       }
+   },
+   //* 사용자 권한 수정
+   async updateUserPermission(userId) {
+      const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
+      if (!user) throw new NotFoundError('사용자 정보 없음');
+      const newPermission = !user.isWrite;
+      await User.updateOne({ _id: userId }, { $set: { isWrite: newPermission } }, { runValidators: true });
+   },
+   //* 사용자 목록 조회
+   async getUserList(item, page) {
+      //페이지당 아이템 수
+      const limit = item === undefined || item === null ? 10 : item;
+      const skip = page ? (page - 1) * limit : 0;
+      const userList = await User.find({}).select('_id nickname isWrite createAt updatedAt').skip(skip).limit(limit).lean();
+      if (!userList) throw new NotFoundError('유저 정보 없음');
+      return userList;
+   },
+   //* 사용자 삭제(관리자)
+   async deleteUser(userId) {
+      const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
+      if (!user) throw new NotFoundError('사용자 정보 없음');
+      const result = await User.deleteOne({ _id: userId });
+      if(result.deletedCount === 0) throw new ConflictError('삭제 데이터 없음');
    },
 };
 

@@ -26,7 +26,7 @@ app.use(cookieParser());
 
 
 //^ 백엔드 테스트시 아래 주석 해제
-// app.use(express.static('public'));
+app.use(express.static('public'));
 
 app.use("/api", router);
 
