@@ -9,7 +9,7 @@ const DiyRecipeSchema = new Schema({
    image: { type: String },
    description: { type: String },
    ingredient: { type: String, required: true, },
-   tag: [{ type: String }],
+   tags: [{ type: String }],
    recipe: [{
       image: { type: String },
       content: { type: String }
@@ -18,11 +18,11 @@ const DiyRecipeSchema = new Schema({
    sweet: { type: Number, min: 1, max: 5, required: true, }, // 당도
    bitter: { type: Number, min: 1, max: 5, required: true, }, //쓴맛
    sour: { type: Number, min: 1, max: 5, required: true, }, // 신맛
-   review: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipeReview', }],
-   wish: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
+   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipeReview', }],
+   wishes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
 }, {
    timestamps: true, versionKey: false
-})
+});
 // DIY레시피 삭제전 리뷰와 유저의 위시에서 삭제
 DiyRecipeSchema.pre('remove', async function (next) {
    await this.model('DiyRecipeReview').deleteMany({ _id: { $in: this.review } });

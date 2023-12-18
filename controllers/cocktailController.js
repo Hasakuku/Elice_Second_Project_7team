@@ -1,11 +1,11 @@
 const asyncHandler = require('express-async-handler');
 const cocktailService = require('../services/cocktailService');
 
-const customCocktail = asyncHandler(async (req, res) => {
+const getCustomCocktail = asyncHandler(async (req, res) => {
    let { base, abv, taste, level } = req.query;
    abv = Number(abv);
    level = Number(level);
-   const result = await cocktailService.customCocktail(base, abv, taste, level);
+   const result = await cocktailService.getCustomCocktail(base, abv, taste, level);
    res.status(200).json(result);
 });
 
@@ -24,7 +24,7 @@ const getCocktailList = asyncHandler(async (req, res) => {
 const deleteCocktail = asyncHandler(async (req, res) => {
    const id = req.params.id;
    await cocktailService.deleteCocktail(id);
-   res.status(204).json({message: "칵테일 삭제"})
+   res.status(204).json({message: "칵테일 삭제"});
 });
 
-module.exports = { customCocktail, getCocktailList, deleteCocktail };
+module.exports = { getCustomCocktail, getCocktailList, deleteCocktail };

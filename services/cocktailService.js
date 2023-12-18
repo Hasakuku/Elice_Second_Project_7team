@@ -1,10 +1,10 @@
 const Cocktail = require('../models/cocktailModel');
 const Base = require('../models/baseModel');
-const { BadRequestError, NotFoundError } = require('../utils/customError')
+const { BadRequestError, NotFoundError } = require('../utils/customError');
 
 const cocktailService = {
    // 맞춤 추천 칵테일
-   async customCocktail(base, abv, taste, level) {
+   async getCustomCocktail(base, abv, taste, level) {
       let foundBase;
       if (!level || level < 1 || level > 5) throw new BadRequestError("level 값 오류");
       // base 미선택시 모든 베이스를 대상
@@ -45,23 +45,23 @@ const cocktailService = {
             throw new BadRequestError('taste 값 오류');
       }
 
-      let cocktails = await Cocktail.find({
+      const cocktails = await Cocktail.find({
          base: { $in: foundBase },
          abv: abvRange,
          ...tasteQuery
-      }).populate('review').sort({ 'review.length': -1 }).populate('base').limit(3).lean();
+      }).populate('reviews').sort({ 'reviews.length': -1 }).populate('base').limit(3).lean();
 
       if (cocktails.length === 0) throw new NotFoundError('조건에 맞는 칵테일 없음');
 
       // 가장 인기있는 칵테일 선택
       const result = cocktails.map((item) => {
-         const { review, wish, ...rest } = item;
+         const { reviews, wish, ...rest } = item;
          return {
             ...rest,
             base: rest.base.name,
-            reviewCount: review.length,
+            reviewCount: reviews.length,
             wishCount: wish.length,
-         }
+         };
       });
       return result;
    },
@@ -70,8 +70,8 @@ const cocktailService = {
       let foundBase;
       let option = {};// find할 옵션
       //페이지당 아이템 수
-      let limit = item ? item : 10;
-      let skip = page ? (page - 1) * limit : 0;
+      const limit = item === undefined || item === null ? 10 : item;
+      const skip = page ? (page - 1) * limit : 0;
 
       // base 미선택시 모든 베이스를 대상
       if (!base) {
@@ -97,7 +97,7 @@ const cocktailService = {
                option.abv = { $gte: 20 };
                break;
             default:
-            throw new BadRequestError('abv 값 오류');
+               throw new BadRequestError('abv 값 오류');
          }
       }
       if (sweet) {
@@ -112,7 +112,7 @@ const cocktailService = {
                option.sweet = { $in: [4, 5] };
                break;
             default:
-            throw new BadRequestError('sweet 값 오류');
+               throw new BadRequestError('sweet 값 오류');
          }
       }
       if (bitter) {
@@ -127,7 +127,7 @@ const cocktailService = {
                option.bitter = { $in: [4, 5] };
                break;
             default:
-            throw new BadRequestError('bitter 값 오류');
+               throw new BadRequestError('bitter 값 오류');
          }
       }
       if (sour) {
@@ -142,26 +142,26 @@ const cocktailService = {
                option.sour = { $in: [4, 5] };
                break;
             default:
-            throw new BadRequestError('sour 값 오류');
+               throw new BadRequestError('sour 값 오류');
          }
       }
 
       // 칵테일 조회
-      let cocktails = await Cocktail.find(option)
+      const cocktails = await Cocktail.find(option)
          .skip(skip)
          .limit(limit)
          .select('_id name image createdAt updatedAt')
          .populate({
-            path: 'review',
+            path: 'reviews',
             select: 'rating -_id'
          })
          .lean();
       if (cocktails.length === 0) throw new NotFoundError('조건에 맞는 칵테일 없음');
       // 각 칵테일에 대한 평균 평점과 리뷰 수 계산
       for (let cocktail of cocktails) {
-         let avgRating = cocktail.review.reduce((acc, review) => acc + review.rating, 0) / cocktail.review.length;
+         let avgRating = cocktail.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / cocktail.reviews.length;
          cocktail.avgRating = avgRating;
-         cocktail.reviewCount = cocktail.review.length;
+         cocktail.reviewCount = cocktail.reviews.length;
       }
 
       // 정렬 적용
@@ -177,12 +177,12 @@ const cocktailService = {
             sortedCocktails = cocktails;
       }
       const result = sortedCocktails.map(item => {
-         const { review, ...rest } = item;
+         const { reviews, ...rest } = item;
          return {
             ...rest,
             avgRating: item.avgRating,
             reviewCount: item.reviewCount,
-         }
+         };
       });
       return result;
    },

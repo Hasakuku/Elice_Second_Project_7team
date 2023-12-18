@@ -71,4 +71,4 @@ module.exports = {
     BadRequestError,
     NotFoundError,
     CustomError
-}
+};

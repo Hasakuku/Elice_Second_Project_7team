@@ -7,7 +7,7 @@ const BaseSchema = new Schema({
    image: { type: String, required: true }
 }, {
    versionKey: false
-})
+});
 
 const Base = mongoose.model('Base', BaseSchema);
 module.exports = Base;
