@@ -1,5 +1,5 @@
 const User = require('../models/userModel');
-const { BadRequestError, ConflictError, NotFoundError, } = require('../utils/customError');
+const { BadRequestError, ConflictError, NotFoundError, InternalServerError, } = require('../utils/customError');
 const mongoose = require('mongoose');
 const userService = {
    //* JWT 토큰에 할당될 사용자 정보
@@ -79,8 +79,24 @@ const userService = {
       });
       return result;
    },
-
-   //* 사용자 찜 목록의 아이템 삭제
+   //* 사용자 찜 추가
+   async createWish(payload, id) {
+      const userId = payload._id;
+      const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
+      if (!user) throw new NotFoundError('사용자 정보 없음');
+      if (user.wishes.cocktail.includes(id) || user.wishes.diyRecipe.includes(id)) {
+         throw new ConflictError('찜 목록에 이미 아이템이 있음');
+      }
+      const result = await User.updateOne(
+         { _id: userId },
+         { $push: { 'wishes.cocktail': id, 'wishes.diyRecipe': id } },
+         { runValidators: true }
+      );
+      if (result.modifiedCount === 0) {
+         throw new InternalServerError('아이템 추가 실패');
+      }
+   },
+   //* 사용자 찜 삭제
    async deleteWish(payload, id) {
       const userId = payload._id;
       // let userId = new mongoose.Types.ObjectId(payload._id);
@@ -113,7 +129,7 @@ const userService = {
       //페이지당 아이템 수
       const limit = item === undefined || item === null ? 10 : item;
       const skip = page ? (page - 1) * limit : 0;
-      const userList = await User.find({}).select('_id nickname isWrite createAt updatedAt').skip(skip).limit(limit).lean();
+      const userList = await User.find({}).select('_id email isWrite createAt updatedAt').skip(skip).limit(limit).lean();
       if (!userList) throw new NotFoundError('유저 정보 없음');
       return userList;
    },
@@ -122,7 +138,7 @@ const userService = {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
       const result = await User.deleteOne({ _id: userId });
-      if(result.deletedCount === 0) throw new ConflictError('삭제 데이터 없음');
+      if (result.deletedCount === 0) throw new ConflictError('삭제 데이터 없음');
    },
 };
 

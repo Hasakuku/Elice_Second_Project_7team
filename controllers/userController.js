@@ -37,12 +37,18 @@ const getWishListByType = asyncHandler(async (req, res) => {
    const result = await userService.getWishListByType(user, type);
    res.status(200).json(result);
 });
-//* 사용자 찜 목록의 아이템 삭제
+//* 사용자 찜 추가
+const createWish = asyncHandler(async (req, res) => {
+   const user = req.user;
+   const id = req.params.id;
+   await userService.createWish(user, id);
+   res.status(201).json('찜 추가');
+});
+//* 사용자 찜 삭제
 const deleteWish = asyncHandler(async (req, res) => {
    const user = req.user;
    // const user = req.body;
    const id = req.params.id;
-   if (!id) throw new BadRequestError("요청 id없음");
    await userService.deleteWish(user, id);
    res.status(204).json('');
 });
@@ -63,4 +69,4 @@ const deleteUser = asyncHandler(async (req, res) => {
    await userService.deleteUser(userId);
    res.status(204).json('');
 });
-module.exports = { getUser, logout, updateUser, withdrawal, getWishListByType, deleteWish, updateUserPermission, getUserList, deleteUser };
+module.exports = { getUser, logout, updateUser, withdrawal, getWishListByType, createWish, deleteWish, updateUserPermission, getUserList, deleteUser };

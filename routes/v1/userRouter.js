@@ -6,7 +6,8 @@ const router = express.Router();
 
 // 찜 목록
 router.get('/wishlist', checkUser, userController.getWishListByType);
-router.delete('/wishlist/:id', checkUser, userController.getWishListByType);
+router.delete('/wishlist/:id', checkUser, userController.deleteWish);
+router.post('/wishlist/:id',checkUser, userController.createWish);
 
 //관리자
 router.put('/permissions', checkUser, checkAdmin, userController.updateUserPermission);
