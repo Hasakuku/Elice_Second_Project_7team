@@ -9,37 +9,28 @@
 </head>
 
 <body>
-   <!-- <button id="login">Login</button> -->
-   <a href="/api/v1/auth/kakao">login</a>
+   <a href="/api/v1/auth/kakao/redirectLogin">login</a>
    <button id="refresh">Refresh Token</button>
    <button id="logout">Logout</button>
-   <button id="withdrawal">Withdrawal</button>
+   <a href="/api/v1/auth/kakao/redirectWithdrawal">withdrawal</a>
 
    <script>
-      // $('#login').click(function() {
-      //    $.get('/auth/kakao', function(data) {
-      //       console.log(data);
-      //    });
-      // });
-
       $('#refresh').click(function () {
          $.post('/api/v1/auth/kakao/user', function (data) {
             console.log(data);
          });
       });
-
+      // $('#logout').click(function () {
+      //    $.post('/api/v1/users/logout', function (data) {
+      //       console.log(data);
+      //    });
+      // });
       $('#logout').click(function () {
-         $.post('/api/v1/auth/kakao/logout', function (data) {
-            console.log(data);
-         });
-      });
-
-      $('#withdrawal').click(function () {
          $.ajax({
-            url: '/api/v1/auth/kakao/withdrawal',
+            url: '/api/v1/users/logout',
             type: 'DELETE',
-            success: function (data) {
-               console.log(data);
+            success: function(result) {
+               console.log(result);
             }
          });
       });

@@ -2,8 +2,7 @@ const axios = require('axios');
 const setToken = require('../utils/setToken');
 const config = require("../config");
 const User = require("../models/userModel");
-const { UnauthorizedError, InternalServerError, NotFoundError } = require("../utils/customError");
-const userService = require('./userService');
+const { InternalServerError, NotFoundError } = require("../utils/customError");
 
 const kakaoService = {
    //* 로그인과 회원가입
@@ -40,31 +39,22 @@ const kakaoService = {
       } else if (checkUser.deletedAt !== null) { // 사용자가 있지만 deletedAt이 null이 아닌 경우
          await User.updateOne({ kakaoId: user.data.id }, { $set: { deletedAt: null } }, { runValidators: true });
          checkUser = await User.findOne({ kakaoId: user.data.id, }).lean();
-      } 
+      }
       // JWT 토큰 발행
       const jwtToken = setToken(checkUser);
-      return {
-         jwtToken: jwtToken,
-         accessToken: accessToken,
-         refreshToken: refreshToken
-      };
-   },
-   //* 로그아웃
-   async logoutKakao(kakaoToken) {
-      // 카카오 로그아웃 API 호출
-      const result = await axios.post("https://kapi.kakao.com/v1/user/logout", {}, {
-         headers: {
-            Authorization: `Bearer ${kakaoToken}`,
-         },
-      });
-
-      // 로그아웃 성공 여부 확인
-      if (result.status !== 200) {
-         throw new UnauthorizedError('카카오 로그아웃 실패');
-      }
+      return jwtToken;
    },
    //* 카카오 연결 해제
-   async withdrawalKakao(kakaoToken) {
+   async withdrawalKakao(code) {
+      const newToken = await axios.post('https://kauth.kakao.com/oauth/token',
+         `grant_type=authorization_code&client_id=${config.kakaoApiKey}&redirect_uri=${config.withdrawalRedirectURI}&code=${code}`,
+         {
+            headers: {
+               'content-type': 'application/x-www-form-urlencoded'
+            },
+         });
+
+      const kakaoToken = newToken.data.access_token;
       // 카카오 토큰으로 유저정보얻기
       const user = await axios.get('https://kapi.kakao.com/v2/user/me',
          {
