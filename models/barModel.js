@@ -13,7 +13,7 @@ const BarSchema = new Schema({
    },
 }, {
    versionKey: false
-})
+});
 
 const Bar = mongoose.model('Bar', BarSchema);
 module.exports = Bar;

@@ -1,14 +1,14 @@
 const express = require('express');
 const userController = require('../../controllers/userController');
-const permission = require('../../middlewares/permission');
+const checkUser = require('../../middlewares/checkUser');
 const router = express.Router();
 
-// router.get('/wishlist', permission('user'), userController.getWishListByType);
+// router.get('/wishlist', checkUser, userController.getWishListByType);
 router.get('/wishlist', userController.getWishListByType);
-// router.delete('/wishlist/:id', permission('user'), userController.getWishListByType);
+// router.delete('/wishlist/:id', checkUser, userController.getWishListByType);
 router.delete('/wishlist/:id', userController.deleteWish);
-router.get('/', permission('user'), userController.getUser);
-router.put('/', permission('user'), userController.updateUser);
-router.delete('/', permission('user'), userController.withdrawal);
+router.get('/', checkUser, userController.getUser);
+router.put('/', checkUser, userController.updateUser);
+router.delete('/', checkUser, userController.withdrawal);
 
 module.exports = router;

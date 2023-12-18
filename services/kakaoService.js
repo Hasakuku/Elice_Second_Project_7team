@@ -1,8 +1,9 @@
 const axios = require('axios');
-const setToken = require('../utils/jwtToken');
+const setToken = require('../utils/setToken');
 const config = require("../config");
 const User = require("../models/userModel");
 const { UnauthorizedError, InternalServerError } = require("../utils/customError");
+const userService = require('./userService');
 
 const kakaoService = {
    //* 로그인과 회원가입
@@ -15,8 +16,8 @@ const kakaoService = {
             },
          });
 
-      let accessToken = newToken.data.access_token;
-      let refreshToken = newToken.data.refresh_token;
+      const accessToken = newToken.data.access_token;
+      const refreshToken = newToken.data.refresh_token;
 
       const user = await axios.get('https://kapi.kakao.com/v2/user/me',
          {
@@ -24,17 +25,19 @@ const kakaoService = {
                Authorization: `Bearer ${accessToken}`
             }
          });
-
-      const checkUser = await User.findOne({ email: user.data.kakao_account.email }).lean();
+      console.log(user.data.id);
       const data = {
+         kakaoId: user.data.id,
          nickname: user.data.kakao_account.profile.nickname,
          email: user.data.kakao_account.email,
       };
+      const checkUser = await User.findOne({ kakaoId: user.data.id, }).lean();
       // DB에 유저가 없다면 회원가입
       if (!checkUser) {
          const newUser = new User(data);
          await newUser.save();
-         const jwtToken = setToken(newUser);
+         const userId =newUser._id;
+         const jwtToken = userService.getUserTokenPayload(userId);
          return {
             jwtToken: jwtToken,
             accessToken: accessToken,
@@ -67,14 +70,14 @@ const kakaoService = {
 
    },
    async getUser(user) {
-      const id = user._id
-      const foundUser = await User.findOne({ _id: id, deletedAt: null }).lean()
+      const id = user._id;
+      const foundUser = await User.findOne({ _id: id, deletedAt: null }).lean();
       return {
          _id: foundUser._id,
          email: foundUser.email,
          isAdmin: foundUser.isAdmin,
          isWrite: foundUser.isWrite,
-      }
+      };
    },
    //* 토큰 갱신
    async refreshToken(accessToken, refreshToken) {
