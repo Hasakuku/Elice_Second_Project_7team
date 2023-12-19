@@ -6,10 +6,10 @@ const BarSchema = new Schema({
    name: { type: String, required: true, },
    image: { type: String, required: true, },
    address: { type: String, required: true, unique: true },
-   tel:{type: String,},
+   tel: { type: String, },
    time: { type: String, required: true },
-      x: Number,
-      y: Number
+   x: Number,
+   y: Number
 }, {
    versionKey: false
 });

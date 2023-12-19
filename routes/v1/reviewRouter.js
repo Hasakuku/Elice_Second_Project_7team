@@ -4,14 +4,14 @@ const reviewController = require('../../controllers/reviewController');
 const checkUser = require('../../middlewares/checkUser');
 const checkAdmin = require('../../middlewares/checkAdmin');
 
-router.get('/search', reviewController.getReviewListByKeyword);
-router.get('/users', reviewController.getUserReviewList);
-router.get('/list', reviewController.getReviewList);
-router.get('/:id',  reviewController.getReview);
+router.get('/search', checkUser, checkAdmin, reviewController.getReviewListByKeyword);
+router.get('/users', checkUser, reviewController.getUserReviewList);
+router.get('/list', checkUser, reviewController.getReviewList);
+router.get('/:id', checkUser, reviewController.getReview);
 
-router.put('/:id',  reviewController.updateReview);
-router.post('/create/:id',  reviewController.createReview);
+router.put('/:id', checkUser, reviewController.updateReview);
+router.post('/create/:id', checkUser, reviewController.createReview);
 
-router.delete('/:id/users',  reviewController.deleteUserReview);
-router.delete('/:id', reviewController.deleteReview);
+router.delete('/:id/users', checkUser, reviewController.deleteUserReview);
+router.delete('/:id', checkUser, checkAdmin, reviewController.deleteReview);
 module.exports = router;
