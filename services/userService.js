@@ -43,14 +43,13 @@ const userService = {
    },
    //*사용자 찜 목록 조회
    async getWishListByType(payload, type, item, page) {
-      type = `${type}s`;
+      type = (type === 'cocktail') ? 'cocktails' : (type === 'recipe' ? 'diyRecipes' : undefined);
+      if (!type) throw new BadRequestError('잘못된 요청입니다.');
       //페이지당 아이템 수
       const limit = item === undefined || item === null ? 10 : item;
       const skip = page ? (page - 1) * limit : 0;
       // const userId = payload._id;
       const userId = new mongoose.Types.ObjectId(payload._id);
-
-      if (type !== 'cocktails' && type !== 'diyRecipes') throw new BadRequestError('잘못된 요청입니다.');
       let userWishList = await User.findById(userId).populate({
          path: `wishes.${type}`,
          populate: {

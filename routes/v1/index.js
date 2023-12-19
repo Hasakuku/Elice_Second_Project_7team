@@ -9,12 +9,14 @@ const kakaoRouter = require('./kakaoRouter');
 const searchRouter = require('./searchRouter');
 const barRouter = require('./barRouter');
 const baseRouter = require('./baseRouter');
+const reviewRouter = require('./reviewRouter');
 
 router.use('/search', searchRouter);
 router.use('/images', imageRouter);
 router.use('/auth', kakaoRouter);
 
-router.use('/base', baseRouter);
+router.use('/reviews', reviewRouter);
+router.use('/bases', baseRouter);
 router.use('/bars', barRouter);
 router.use('/users', userRouter);
 router.use('/cocktails', cocktailRouter);
