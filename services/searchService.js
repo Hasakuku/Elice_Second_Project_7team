@@ -4,7 +4,7 @@ const Base = require('../models/baseModel');
 const CocktailReview = require('../models/cocktailReviewModel');
 const DiyRecipeReview = require('../models/diyRecipeReviewModel');
 const Bar = require('../models/barModel');
-const { NotFoundError } = require('../utils/customError');
+const { NotFoundError, BadRequestError } = require('../utils/customError');
 const searchService = {
    async a() {
       await CocktailReview.find();
@@ -19,7 +19,10 @@ const searchService = {
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
 
-      const types = type === undefined || type === null ? ['cocktail', 'diyRecipe'] : [type];
+      const types = (type === 'cocktail' ? ['cocktail']
+         : type === 'recipe' ? ['diyRecipe']
+            : type === undefined || type === null ? ['cocktail', 'diyRecipe']
+               : (() => { throw new BadRequestError('타입 오류'); })());
 
       let results = {};
       // type별 검색
@@ -31,7 +34,7 @@ const searchService = {
                { base: { $in: baseIds } }
             ],
          }).populate('base').populate({ path: 'reviews', select: 'rating' }).skip(skip).limit(item).lean();
-         if(types.length < 3 && !items.length) throw new NotFoundError("검색 결과가 없음");
+         if (types.length < 3 && !items.length === 0) throw new NotFoundError("검색 결과가 없음");
          // 평균 별점& 리뷰 숫자 계산.
          let itemResults = [];
          for (let item of items) {

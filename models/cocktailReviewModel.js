@@ -12,6 +12,26 @@ const CocktailReviewSchema = new Schema({
 }, {
    timestamps: true, versionKey: false
 });
-
+CocktailReviewSchema.post('save', async function() {
+   const review = this;
+   const Cocktail = mongoose.model('Cocktail');
+   const cocktail = await Cocktail.findById(review.cocktail);
+   if (cocktail) {
+       cocktail.reviews.push(review._id);
+       await cocktail.save();
+   }
+});
+CocktailReviewSchema.post('remove', async function() {
+   const review = this;
+   const Cocktail = mongoose.model('Cocktail');
+   const cocktail = await Cocktail.findById(review.cocktail);
+   if (cocktail) {
+       const index = cocktail.reviews.indexOf(review._id);
+       if (index > -1) {
+           cocktail.reviews.splice(index, 1);
+           await cocktail.save();
+       }
+   }
+});
 const CocktailReview = mongoose.model('CocktailReview', CocktailReviewSchema);
 module.exports = CocktailReview;

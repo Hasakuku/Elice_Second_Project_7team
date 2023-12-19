@@ -12,6 +12,14 @@ const DiyRecipeReviewSchema = new Schema({
 }, {
    timestamps: true, versionKey: false
 });
-
+DiyRecipeReviewSchema.post('save', async function () {
+   const review = this;
+   const DiyRecipe = mongoose.model('DiyRecipe');
+   const diyRecipe = await DiyRecipe.findById(review.diyRecipe);
+   if (diyRecipe) {
+      diyRecipe.reviews.push(review._id);
+      await diyRecipe.save();
+   }
+});
 const DiyRecipeReview = mongoose.model("DiyRecipeReview", DiyRecipeReviewSchema);
 module.exports = DiyRecipeReview;
