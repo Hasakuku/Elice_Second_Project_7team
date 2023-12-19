@@ -3,14 +3,16 @@ const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = r
 
 const barService = {
    //* 바 목록 조회
-   async getBarList(item, page) {
-      //페이지당 아이템 수
-      const limit = item === undefined || item === null ? 10 : item;
-      const skip = page ? (page - 1) * limit : 0;
-
-      const barList = await Bar.find({}).select('_id name image').skip(skip).limit(limit).lean();
-      if (barList.length === 0) throw new NotFoundError('bar 정보 없음');
-      return barList;
+   async getBarList(query) {
+      const { x1, x2, y1, y2 } = query;
+      const data = await Bar.find({
+         x: { $gt: x1, $lt: x2 },
+         y: { $gt: y1, $lt: y2 },
+      });
+      // 수동으로 필터링
+      const filteredData = data.filter((data) => data.address);
+      console.log(filteredData.map((data) => data.address));
+      return filteredData;
    },
    //* 바 상세 조회
    async getBar(barId) {
@@ -38,7 +40,7 @@ const barService = {
          { name, image, address, operationTime, map },
          { runValidators: true }
       );
-      if(!foundBar.acknowledged) throw new BadRequestError('bar 요청 데이터 오류');
+      if (!foundBar.acknowledged) throw new BadRequestError('bar 요청 데이터 오류');
       if (updateBar.modifiedCount === 0) throw new ConflictError('bar 수정 실패');
    },
    //* 바 삭제
