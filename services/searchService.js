@@ -4,7 +4,11 @@ const setParameter = require('../utils/setParameter');
 
 const searchService = {
    async searchByKeyword(keyword, type, sort, item, page) {
-      const { limit, skip, types } = setParameter(item, page, type);
+      const { limit, skip,} = setParameter(item, page);
+      const types = (type === 'cocktails' ? ['Cocktail']
+      : type === 'recipes' ? ['DiyRecipe']
+         : type === undefined || type === null ? ['Cocktail', 'DiyRecipe']
+            : (() => { throw new BadRequestError('타입 오류'); })());
       // base 검색
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
@@ -46,7 +50,8 @@ const searchService = {
             default:
                sortedItems = itemResults;
          }
-         results[type] = sortedItems;
+         const key = type === 'Cocktail' ? 'cocktails' : 'diyRecipes';
+         results[key] = sortedItems;
       }
       return results;
    },

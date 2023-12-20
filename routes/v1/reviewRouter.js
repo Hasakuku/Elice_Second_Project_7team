@@ -12,9 +12,9 @@ router.get('/:id', checkUser, reviewController.getReview);
 
 router.put('/:id', checkUser, checkWrite, reviewController.updateReview);
 router.post('/create/:id', checkUser, checkWrite, reviewController.createReview);
-router.post(':id/likes', reviewController.addLike);
+router.post('/:id/likes', checkUser, reviewController.addLike);
 
-router.delete(':id/likes', reviewController.deleteLike);
+router.delete('/:id/likes', checkUser, reviewController.deleteLike);
 router.delete('/:id/users', checkUser, reviewController.deleteUserReview);
 router.delete('/:id', checkUser, checkAdmin, reviewController.deleteReview);
 

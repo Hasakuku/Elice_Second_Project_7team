@@ -66,4 +66,11 @@ const deleteUser = asyncHandler(async (req, res) => {
    await userService.deleteUser(userId);
    res.status(204).json('');
 });
-module.exports = { getUser, logout, updateUser, withdrawal, getWishListByType, createWish, deleteWish, updateUserPermission, getUserList, deleteUser };
+//테스트 로그인
+const login = asyncHandler(async (req, res) => {
+   const data = req.body;
+   const result = await userService.login(data);
+   res.cookie('jwtToken', result, { httpOnly: true });
+   res.status(200).json({ message: '로그인 성공' });
+});
+module.exports = { getUser, logout, updateUser, withdrawal, getWishListByType, createWish, deleteWish, updateUserPermission, getUserList, deleteUser, login };

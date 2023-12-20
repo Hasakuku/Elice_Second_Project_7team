@@ -72,7 +72,7 @@ const deleteLike = asyncHandler(async (req, res) => {
    const id = req.params.id;
    const userId = req.body.payload._id;
    await reviewService.deleteLike(userId, id);
-   res.status(201).json({ message: '좋아요 삭제 성공' });
+   res.status(204).json({ message: '좋아요 삭제 성공' });
 });
 module.exports = {
    getReviewListByKeyword,
