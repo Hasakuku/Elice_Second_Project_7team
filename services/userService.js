@@ -3,21 +3,19 @@ const { BadRequestError, ConflictError, NotFoundError, InternalServerError, } = 
 const mongoose = require('mongoose');
 const userService = {
    //* JWT 토큰에 할당될 사용자 정보
-   async getUserTokenPayload(userId) {
+   async getUserTokenPayLoad(userId) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).select('_id isAdmin isWrite').lean();
       if (!user) throw new NotFoundError('유저 정보 없음');
       return user;
    },
    //* 사용자 정보 조회
-   async getUser(payload) {
-      const userId = payload._id;
+   async getUser(userId) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).select('_id email nickname createdAt updatedAt').lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
       return user;
    },
    //* 사용자 정보 수정
-   async updateUser(payload, email, nickname) {
-      const userId = payload._id;
+   async updateUser(userId, email, nickname) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
 
@@ -29,8 +27,7 @@ const userService = {
       if (updatedUser.nModified === 0) throw new ConflictError("업데이트 실패");
    },
    //* 사용자 탈퇴
-   async withdrawal(payload) {
-      const userId = payload._id;
+   async withdrawal(userId) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
 
@@ -42,14 +39,13 @@ const userService = {
       if (withdrawalUser.nModified === 0) throw new ConflictError("탈퇴 실패");
    },
    //*사용자 찜 목록 조회
-   async getWishListByType(payload, type, item, page) {
+   async getWishListByType(userId, type, item, page) {
       type = (type === 'cocktail') ? 'cocktails' : (type === 'recipe' ? 'diyRecipes' : undefined);
       if (!type) throw new BadRequestError('잘못된 요청입니다.');
       //페이지당 아이템 수
       const limit = item === undefined || item === null ? 10 : item;
       const skip = page ? (page - 1) * limit : 0;
-      // const userId = payload._id;
-      const userId = new mongoose.Types.ObjectId(payload._id);
+
       let userWishList = await User.findById(userId).populate({
          path: `wishes.${type}`,
          populate: {
@@ -79,8 +75,7 @@ const userService = {
       return result;
    },
    //* 사용자 찜 추가
-   async createWish(payload, id) {
-      const userId = payload._id;
+   async createWish(userId, id) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
       if (user.wishes.cocktail.includes(id) || user.wishes.diyRecipe.includes(id)) {
@@ -96,9 +91,7 @@ const userService = {
       }
    },
    //* 사용자 찜 삭제
-   async deleteWish(payload, id) {
-      const userId = payload._id;
-      // let userId = new mongoose.Types.ObjectId(payload._id);
+   async deleteWish(userId, id) {
       // 사용자 정보 확인
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');

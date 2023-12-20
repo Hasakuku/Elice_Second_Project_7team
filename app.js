@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
-const cors = require('express');
+const cors = require('cors');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const connectMongoDB = require('./db');
@@ -39,7 +39,6 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500).json({ message: err.message });
   }
 });
-
 
 app
   .listen(config.port, () =>

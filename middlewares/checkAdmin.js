@@ -3,7 +3,7 @@ const { ForbiddenError, } = require('../utils/customError');
 
 // 관리자 체크 미들웨어
 module.exports = asyncHandler(async (req, res, next) => {
-   const isAdmin = req.user.isAdmin;
+   const isAdmin = req.body.payload.isAdmin;
    // 권한 유무 체크
    if (isAdmin) {
       next();
