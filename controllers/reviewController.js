@@ -60,7 +60,20 @@ const deleteUserReview = asyncHandler(async (req, res) => {
    res.status(204).json("");
 });
 
-
+//* 좋아요 추가
+const addLike = asyncHandler(async (req, res) => {
+   const id = req.params.id;
+   const userId = req.body.payload._id;
+   await reviewService.addLike(userId, id);
+   res.status(201).json({ message: '좋아요 추가 성공' });
+});
+//* 좋아요 삭제
+const deleteLike = asyncHandler(async (req, res) => {
+   const id = req.params.id;
+   const userId = req.body.payload._id;
+   await reviewService.deleteLike(userId, id);
+   res.status(201).json({ message: '좋아요 삭제 성공' });
+});
 module.exports = {
    getReviewListByKeyword,
    deleteReview,
@@ -69,5 +82,7 @@ module.exports = {
    getReviewList,
    updateReview,
    createReview,
-   deleteUserReview
+   deleteUserReview,
+   addLike,
+   deleteLike
 };
