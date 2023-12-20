@@ -15,7 +15,7 @@ const loginKakao = asyncHandler(async (req, res) => {
     if (!code) throw new NotFoundError("요청 code 없음");
     const result = await kakaoService.login(code);
     res.cookie('jwtToken', result, { httpOnly: true });
-    res.status(201).json({ message: "로그인 성공" }).redirect(config.frontendURI);
+    res.status(201).redirect(config.frontendURI);
 });
 
 const withdrawalKakao = asyncHandler(async (req, res) => {

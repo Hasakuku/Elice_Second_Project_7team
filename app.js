@@ -11,8 +11,8 @@ const router = require('./routes');
 connectMongoDB(); // 몽고DB 연결
 
 // 개발환경에서만 cors 사용
-// app.use(cors());
-const isDevelopment = config.nodeEnv !== 'production';
+const isDevelopment = config.nodeEnv !== 'production ';
+
 if (isDevelopment) {
   app.use(
     cors({
@@ -28,7 +28,7 @@ app.use(cookieParser());
 
 
 //^ 백엔드 테스트시 아래 주석 해제
-// app.use(express.static('public'));
+app.use(express.static('public'));
 
 app.use("/api", router);
 
