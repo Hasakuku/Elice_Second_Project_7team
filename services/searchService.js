@@ -1,28 +1,15 @@
 const Cocktail = require('../models/cocktailModel');
 const DiyRecipe = require('../models/diyRecipeModel');
 const Base = require('../models/baseModel');
-const CocktailReview = require('../models/cocktailReviewModel');
-const DiyRecipeReview = require('../models/diyRecipeReviewModel');
-const Bar = require('../models/barModel');
 const { NotFoundError, BadRequestError } = require('../utils/customError');
+const setParameter = require('../utils/setParameter');
+
 const searchService = {
-   async a() {
-      await CocktailReview.find();
-      await DiyRecipeReview.find();
-      await Bar.find();
-   },
    async searchByKeyword(keyword, type, sort, item, page) {
-      //페이지당 아이템 수
-      const limit = item === undefined || item === null ? 10 : item;
-      const skip = page ? (page - 1) * limit : 0;
+      const { limit, skip, types } = setParameter(item, page, type);
       // base 검색
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
-
-      const types = (type === 'cocktail' ? ['cocktail']
-         : type === 'recipe' ? ['diyRecipe']
-            : type === undefined || type === null ? ['cocktail', 'diyRecipe']
-               : (() => { throw new BadRequestError('타입 오류'); })());
 
       let results = {};
       // type별 검색
@@ -33,12 +20,12 @@ const searchService = {
                { name: { $regex: keyword, $options: 'i' } },
                { base: { $in: baseIds } }
             ],
-         }).populate('base').populate({ path: 'reviews', select: 'rating' }).skip(skip).limit(item).lean();
+         }).populate('base').populate({ path: 'reviews', select: 'rating' }).skip(skip).limit(limit).lean();
          if (types.length < 3 && !items.length === 0) throw new NotFoundError("검색 결과가 없음");
          // 평균 별점& 리뷰 숫자 계산.
          let itemResults = [];
          for (let item of items) {
-            const avgRating = item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length;
+            const avgRating = (item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length).toFixed(2);
             const reviewCount = item.reviews.length;
             itemResults.push({
                _id: item._id,
@@ -65,7 +52,32 @@ const searchService = {
       }
       return results;
    },
+   async countByKeyword(keyword) {
+      // base 검색
+      const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
+      const baseIds = base.map(base => base._id);
 
+      const types = ['cocktail', 'diyRecipe'];
+
+      let totalCounts = {};
+      let total = 0;
+      // type별 검색
+      for (let type of types) {
+         const Model = type === 'cocktail' ? Cocktail : DiyRecipe;
+         // 검색 결과 갯수 계산
+         const totalCount = await Model.countDocuments({
+            $or: [
+               { name: { $regex: keyword, $options: 'i' } },
+               { base: { $in: baseIds } }
+            ],
+         });
+         totalCounts[type] = totalCount;
+         total += totalCount;
+      }
+      totalCounts['total'] = total;
+      if(!total) throw new NotFoundError('검색 결과 없음');
+      return totalCounts;
+   }
 };
 
 module.exports = searchService;

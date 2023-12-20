@@ -4,20 +4,12 @@ const Cocktail = require('../models/cocktailModel');
 const DiyRecipe = require('../models/diyRecipeModel');
 const User = require('../models/userModel');
 const { BadRequestError, NotFoundError, ConflictError } = require('../utils/customError');
-// type, item, page를 처리 후 반환
-const getParameter = (item, page, type) => {
-   const limit = item === undefined || item === null ? 10 : item;
-   const skip = page ? (page - 1) * limit : 0;
-   const types = (type === 'cocktail' ? ['CocktailReview']
-      : type === 'recipe' ? ['DiyRecipeReview']
-         : type === undefined || type === null ? ['CocktailReview', 'DiyRecipeReview']
-            : (() => { throw new BadRequestError('타입 오류'); })());
-   return { limit, skip, types };
-};
+const setParameter = require('../utils/setParameter');
+
 const reviewService = {
    //* 리뷰 검색(관리자)
    async getReviewListByKeyword(keyword, type, item, page) {
-      const { limit, skip, types } = getParameter(item, page, type);
+      const { limit, skip, types } = setParameter(item, page, type);
       let userIds = [];
       if (keyword) {
          const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
@@ -76,7 +68,7 @@ const reviewService = {
    ,
    //* 리뷰 목록 조회
    async getReviewList(id, item, page) {
-      const { limit, skip } = getParameter(item, page);
+      const { limit, skip } = setParameter(item, page);
       let results = [];
       const models = [CocktailReview, DiyRecipeReview];
       const modelNames = ['cocktail', 'diyRecipe'];
@@ -124,7 +116,7 @@ const reviewService = {
    },
    //* 유저 리뷰 목록 조회
    async getUserReviewList(userId, type, item, page) {
-      const { limit, skip, types } = getParameter(item, page, type);
+      const { limit, skip, types } = setParameter(item, page, type);
       let results = {};
       let totalItems = 0;
       for (let type of types) {
