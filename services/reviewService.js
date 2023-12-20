@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const { User, Cocktail, DiyRecipe, CocktailReview, DiyRecipeReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
@@ -208,45 +209,27 @@ const reviewService = {
    },
    //* 좋아요 추가
    async addLike(userId, id) {
-      const cocktailReview = await Cocktail.findById(id).lean();
-      if (cocktailReview) {
-         if (!cocktailReview.likes.includes(userId)) {
-            cocktailReview.likes.push(userId);
-            await cocktailReview.save();
-            return;
-         }
-      } else throw new ConflictError('이미 좋아요를 누름');
+      const cocktailReview = await CocktailReview.findById(id).lean();
       const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
-      if (diyRecipeReview) {
-         if (!diyRecipeReview.likes.includes(userId)) {
-            diyRecipeReview.likes.push(userId);
-            await diyRecipeReview.save();
-            return;
-         }
-      } else throw new ConflictError('이미 좋아요를 누름');
+      if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
+
+      if (cocktailReview && cocktailReview.likes.indexOf(userId) !== -1) throw new ConflictError('이미 좋아요를 누름');
+      else if (cocktailReview && cocktailReview.likes.indexOf(userId) === -1) return await CocktailReview.updateOne({ _id: id }, { $push: { likes: userId } }, { runValidators: true });
+
+      if (!diyRecipeReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
+      else if (diyRecipeReview.likes.includes(userId)) return await DiyRecipeReview.updateOne(id, { $push: { likes: userId } }, { runValidators: true });
    },
    //* 좋아요 삭제
    async deleteLike(userId, id) {
-      const cocktailReview = await CocktailReview.findById(id);
-      if (cocktailReview) {
-         const index = cocktailReview.likes.indexOf(userId);
-         if (index !== -1) {
-            cocktailReview.likes.splice(index, 1);
-            await cocktailReview.save();
-            if (!cocktailReview.likes.includes(userId)) throw new NotFoundError('좋아요가 없음');
-            return;
-         }
-      }
+      const cocktailReview = await CocktailReview.findById(id).lean();
       const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
-      if (diyRecipeReview) {
-         const index = diyRecipeReview.likes.indexOf(userId);
-         if (index !== -1) {
-            diyRecipeReview.likes.splice(index, 1);
-            await diyRecipeReview.save();
-            if (!diyRecipeReview.likes.includes(userId)) throw new NotFoundError('좋아요가 없음');
-            return;
-         }
-      }
+      if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
+
+      if (!cocktailReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
+      else if (cocktailReview.likes.includes(userId)) return await CocktailReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
+
+      if (!diyRecipeReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
+      else if (diyRecipeReview.likes.includes(userId)) return await DiyRecipeReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
    }
 };
 module.exports = reviewService;
