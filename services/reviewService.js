@@ -152,8 +152,8 @@ const reviewService = {
    async updateReview(userId, id, type, data) {
       const { content, images, rating } = data;
       const models = {
-         'cocktail': CocktailReview,
-         'recipe': DiyRecipeReview
+         'cocktails': CocktailReview,
+         'recipes': DiyRecipeReview
       };
       const model = models[type];
       if (!model) throw new BadRequestError('타입 오류');
@@ -169,13 +169,13 @@ const reviewService = {
    async createReview(userId, itemId, type, data) {
       const { content, images, rating } = data;
       const models = {
-         'cocktail': CocktailReview,
-         'recipe': DiyRecipeReview
+         'cocktails': CocktailReview,
+         'recipes': DiyRecipeReview
       };
       const model = models[type];
 
       if (!model) throw new BadRequestError('타입 오류');
-      const modelName = type === 'cocktail' ? 'cocktail' : 'diyRecipe';
+      const modelName = type === 'cocktails' ? 'cocktail' : 'diyRecipe';
       const review = new model({
          user: userId,
          [modelName]: itemId,
@@ -212,12 +212,17 @@ const reviewService = {
       const cocktailReview = await CocktailReview.findById(id).lean();
       const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
       if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
+      else if (cocktailReview) {
+         const userLiked = cocktailReview.likes.map(String).includes(userId.toString());
+         if (userLiked) throw new ConflictError('이미 좋아요를 누름');
+         return await CocktailReview.updateOne({ _id: id }, { $push: { likes: userId } }, { runValidators: true });
+      }
 
-      if (cocktailReview && cocktailReview.likes.indexOf(userId) !== -1) throw new ConflictError('이미 좋아요를 누름');
-      else if (cocktailReview && cocktailReview.likes.indexOf(userId) === -1) return await CocktailReview.updateOne({ _id: id }, { $push: { likes: userId } }, { runValidators: true });
-
-      if (!diyRecipeReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
-      else if (diyRecipeReview.likes.includes(userId)) return await DiyRecipeReview.updateOne(id, { $push: { likes: userId } }, { runValidators: true });
+      else if (diyRecipeReview) {
+         const userLiked = diyRecipeReview.likes.map(String).includes(userId.toString());
+         if (userLiked) throw new ConflictError('이미 좋아요를 누름');
+         return await DiyRecipeReview.updateOne(id, { $push: { likes: userId } }, { runValidators: true });
+      }
    },
    //* 좋아요 삭제
    async deleteLike(userId, id) {

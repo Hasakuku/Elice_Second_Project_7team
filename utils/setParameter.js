@@ -4,8 +4,8 @@ const { BadRequestError } = require("./customError");
 module.exports = (item, page, type) => {
    const limit = item === undefined || item === null ? 10 : item;
    const skip = page ? (page - 1) * limit : 0;
-   const types = (type === 'cocktail' ? ['CocktailReview']
-      : type === 'recipe' ? ['DiyRecipeReview']
+   const types = (type === 'cocktails' ? ['CocktailReview']
+      : type === 'recipes' ? ['DiyRecipeReview']
          : type === undefined || type === null ? ['CocktailReview', 'DiyRecipeReview']
             : (() => { throw new BadRequestError('타입 오류'); })());
    return { limit, skip, types };
