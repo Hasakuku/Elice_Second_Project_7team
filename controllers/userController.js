@@ -40,7 +40,7 @@ const createWish = asyncHandler(async (req, res) => {
    const userId = req.body.payload._id;
    const id = req.params.id;
    await userService.createWish(userId, id);
-   res.status(201).json('찜 추가');
+   res.status(201).json({ message: '찜 추가' });
 });
 //* 사용자 찜 삭제
 const deleteWish = asyncHandler(async (req, res) => {
@@ -53,7 +53,7 @@ const deleteWish = asyncHandler(async (req, res) => {
 const updateUserPermission = asyncHandler(async (req, res) => {
    const userId = req.body.payload._id;
    await userService.updateUserPermission(userId);
-   res.status(200).json('권한 수정 성공');
+   res.status(200).json({ message: '권한 수정 성공' });
 });
 //* 사용자 목록 조회(관리자)
 const getUserList = asyncHandler(async (req, res) => {
