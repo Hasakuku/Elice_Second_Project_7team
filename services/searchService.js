@@ -1,6 +1,4 @@
-const Cocktail = require('../models/cocktailModel');
-const DiyRecipe = require('../models/diyRecipeModel');
-const Base = require('../models/baseModel');
+const { Base, Cocktail, DiyRecipe } = require('../models');
 const { NotFoundError, BadRequestError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
 
@@ -75,7 +73,7 @@ const searchService = {
          total += totalCount;
       }
       totalCounts['total'] = total;
-      if(!total) throw new NotFoundError('검색 결과 없음');
+      if (!total) throw new NotFoundError('검색 결과 없음');
       return totalCounts;
    }
 };

@@ -1,7 +1,7 @@
 const axios = require('axios');
 const setToken = require('../utils/setToken');
 const config = require("../config");
-const User = require("../models/userModel");
+const { User } = require('../models');
 const { InternalServerError, NotFoundError } = require("../utils/customError");
 
 const kakaoService = {

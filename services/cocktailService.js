@@ -1,5 +1,4 @@
-const Cocktail = require('../models/cocktailModel');
-const Base = require('../models/baseModel');
+const { Base, Cocktail, } = require('../models');
 const { BadRequestError, NotFoundError } = require('../utils/customError');
 
 const cocktailService = {

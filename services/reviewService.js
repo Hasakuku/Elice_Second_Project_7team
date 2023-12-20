@@ -1,8 +1,4 @@
-const CocktailReview = require('../models/cocktailReviewModel');
-const DiyRecipeReview = require('../models/diyRecipeReviewModel');
-const Cocktail = require('../models/cocktailModel');
-const DiyRecipe = require('../models/diyRecipeModel');
-const User = require('../models/userModel');
+const { User, Cocktail, DiyRecipe, CocktailReview, DiyRecipeReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
 

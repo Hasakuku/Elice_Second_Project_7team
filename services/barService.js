@@ -1,4 +1,4 @@
-const Bar = require('../models/barModel');
+const { Bar } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
 
 const barService = {
