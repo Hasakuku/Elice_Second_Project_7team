@@ -23,7 +23,7 @@ const REDIRECT_URI = process.env.REDIRECT_URI;
 const KAKAO_AUTH_URI = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=profile_nickname,account_email`;
 const WITHDRAWAL_REDIRECT_URI = process.env.WITHDRAWAL_REDIRECT_URI;
 const KAKAO_WITHDRAWAL_URI = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_API_KEY}&redirect_uri=${WITHDRAWAL_REDIRECT_URI}&response_type=code&scope=profile_nickname,account_email`;
-console.log(process.env.NODE_ENV == 'development ')
+
 module.exports = {
    port: parseInt(process.env.PORT) || 3000,
    nodeEnv: process.env.NODE_ENV,

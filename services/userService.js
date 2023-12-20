@@ -41,7 +41,7 @@ const userService = {
    },
    //*사용자 찜 목록 조회
    async getWishListByType(userId, type, item, page) {
-      type = (type === 'cocktail') ? 'cocktails' : (type === 'recipe' ? 'diyRecipes' : undefined);
+      type = (type === 'cocktails') ? 'cocktails' : (type === 'recipes' ? 'diyRecipes' : undefined);
       if (!type) throw new BadRequestError('잘못된 요청입니다.');
       //페이지당 아이템 수
       const limit = item === undefined || item === null ? 10 : item;
