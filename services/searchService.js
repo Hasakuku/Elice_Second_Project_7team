@@ -5,9 +5,9 @@ const setParameter = require('../utils/setParameter');
 const searchService = {
    async searchByKeyword(keyword, type, sort, item, page) {
       const { limit, skip,} = setParameter(item, page);
-      const types = (type === 'cocktails' ? ['Cocktail']
-      : type === 'recipes' ? ['DiyRecipe']
-         : type === undefined || type === null ? ['Cocktail', 'DiyRecipe']
+      const types = (type === 'cocktails' ? ['cocktails']
+      : type === 'recipes' ? ['diyRecipes']
+         : type === undefined || type === null ? ['cocktails', 'diyRecipes']
             : (() => { throw new BadRequestError('타입 오류'); })());
       // base 검색
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
@@ -16,7 +16,7 @@ const searchService = {
       let results = {};
       // type별 검색
       for (let type of types) {
-         const Model = type === 'cocktail' ? Cocktail : DiyRecipe;
+         const Model = type === 'cocktails' ? Cocktail : DiyRecipe;
          const items = await Model.find({
             $or: [
                { name: { $regex: keyword, $options: 'i' } },
@@ -50,8 +50,7 @@ const searchService = {
             default:
                sortedItems = itemResults;
          }
-         const key = type === 'Cocktail' ? 'cocktails' : 'diyRecipes';
-         results[key] = sortedItems;
+         results[type] = sortedItems;
       }
       return results;
    },
