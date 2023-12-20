@@ -158,7 +158,7 @@ const cocktailService = {
       if (cocktails.length === 0) throw new NotFoundError('조건에 맞는 칵테일 없음');
       // 각 칵테일에 대한 평균 평점과 리뷰 수 계산
       for (let cocktail of cocktails) {
-         let avgRating = cocktail.reviews.reduce((acc, review) => acc + review.rating, 0) / cocktail.review.length;
+         let avgRating = cocktail.reviews.reduce((acc, review) => acc + review.rating, 0) / cocktail.reviews.length;
          cocktail.avgRating = avgRating.toFixed(2);
          cocktail.reviewCount = cocktail.reviews.length;
       }
