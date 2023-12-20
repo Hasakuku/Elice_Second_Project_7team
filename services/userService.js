@@ -1,4 +1,4 @@
-const { User, CocktailReview, DiyRecipeReview, DiyRecipe } = require('../models');
+const { User, CocktailReview, DiyRecipeReview, DiyRecipe, Cocktail } = require('../models');
 const { BadRequestError, ConflictError, NotFoundError, InternalServerError, } = require('../utils/customError');
 const mongoose = require('mongoose');
 const setToken = require('../utils/setToken');
@@ -79,16 +79,27 @@ const userService = {
    async createWish(userId, id) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
-      if (user.wishes.cocktail.includes(id) || user.wishes.diyRecipe.includes(id)) {
+
+      if (user.wishes.cocktails.map(String).includes(id.toString()) || user.wishes.diyRecipes.map(String).includes(id.toString())) {
          throw new ConflictError('찜 목록에 이미 아이템이 있음');
       }
-      const result = await User.updateOne(
-         { _id: userId },
-         { $push: { 'wishes.cocktail': id, 'wishes.diyRecipe': id } },
-         { runValidators: true }
-      );
-      if (result.modifiedCount === 0) {
-         throw new InternalServerError('아이템 추가 실패');
+      const foundCocktail = Cocktail.findOne({ _id: id });
+      if (foundCocktail) {
+         await User.updateOne(
+            { _id: userId },
+            { $push: { 'wishes.cocktails': id, } },
+            { runValidators: true }
+         );
+         return;
+      }
+      const foundDiyRecipe = DiyRecipe.findOne({ _id: id });
+      if (foundDiyRecipe) {
+         await User.updateOne(
+            { _id: userId },
+            { $push: { 'wishes.diyRecipes': id, } },
+            { runValidators: true }
+         );
+         return;
       }
    },
    //* 사용자 찜 삭제
@@ -96,18 +107,26 @@ const userService = {
       // 사용자 정보 확인
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
-      if (!user.wishes.cocktail.includes(id) && !user.wishes.diyRecipe.includes(id)) {
+      if (!user.wishes.cocktails.map(String).includes(id.toString()) && !user.wishes.diyRecipes.map(String).includes(id.toString())) {
          throw new NotFoundError('찜 목록에 아이템이 없음');
       }
-      // 아이템 삭제
-      const result = await User.updateOne(
-         { _id: userId },
-         { $pull: { 'wishes.cocktail': id, 'wishes.diyRecipe': id } },
-         { runValidators: true }
-      );
-      // 삭제 성공 여부 확인
-      if (result.modifiedCount === 0) {
-         throw new ConflictError('아이템 삭제 실패');
+      const foundCocktail = Cocktail.findOne({ _id: id });
+      if (foundCocktail) {
+         await User.updateOne(
+            { _id: userId },
+            { $pull: { 'wishes.cocktails': id, } },
+            { runValidators: true }
+         );
+         return;
+      }
+      const foundDiyRecipe = DiyRecipe.findOne({ _id: id });
+      if (foundDiyRecipe) {
+         await User.updateOne(
+            { _id: userId },
+            { $pull: { 'wishes.diyRecipes': id, } },
+            { runValidators: true }
+         );
+         return;
       }
    },
    //* 사용자 권한 수정
@@ -143,7 +162,7 @@ const userService = {
    async login(data) {
       const { id, pw } = data;
       const user = await User.findOne({ id: id, pw: pw });
-      if(!user) throw new NotFoundError('없어여');
+      if (!user) throw new NotFoundError('없어여');
       const result = setToken(user);
       return result;
    },
