@@ -1,4 +1,4 @@
-const Base = require('../models/baseModel');
+const { Base, } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
 
 const baseService = {

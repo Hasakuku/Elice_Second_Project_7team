@@ -1,4 +1,4 @@
-const User = require('../models/userModel');
+const { User, CocktailReview, DiyRecipeReview, DiyRecipe } = require('../models');
 const { BadRequestError, ConflictError, NotFoundError, InternalServerError, } = require('../utils/customError');
 const mongoose = require('mongoose');
 const userService = {
@@ -134,11 +134,18 @@ const userService = {
    },
    //* 사용자 삭제(관리자)
    async deleteUser(userId) {
-      const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
+      const user = await User.findOne({ _id: userId}).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
+
+      await CocktailReview.deleteMany({ user: userId });
+
+      await DiyRecipeReview.deleteMany({ user: userId });
+
+      await DiyRecipe.deleteMany({ user: userId });
+
       const result = await User.deleteOne({ _id: userId });
       if (result.deletedCount === 0) throw new ConflictError('삭제 데이터 없음');
-   },
+   }
 };
 
 module.exports = userService;
