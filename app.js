@@ -11,15 +11,18 @@ const router = require('./routes');
 connectMongoDB(); // 몽고DB 연결
 
 // 개발환경에서만 cors 사용
+// app.use(cors());
 const isDevelopment = config.nodeEnv !== 'production';
-if (isDevelopment) {
+// console.log(isDevelopment)
+// if (isDevelopment) {
   app.use(
     cors({
-      origin: config.frontendURI, // 출처 허용 옵션
+      // origin: config.frontendURI, // 출처 허용 옵션
+      origin:'*',
       credentials: true, // 사용자 인증이 필요한 리소스(쿠키 등) 접근
     }));
-  app.use(logger('dev'));
-}
+//   app.use(logger('dev'));
+// }
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

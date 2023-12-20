@@ -9,7 +9,7 @@ const envVariables = [
    'FRONTEND_URL',
    'REDIRECT_URI',
    'KAKAO_API_KEY',
-   'NODE_ENV',
+   // 'NODE_ENV',
    'WITHDRAWAL_REDIRECT_URI',
 ];
 
