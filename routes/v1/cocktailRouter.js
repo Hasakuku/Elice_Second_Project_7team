@@ -1,65 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const cocktailController = require('../../controllers/cocktailController');
-const Cocktail = require('../../models/cocktailModel');
+const checkUser = require('../../middlewares/checkUser');
+const checkAdmin = require('../../middlewares/checkAdmin');
 
-//개인 맞춤 추천 
-router.get('/custom', cocktailController.getCustomCocktail);
-//칵테일 목록 조회
-router.get('/', cocktailController.getCocktailList);
-// 칵테일 등록
-router.post('/', async (req, res) => {
-  try {
-    const cocktail = new Cocktail(req.body);
-    const savedCocktail = await cocktail.save();
-    res.status(204).json(savedCocktail);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+router.get('/custom', cocktailController.getCustomCocktail); // 맞춤 추천 칵테일
+router.get('/:id', cocktailController.getCocktail); // 칵테일 목록 조회
+router.get('/', cocktailController.getCocktailList); // 칵테일 상세 조회
 
-// 칵테일 정보 조회
-router.get('/:id', async (req, res) => {
-  try {
-    const cocktail = await Cocktail.find({});
-    if (!cocktail) {
-      return res.status(404).json({ message: '칵테일을 찾을 수 없습니다!' });
-    }
-    res.status(200).json(cocktail);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+router.post('/', checkUser, checkAdmin, cocktailController.createCocktail); // 칵테일 등록
+router.put('/:id', checkUser, checkAdmin, cocktailController.updateCocktail); // 칵테일 수정
+router.delete('/:id', checkUser, checkAdmin, cocktailController.deleteCocktail); // 칵테일 삭제
 
-// 칵테일 수정
-router.put('/:id', async (req, res) => {
-  try {
-    const updatedCocktail = await Cocktail.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true },
-    );
-    if (!updatedCocktail) {
-      return res.status(404).json({ message: '칵테일을 찾을 수 없습니다!' });
-    }
-    res.status(200).json(updatedCocktail);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// 칵테일 삭제
-router.delete('/:id', async (req, res) => {
-  try {
-    const deletedCocktail = await Cocktail.findByIdAndRemove(req.params.id).lean();
-    if (!deletedCocktail) {
-      return res.status(404).json({ message: '칵테일을 찾을 수 없습니다!' });
-    }
-    res.status(204).json({ message: '해당 칵테일 정보를 삭제했습니다.' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
+// 로그인 없이 테스트 시 해제 // checkUser, checkAdmin, 
+// router.post('/', cocktailController.createCocktail); // 칵테일 등록
+// router.put('/:id', cocktailController.updateCocktail); // 칵테일 수정
+// router.delete('/:id',  cocktailController.deleteCocktail); // 칵테일 삭제
 
 module.exports = router;

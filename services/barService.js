@@ -17,7 +17,7 @@ const barService = {
    //* 바 상세 조회
    async getBar(barId) {
       const bar = await Bar.findById(barId).lean();
-      if (!bar) throw new NotFoundError('bar 정보 없음');
+      if (!bar) throw new NotFoundError('바 정보 없음');
       return bar;
    },
    //* 바 등록
@@ -34,19 +34,25 @@ const barService = {
    async updateBar(barId, data) {
       const { name, image, address, operationTime, map } = data;
       const foundBar = await Bar.findById(barId).lean();
-      if (!foundBar) throw new NotFoundError('bar 정보 없음');
+      if (!foundBar) throw new NotFoundError('바 정보 없음');
+
+      const dataKeys = Object.keys(data);
+      const isSame = dataKeys.map(key => foundBar[key] === data[key]).every(value => value === true);
+
+      if (isSame) {
+         throw new ConflictError('같은 내용 수정');
+      }
       const updateBar = await Bar.updateOne(
          { _id: barId },
          { name, image, address, operationTime, map },
          { runValidators: true }
       );
-      if (!foundBar.acknowledged) throw new BadRequestError('bar 요청 데이터 오류');
-      if (updateBar.modifiedCount === 0) throw new ConflictError('bar 수정 실패');
+      if (updateBar.modifiedCount === 0) throw new ConflictError('바 수정 실패');
    },
    //* 바 삭제
    async deleteBar(barId) {
       const foundBar = await Bar.findById(barId).lean();
-      if (!foundBar) throw new NotFoundError('bar 정보 없음');
+      if (!foundBar) throw new NotFoundError('바 정보 없음');
 
       const result = await Bar.deleteOne({ _id: barId });
       if (result.deletedCount === 0) throw new InternalServerError("바 삭제 실패");

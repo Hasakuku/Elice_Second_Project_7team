@@ -92,10 +92,10 @@ const reviewService = {
       return results;
    },
    //* 리뷰 상세 조회
-   async getReview(id) {
+   async getReview(userId, id) {
       const models = [CocktailReview, DiyRecipeReview];
       for (let model of models) {
-         const review = await model.findById(id).populate({ path: 'user', select: 'email' }).lean();
+         const review = await model.findOne({ _id: id, user: userId }).populate({ path: 'user', select: 'email' }).lean();
          if (review) {
             return {
                _id: review._id,
@@ -103,7 +103,7 @@ const reviewService = {
                content: review.content,
                images: review.images,
                rating: review.rating,
-               likesCount: review.likes.length,
+               likeCount: review.likes.length,
                createdAt: review.createdAt
             };
          }

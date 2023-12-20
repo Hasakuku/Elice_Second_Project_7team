@@ -22,12 +22,6 @@ const CocktailSchema = new Schema({
 }, {
    timestamps: true, versionKey: false
 });
-// 칵테일 삭제전 리뷰와 유저의 위시에서 삭제
-CocktailSchema.pre('remove', async function (next) {
-   await this.model('CocktailReview').deleteMany({ _id: { $in: this.review } });
-   await this.model('User').updateMany({ "wish.cocktails": this._id }, { $pull: { wish: this._id } });
-   next();
-});
 
 const Cocktail = mongoose.model('Cocktail', CocktailSchema);
 module.exports = Cocktail;

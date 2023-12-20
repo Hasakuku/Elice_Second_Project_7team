@@ -1,5 +1,6 @@
-const { Base, Cocktail, } = require('../models');
-const { BadRequestError, NotFoundError } = require('../utils/customError');
+const { Base, Cocktail, CocktailReview } = require('../models');
+const { BadRequestError, NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
+const setPrameter = require('../utils/setParameter');
 
 const cocktailService = {
    //* 맞춤 추천 칵테일
@@ -48,18 +49,19 @@ const cocktailService = {
          base: { $in: foundBase },
          abv: abvRange,
          ...tasteQuery
-      }).populate('reviews').sort({ 'reviews.length': -1 }).populate('base').limit(3).lean();
+      }).sort({ 'reviews.length': -1 }).populate('reviews').populate('base').limit(3).lean();
 
       if (cocktails.length === 0) throw new NotFoundError('조건에 맞는 칵테일 없음');
 
       // 가장 인기있는 칵테일 선택
       const result = cocktails.map((item) => {
-         const { reviews, wish, ...rest } = item;
+         const { reviews, wishes, ...rest } = item;
+         const avgRating = (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(2);
          return {
             ...rest,
             base: rest.base.name,
             reviewCount: reviews.length,
-            wishCount: wish.length,
+            avgRating: avgRating,
          };
       });
       return result;
@@ -68,9 +70,7 @@ const cocktailService = {
    async getCocktailList(base, sort, abv, sweet, bitter, sour, item, page) {
       let foundBase;
       let option = {};// find할 옵션
-      //페이지당 아이템 수
-      const limit = item === undefined || item === null ? 10 : item;
-      const skip = page ? (page - 1) * limit : 0;
+      const { limit, skip } = setPrameter(item, page);
 
       // base 미선택시 모든 베이스를 대상
       if (!base) {
@@ -145,7 +145,7 @@ const cocktailService = {
          }
       }
 
-      //* 칵테일 조회
+      // 칵테일 조회
       const cocktails = await Cocktail.find(option)
          .skip(skip)
          .limit(limit)
@@ -158,8 +158,8 @@ const cocktailService = {
       if (cocktails.length === 0) throw new NotFoundError('조건에 맞는 칵테일 없음');
       // 각 칵테일에 대한 평균 평점과 리뷰 수 계산
       for (let cocktail of cocktails) {
-         let avgRating = cocktail.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / cocktail.reviews.length;
-         cocktail.avgRating = avgRating;
+         let avgRating = cocktail.reviews.reduce((acc, review) => acc + review.rating, 0) / cocktail.review.length;
+         cocktail.avgRating = avgRating.toFixed(2);
          cocktail.reviewCount = cocktail.reviews.length;
       }
 
@@ -184,6 +184,53 @@ const cocktailService = {
          };
       });
       return result;
+   },
+   //* 칵테일 상세 조회
+   async getCocktail(id) {
+      const cocktail = await Cocktail.findById(id).populate({ path: 'reviews', options: { limit: 2 } }).lean();
+      if (!cocktail) throw new NotFoundError('칵테일 없음');
+      cocktail.reviews = cocktail.reviews.map(review => ({
+         ...review,
+         likeCount: review.likes.length,
+      }));
+      return cocktail;
+   },
+   //* 칵테일 등록
+   async createCocktail(data) {
+      const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const foundCocktail = await Cocktail.findOne({ name: name }).lean();
+      if (foundCocktail) throw new ConflictError('이미 등록된 칵테일');
+
+      const newCocktail = new Cocktail({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour });
+      const result = await newCocktail.save();
+      if (!result) throw new InternalServerError('등록 안됨');
+   },
+   //* 칵테일 수정
+   async updateCocktail(id, data) {
+      const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const foundCocktail = await Cocktail.findById(id).lean();
+      if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
+
+      const dataKeys = Object.keys(data);
+      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
+
+      if (isSame) {
+         throw new ConflictError('같은 내용 수정');
+      }
+      const updateCocktail = await Cocktail.updateOne(
+         { _id: id },
+         { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour },
+         { runValidators: true }
+      );
+      if (updateCocktail.modifiedCount === 0) throw new InternalServerError('칵테일 수정 실패');
+   },
+   //* 칵테일 삭제
+   async deleteCocktail(id) {
+      const cocktail = await Cocktail.findById(id).lean();
+      if (!cocktail) throw new NotFoundError('칵테일 정보 없음');
+      await CocktailReview.deleteMany({ cocktail: id });
+      const result = await Cocktail.deleteOne({ _id: id });
+      if (result.deletedCount === 0) throw new InternalServerError("칵테일 삭제 실패");
    },
 };
 
