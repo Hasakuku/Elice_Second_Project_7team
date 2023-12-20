@@ -205,6 +205,48 @@ const reviewService = {
          return;
       }
       throw new NotFoundError('리뷰 없음');
+   },
+   //* 좋아요 추가
+   async addLike(userId, id) {
+      const cocktailReview = await Cocktail.findById(id).lean();
+      if (cocktailReview) {
+         if (!cocktailReview.likes.includes(userId)) {
+            cocktailReview.likes.push(userId);
+            await cocktailReview.save();
+            return;
+         }
+      } else throw new ConflictError('이미 좋아요를 누름');
+      const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
+      if (diyRecipeReview) {
+         if (!diyRecipeReview.likes.includes(userId)) {
+            diyRecipeReview.likes.push(userId);
+            await diyRecipeReview.save();
+            return;
+         }
+      } else throw new ConflictError('이미 좋아요를 누름');
+   },
+   //* 좋아요 삭제
+   async deleteLike(userId, id) {
+      const cocktailReview = await CocktailReview.findById(id);
+      if (cocktailReview) {
+         const index = cocktailReview.likes.indexOf(userId);
+         if (index !== -1) {
+            cocktailReview.likes.splice(index, 1);
+            await cocktailReview.save();
+            if (!cocktailReview.likes.includes(userId)) throw new NotFoundError('좋아요가 없음');
+            return;
+         }
+      }
+      const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
+      if (diyRecipeReview) {
+         const index = diyRecipeReview.likes.indexOf(userId);
+         if (index !== -1) {
+            diyRecipeReview.likes.splice(index, 1);
+            await diyRecipeReview.save();
+            if (!diyRecipeReview.likes.includes(userId)) throw new NotFoundError('좋아요가 없음');
+            return;
+         }
+      }
    }
 };
 module.exports = reviewService;
