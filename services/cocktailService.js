@@ -194,7 +194,7 @@ const cocktailService = {
       let perPages = Number(perPage);
       let dateFromId;
       let mongoId;
-      console.log(cursorId)
+
       if (cursorId) {
          dateFromId = new Date(parseInt(cursorId.substring(0, 8), 16) * 1000);
          mongoId = new mongoose.Types.ObjectId(cursorId);
