@@ -5,7 +5,7 @@
   "scripts": {
     "start": "set NODE_ENV=production && nodemon app.js",
     "dev": "set NODE_ENV=development && nodemon app.js"
-  },  
+  },
   "dependencies": {
     "axios": "^1.6.2",
     "cookie-parser": "~1.4.4",
@@ -14,11 +14,13 @@
     "dotenv": "^16.3.1",
     "express": "~4.16.1",
     "express-async-handler": "^1.2.0",
+    "fs": "^0.0.1-security",
     "http-errors": "~1.6.3",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.3.0",
     "mongoose": "^8.0.3",
-    "morgan": "~1.9.1"
+    "morgan": "~1.9.1",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "debug": "~2.6.9",

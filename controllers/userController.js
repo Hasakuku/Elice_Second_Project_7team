@@ -62,7 +62,7 @@ const getUserList = asyncHandler(async (req, res) => {
 });
 //* 사용자 삭제(관리자)
 const deleteUser = asyncHandler(async (req, res) => {
-   const userId = req.body.payload._id;
+   const userId = req.params.id;
    await userService.deleteUser(userId);
    res.status(204).json('');
 });
