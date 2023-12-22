@@ -11,7 +11,7 @@ const userService = {
    },
    //* 사용자 정보 조회
    async getUser(userId) {
-      const user = await User.findOne({ _id: userId, deletedAt: null }).select('_id email nickname createdAt updatedAt').lean();
+      const user = await User.findOne({ _id: userId, deletedAt: null }).select('_id email nickname createdAt updatedAt isAdmin isWrite').lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
       return user;
    },
