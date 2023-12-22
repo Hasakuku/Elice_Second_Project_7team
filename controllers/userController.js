@@ -51,7 +51,7 @@ const deleteWish = asyncHandler(async (req, res) => {
 });
 //* 사용자 권한 수정
 const updateUserPermission = asyncHandler(async (req, res) => {
-   const userId = req.body.payload._id;
+   const userId = req.params.id;
    await userService.updateUserPermission(userId);
    res.status(200).json({ message: '권한 수정 성공' });
 });
@@ -66,7 +66,7 @@ const deleteUser = asyncHandler(async (req, res) => {
    await userService.deleteUser(userId);
    res.status(204).json('');
 });
-//테스트 로그인
+//* 기본 로그인
 const login = asyncHandler(async (req, res) => {
    const data = req.body;
    const result = await userService.login(data);

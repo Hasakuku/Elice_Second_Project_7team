@@ -12,14 +12,8 @@ const getCustomCocktail = asyncHandler(async (req, res) => {
 
 //* 칵테일 목록 조회
 const getCocktailList = asyncHandler(async (req, res) => {
-  let { base, sort, abv, sweet, bitter, sour, item, page } = req.query;
-  abv = Number(abv);
-  sweet = Number(sweet);
-  bitter = Number(bitter);
-  sour = Number(sour);
-  item = Number(item);
-  page = Number(page);
-  const result = await cocktailService.getCocktailList(base, sort, abv, sweet, bitter, sour, item, page);
+
+  const result = await cocktailService.getCocktailList(req.query);
   res.status(200).json(result);
 });
 //* 칵테일 상세 조회

@@ -12,7 +12,7 @@ router.get('/', checkUser, checkAdmin, userController.getUserList);
 router.post('/wishlist/:id', checkUser, userController.createWish);
 
 router.put('/mypage', checkUser, userController.updateUser);
-router.put('/permissions', checkUser, checkAdmin, userController.updateUserPermission);
+router.put('/permissions/:id', checkUser, checkAdmin, userController.updateUserPermission);
 
 router.delete('/wishlist/:id', checkUser, userController.deleteWish);
 router.delete('/delete', checkUser, checkAdmin, userController.deleteUser);

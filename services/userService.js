@@ -55,7 +55,7 @@ const userService = {
          }
       }).skip(skip).limit(limit).lean();
       if (!userWishList) throw new NotFoundError('사용자 정보 없음');
-      if (userWishList.wishes[type].length === 0) throw new NotFoundError('해당 타입의 찜목록 없음');
+      // if (userWishList.wishes[type].length === 0) throw new NotFoundError('해당 타입의 찜목록 없음');
       // 각 아이템에 대한 평균 평점과 리뷰 수 계산
       for (let item of userWishList.wishes[type]) {
          let avgRating = item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length;
@@ -142,7 +142,7 @@ const userService = {
       const limit = item === undefined || item === null ? 10 : item;
       const skip = page ? (page - 1) * limit : 0;
       const userList = await User.find({}).select('_id email isWrite createAt updatedAt').skip(skip).limit(limit).lean();
-      if (!userList) throw new NotFoundError('유저 정보 없음');
+      
       return userList;
    },
    //* 사용자 삭제(관리자)
