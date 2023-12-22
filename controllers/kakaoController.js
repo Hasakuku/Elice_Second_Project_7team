@@ -26,4 +26,4 @@ const withdrawalKakao = asyncHandler(async (req, res) => {
     res.status(204).redirect(config.frontendURI);
 });
 
-module.exports = { loginKakao, redirectKakaoPage, withdrawalKakao, redirectWithdrawal };
+module.exports = { loginKakao, redirectKakaoPage, withdrawalKakao, redirectWithdrawal, };
