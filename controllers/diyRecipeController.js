@@ -4,7 +4,7 @@ const diyRecipeService = require('../services/diyRecipeService');
 // DIY 레시피 목록 조회
 const getDiyRecipeList = asyncHandler(async (req, res) => {
   const { option, skip, limit, sort } = req.query;
-  const result = await diyRecipeService.getDiyRecipes(option, skip, limit, sort);
+  const result = await diyRecipeService.getDiyRecipeList(option, skip, limit, sort);
   res.status(200).json(result);
 });
 
@@ -17,8 +17,10 @@ const getDiyRecipe = asyncHandler(async (req, res) => {
 
 // DIY 레시피 등록
 const createDiyRecipe = asyncHandler(async (req, res) => {
+  //유저 정보 
+  const userId = req.body.payload._id;
   const data = req.body;
-  await diyRecipeService.createDiyRecipe(data);
+  await diyRecipeService.createDiyRecipe(data,userId);
   res.status(201).json({ message: '레시피 등록이 완료되었습니다!' });
 });
 

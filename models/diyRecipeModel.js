@@ -19,7 +19,7 @@ const DiyRecipeSchema = new Schema({
    bitter: { type: Number, min: 1, max: 5, required: true, }, //쓴맛
    sour: { type: Number, min: 1, max: 5, required: true, }, // 신맛
    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipeReview', }],
-   wishes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
+   wishes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
 }, {
    timestamps: true, versionKey: false
 });

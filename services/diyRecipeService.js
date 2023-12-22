@@ -1,12 +1,12 @@
-const DiyRecipe = require('../models/DiyRecipe');
+const DiyRecipe = require('../models/diyRecipeModel');
 const { NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
-const DiyRecipeReview = require('../models/DiyRecipeReview');
+const DiyRecipeReview = require('../models/diyRecipeModel');
 
 const diyRecipeService = {
-  // DIY 레시피 조회
+  //* DIY 레시피 조회
   // MongoDB 에서 레시피 조회 -> option은 조회할 데이터의 조건,
   // skip은 건너뛸 데이터의 수, limit은 조회할 데이터의 수, sort는 정렬 방식
-  async getDiyRecipes(option, skip, limit, sort) {
+  async getDiyRecipeList(option, skip, limit, sort) {
     const diyRecipes = await DiyRecipe.find(option) //option 조건에 해당하는 모든 레시피 데이터 찾기
       .skip(skip) //skip 만큼 데이터를 건너뛰고
       .limit(limit) //limit만큼 데이터만 조회 - 리뷰에서 2개까지인것으로 기억하고 정함.
@@ -54,7 +54,7 @@ const diyRecipeService = {
     });
     return result;
   },
-  // DIY 레시피 상세 조회
+  //* DIY 레시피 상세 조회
   async getDiyRecipe(id) {
     const diyRecipe = await DiyRecipe.findById(id)
       .populate({ path: 'reviews', options: { limit: 2 } })
@@ -66,8 +66,8 @@ const diyRecipeService = {
     }));
     return diyRecipe;
   },
-  // DIY 레시피 등록
-  async createDiyRecipe(data) {
+  //* DIY 레시피 등록
+  async createDiyRecipe(data, user) {
     const {
       name,
       base,
@@ -87,6 +87,7 @@ const diyRecipeService = {
 
     const newDiyRecipe = new DiyRecipe({
       name,
+      user,
       base,
       image,
       description,
@@ -101,7 +102,7 @@ const diyRecipeService = {
     const result = await newDiyRecipe.save();
     if (!result) throw new InternalServerError('등록 할 수 없습니다.');
   },
-  // DIY 레시피 수정
+  //* DIY 레시피 수정
   async updateDiyRecipe(id, data) {
     const {
       name,
@@ -147,7 +148,7 @@ const diyRecipeService = {
     if (updateDiyRecipe.modifiedCount === 0)
       throw new InternalServerError('DIY 레시피 수정을 실패했습니다.');
   },
-  // DIY 레시피 삭제
+  //* DIY 레시피 삭제
   async deleteDiyRecipe(id) {
     const diyRecipe = await DiyRecipe.findById(id).lean();
     if (!diyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
