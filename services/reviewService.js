@@ -1,4 +1,3 @@
-const { default: mongoose } = require('mongoose');
 const { User, Cocktail, DiyRecipe, CocktailReview, DiyRecipeReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
@@ -8,43 +7,43 @@ const reviewService = {
    async getReviewListByKeyword(keyword, type, cursorId, cursorSort, cursorValue, perPage) {
       let userIds = [];
       if (keyword) {
-          const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
-          userIds = users.map(user => user._id);
-          if (userIds.length === 0) throw new NotFoundError('일치하는 유저 없음');
+         const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
+         userIds = users.map(user => user._id);
+         if (userIds.length === 0) throw new NotFoundError('일치하는 유저 없음');
       }
       let results = [];
       // type별 검색
       const types = type ? [type] : ['cocktails', 'recipe'];
       for (let type of types) {
-          const Model = type === 'cocktails' ? CocktailReview : DiyRecipeReview;
-          let query = userIds.length > 0 ? { user: { $in: userIds } } : {};
-          if (cursorId) {
-              query._id = { $lt: cursorId };
-          }
-          if (cursorSort) {
-              query[cursorSort] = { $lt: cursorValue };
-          }
-          const reviews = await Model.find(query)
-              .sort({ [cursorSort]: -1 })
-              .limit(perPage)
-              .populate({ path: 'user', select: 'email' })
-              .populate({ path: type === 'cocktails' ? 'cocktail' : 'diyRecipe', select: 'name' })
-              .select('_id user cocktail diyRecipe createdAt')
-              .lean();
-  
-          for (let review of reviews) {
-              results.push({
-                  _id: review._id,
-                  email: review.user.email,
-                  type: type === 'cocktails' ? 'cocktail' : 'diyRecipe',
-                  name: review[type === 'cocktails' ? 'cocktail' : 'diyRecipe'].name,
-                  createdAt: review.createdAt
-              });
-          }
+         const Model = type === 'cocktails' ? CocktailReview : DiyRecipeReview;
+         let query = userIds.length > 0 ? { user: { $in: userIds } } : {};
+         if (cursorId) {
+            query._id = { $lt: cursorId };
+         }
+         if (cursorSort) {
+            query[cursorSort] = { $lt: cursorValue };
+         }
+         const reviews = await Model.find(query)
+            .sort({ [cursorSort]: -1 })
+            .limit(perPage)
+            .populate({ path: 'user', select: 'email' })
+            .populate({ path: type === 'cocktails' ? 'cocktail' : 'diyRecipe', select: 'name' })
+            .select('_id user cocktail diyRecipe createdAt')
+            .lean();
+
+         for (let review of reviews) {
+            results.push({
+               _id: review._id,
+               email: review.user.email,
+               type: type === 'cocktails' ? 'cocktail' : 'diyRecipe',
+               name: review[type === 'cocktails' ? 'cocktail' : 'diyRecipe'].name,
+               createdAt: review.createdAt
+            });
+         }
       }
       if (!types.length < 3 && results.length === 0) throw new NotFoundError("검색 결과 없음");
       return results;
-  },
+   },
    //* 리뷰 삭제(관리자)
    async deleteReview(id) {
       const cocktailReview = await CocktailReview.findById(id);
@@ -96,7 +95,7 @@ const reviewService = {
             });
          }
       }
-      if (results.length === 0) throw new NotFoundError('리뷰 없음');
+      // if (results.length === 0) throw new NotFoundError('리뷰 없음');
       return results;
    },
    //* 리뷰 상세 조회
@@ -173,6 +172,23 @@ const reviewService = {
    }
    ,
    //* 리뷰 등록
+   // async createReview(userId, itemId, type, data) {
+   //    const { content, images, rating } = data;
+   //    const models = {
+   //       'cocktails': CocktailReview,
+   //       'recipes': DiyRecipeReview
+   //    };
+   //    const model = models[type];
+
+   //    if (!model) throw new BadRequestError('타입 오류');
+   //    const modelName = type === 'cocktails' ? 'cocktail' : 'diyRecipe';
+   //    const review = new model({
+   //       user: userId,
+   //       [modelName]: itemId,
+   //       content, images, rating,
+   //    });
+   //    await review.save();
+   // },
    async createReview(userId, itemId, type, data) {
       const { content, images, rating } = data;
       const models = {
@@ -189,59 +205,122 @@ const reviewService = {
          content, images, rating,
       });
       await review.save();
+
+      const reviews = await model.find({ [modelName]: itemId });
+
+      let avgRating = 0;
+      reviews.forEach((review) => {
+         avgRating += review.rating;
+      });
+      avgRating /= reviews.length;
+      let reviewCount = reviews.length;
+
+
+      await Cocktail.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
    },
    //* 리뷰 삭제
+   // async deleteUserReview(userId, reviewId) {
+   //    const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId });
+   //    if (cocktailReview) {
+   //       await CocktailReview.deleteOne({ _id: reviewId });
+   //       const cocktail = await Cocktail.findOne({ reviews: reviewId });
+   //       if (cocktail) {
+   //          cocktail.reviews.pull(reviewId);
+   //          await cocktail.save();
+   //       }
+   //       return;
+   //    }
+   //    const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: userId });
+   //    if (diyRecipeReview) {
+   //       await DiyRecipeReview.deleteOne({ _id: reviewId });
+   //       const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
+   //       if (diyRecipe) {
+   //          diyRecipe.reviews.pull(reviewId);
+   //          await diyRecipe.save();
+   //       }
+   //       return;
+   //    }
+   //    throw new NotFoundError('리뷰 없음');
+   // },
    async deleteUserReview(userId, reviewId) {
-      const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId });
+      const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId }).lean();
       if (cocktailReview) {
+
          await CocktailReview.deleteOne({ _id: reviewId });
          const cocktail = await Cocktail.findOne({ reviews: reviewId });
          if (cocktail) {
             cocktail.reviews.pull(reviewId);
+
+            const result = await CocktailReview.aggregate([
+               { $match: { cocktail: cocktail._id } },
+               {
+                  $group: {
+                     _id: null,
+                     avgRating: { $avg: "$rating" },
+                     reviewCount: { $sum: 1 }
+                  }
+               }
+            ]);
+
+            cocktail.avgRating = result[0] ? result[0].avgRating : 0;
+            cocktail.reviewCount = result[0] ? result[0].reviewCount : 0;
             await cocktail.save();
+            return;
+         }}
+         const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: userId });
+         if (diyRecipeReview) {
+            await DiyRecipeReview.deleteOne({ _id: reviewId });
+            const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
+            if (diyRecipe) {
+               diyRecipe.reviews.pull(reviewId);
+
+               // After deleting the review, use aggregation to calculate the average rating and review count
+               const result = await diyRecipeReview.aggregate([
+                  { $match: { diyRecipe: diyRecipe._id } },
+                  {
+                     $group: {
+                        _id: null,
+                        avgRating: { $avg: "$rating" },
+                        reviewCount: { $sum: 1 }
+                     }
+                  }
+               ]);
+
+               diyRecipe.avgRating = result[0] ? result[0].avgRating : 0;
+               diyRecipe.reviewCount = result[0] ? result[0].reviewCount : 0;
+               await diyRecipe.save();
+            }
+            return;
          }
-         return;
-      }
-      const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: userId });
-      if (diyRecipeReview) {
-         await DiyRecipeReview.deleteOne({ _id: reviewId });
-         const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
-         if (diyRecipe) {
-            diyRecipe.reviews.pull(reviewId);
-            await diyRecipe.save();
-         }
-         return;
-      }
-      throw new NotFoundError('리뷰 없음');
-   },
+      },
    //* 좋아요 추가
    async addLike(userId, id) {
-      const cocktailReview = await CocktailReview.findById(id).lean();
-      const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
-      if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
-      else if (cocktailReview) {
-         const userLiked = cocktailReview.likes.map(String).includes(userId.toString());
-         if (userLiked) throw new ConflictError('이미 좋아요를 누름');
-         return await CocktailReview.updateOne({ _id: id }, { $push: { likes: userId } }, { runValidators: true });
-      }
+         const cocktailReview = await CocktailReview.findById(id).lean();
+         const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
+         if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
+         else if (cocktailReview) {
+            const userLiked = cocktailReview.likes.map(String).includes(userId.toString());
+            if (userLiked) throw new ConflictError('이미 좋아요를 누름');
+            return await CocktailReview.updateOne({ _id: id }, { $push: { likes: userId } }, { runValidators: true });
+         }
 
-      else if (diyRecipeReview) {
-         const userLiked = diyRecipeReview.likes.map(String).includes(userId.toString());
-         if (userLiked) throw new ConflictError('이미 좋아요를 누름');
-         return await DiyRecipeReview.updateOne(id, { $push: { likes: userId } }, { runValidators: true });
-      }
-   },
+         else if (diyRecipeReview) {
+            const userLiked = diyRecipeReview.likes.map(String).includes(userId.toString());
+            if (userLiked) throw new ConflictError('이미 좋아요를 누름');
+            return await DiyRecipeReview.updateOne(id, { $push: { likes: userId } }, { runValidators: true });
+         }
+      },
    //* 좋아요 삭제
    async deleteLike(userId, id) {
-      const cocktailReview = await CocktailReview.findById(id).lean();
-      const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
-      if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
+         const cocktailReview = await CocktailReview.findById(id).lean();
+         const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
+         if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
 
-      if (!cocktailReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
-      else if (cocktailReview.likes.includes(userId)) return await CocktailReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
+         if (!cocktailReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
+         else if (cocktailReview.likes.includes(userId)) return await CocktailReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
 
-      if (!diyRecipeReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
-      else if (diyRecipeReview.likes.includes(userId)) return await DiyRecipeReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
-   }
-};
-module.exports = reviewService;
+         if (!diyRecipeReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
+         else if (diyRecipeReview.likes.includes(userId)) return await DiyRecipeReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
+      }
+   };
+   module.exports = reviewService;

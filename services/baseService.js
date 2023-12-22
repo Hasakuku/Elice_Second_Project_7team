@@ -5,7 +5,6 @@ const baseService = {
    //* 베이스 목록 조회
    async getBaseList() {
       const baseList = await Base.find({}).select('_id name image').lean();
-      if (baseList.length === 0) throw new NotFoundError('Base 정보 없음');
       return baseList;
    },
    //* 베이스 등록

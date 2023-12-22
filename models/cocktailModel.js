@@ -19,6 +19,8 @@ const CocktailSchema = new Schema({
    sour: { type: Number, min: 1, max: 5, required: true, }, // 신맛
    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CocktailReview', }],
    wishes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', }],
+   avgRating: Number,
+   reviewCount: Number,
 }, {
    timestamps: true, versionKey: false
 });
