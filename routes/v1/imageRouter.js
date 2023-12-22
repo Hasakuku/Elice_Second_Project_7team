@@ -4,7 +4,7 @@ const imageController = require('../../controllers/imageController');
 const multer = require('multer');
 const upload = multer({ dest: 'images/' });
 
-router.post('/', upload.single('image'), imageController.uploadImage);
-router.get('/:filename', imageController.getImage);
+router.post('/', upload.array('images' , 10), imageController.uploadImage);
+router.get('/', imageController.getImages);
 
 module.exports = router;
