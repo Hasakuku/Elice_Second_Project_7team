@@ -23,7 +23,7 @@ const withdrawalKakao = asyncHandler(async (req, res) => {
     if (!code) throw new NotFoundError("요청 code 없음");
     await kakaoService.withdrawalKakao(code);
     res.cookie('jwtToken', null, { maxAge: 0 });
-    res.status(204).json({ message: "사용자 탈퇴" });
+    res.status(204).redirect(config.frontendURI);
 });
 
 module.exports = { loginKakao, redirectKakaoPage, withdrawalKakao, redirectWithdrawal };

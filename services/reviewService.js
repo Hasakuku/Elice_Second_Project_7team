@@ -5,39 +5,46 @@ const setParameter = require('../utils/setParameter');
 
 const reviewService = {
    //* 리뷰 검색(관리자)
-   async getReviewListByKeyword(keyword, type, item, page) {
-      const { limit, skip, types } = setParameter(item, page, type);
+   async getReviewListByKeyword(keyword, type, cursorId, cursorSort, cursorValue, perPage) {
       let userIds = [];
       if (keyword) {
-         const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
-         userIds = users.map(user => user._id);
-         if (userIds.length === 0) throw new NotFoundError('일치하는 유저 없음');
+          const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
+          userIds = users.map(user => user._id);
+          if (userIds.length === 0) throw new NotFoundError('일치하는 유저 없음');
       }
       let results = [];
       // type별 검색
+      const types = type ? [type] : ['cocktails', 'recipe'];
       for (let type of types) {
-         const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
-         const query = userIds.length > 0 ? { user: { $in: userIds } } : {};
-         const reviews = await Model.find(query)
-            .skip(skip)
-            .limit(limit)
-            .populate({ path: 'user', select: 'email' })
-            .populate({ path: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', select: 'name' })
-            .select('_id user cocktail diyRecipe createdAt')
-            .lean();
-
-         for (let review of reviews) {
-            results.push({
-               _id: review._id,
-               type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe',
-               name: review[type === 'CocktailReview' ? 'cocktail' : 'diyRecipe'].name,
-               createdAt: review.createdAt
-            });
-         }
+          const Model = type === 'cocktails' ? CocktailReview : DiyRecipeReview;
+          let query = userIds.length > 0 ? { user: { $in: userIds } } : {};
+          if (cursorId) {
+              query._id = { $lt: cursorId };
+          }
+          if (cursorSort) {
+              query[cursorSort] = { $lt: cursorValue };
+          }
+          const reviews = await Model.find(query)
+              .sort({ [cursorSort]: -1 })
+              .limit(perPage)
+              .populate({ path: 'user', select: 'email' })
+              .populate({ path: type === 'cocktails' ? 'cocktail' : 'diyRecipe', select: 'name' })
+              .select('_id user cocktail diyRecipe createdAt')
+              .lean();
+  
+          for (let review of reviews) {
+              results.push({
+                  _id: review._id,
+                  email: review.user.email,
+                  type: type === 'cocktails' ? 'cocktail' : 'diyRecipe',
+                  name: review[type === 'cocktails' ? 'cocktail' : 'diyRecipe'].name,
+                  createdAt: review.createdAt
+              });
+          }
       }
       if (!types.length < 3 && results.length === 0) throw new NotFoundError("검색 결과 없음");
       return results;
-   },
+  },
    //* 리뷰 삭제(관리자)
    async deleteReview(id) {
       const cocktailReview = await CocktailReview.findById(id);
