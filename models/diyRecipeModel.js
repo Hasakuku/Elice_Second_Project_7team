@@ -10,7 +10,7 @@ const DiyRecipeSchema = new Schema({
    description: { type: String },
    ingredient: { type: String, required: true, },
    tags: [{ type: String }],
-   recipe: [{
+   recipes: [{
       image: { type: String },
       content: { type: String }
    }],
