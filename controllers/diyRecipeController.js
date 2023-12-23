@@ -27,7 +27,7 @@ const createDiyRecipe = asyncHandler(async (req, res) => {
 // DIY 레시피 수정
 const updateDiyRecipe = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  const data = req.body;
+  const data = req.body;-
   await diyRecipeService.updateDiyRecipe(id, data);
   res.status(200).json({ message: '레시피 수정이 완료되었습니다!' });
 });

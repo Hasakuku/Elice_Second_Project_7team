@@ -22,11 +22,11 @@ const barService = {
    },
    //* 바 등록
    async createBar(data) {
-      const { name, image, address, operationTime, map } = data;
+      let { name, address, time, x, y, tel } = data;
       const foundBar = await Bar.findOne({ address: address }).lean();
       if (foundBar) throw new ConflictError('이미 등록된 주소');
-
-      const newBar = new Bar({ name, image, address, operationTime, map });
+      const image = data.newImageNames[0].imageName;
+      const newBar = new Bar({ name, image, address, x, y, time, tel });
       const result = await newBar.save();
       if (!result) throw new InternalServerError('등록 안됨');
    },

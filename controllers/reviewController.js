@@ -18,6 +18,7 @@ const getUserReviewList = asyncHandler(async (req, res) => {
    const userId = req.body.payload._id;
    const { type, item, page } = req.query;
    const result = await reviewService.getUserReviewList(userId, type, item, page);
+   // if(result.data.length === 0) res.status(204).json('');
    res.status(200).json(result);
 });
 //* 리뷰 목록 조회
