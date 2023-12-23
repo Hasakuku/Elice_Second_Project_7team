@@ -39,7 +39,13 @@ const barService = {
       const foundBar = await Bar.findById(barId).lean();
       if (!foundBar) throw new NotFoundError('바 정보 없음');
       let image;
-      if (data.newImageNames) { image = data.newImageNames[0].imageName; }
+      if (data.newImageNames) {
+         const imagePath = path.join(__dirname, '../images', foundBar.image);
+         fs.unlink(imagePath, (err) => {
+            if (err) throw new InternalServerError('이미지 삭제 실패');
+         });
+         image = data.newImageNames[0].imageName;
+      }
       
       const dataKeys = Object.keys(data);
       const isSame = dataKeys.map(key => foundBar[key] === data[key]).every(value => value === true);

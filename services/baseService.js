@@ -25,10 +25,18 @@ const baseService = {
       const { name, } = data;
       const foundBase = await Base.findById(baseId).lean();
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
-      let image;
-      if (data.newImageNames) { image = data.newImageNames[0].imageName; }
+
+
       const dataKeys = Object.keys(data);
-      const isSame = dataKeys.map(key => foundBase[key] === data[key]).every(value => value === true);
+      const isSame = dataKeys.map(key => foundBase[key] === data[key]).some(value => value === true);
+      let image;
+      if (data.newImageNames) {
+         const imagePath = path.join(__dirname, '../images', foundBase.image);
+         fs.unlink(imagePath, (err) => {
+            if (err) throw new InternalServerError('이미지 삭제 실패');
+         });
+         image = data.newImageNames[0].imageName;
+      }
 
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
