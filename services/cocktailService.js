@@ -231,11 +231,11 @@ const cocktailService = {
    },
    //* 칵테일 수정
    async updateCocktail(id, data) {
-      const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const {payload, ...rest} = data;
       const foundCocktail = await Cocktail.findById(id).lean();
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
-      const dataKeys = Object.keys(data);
+      const dataKeys = Object.keys(rest);
       const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
 
       if (isSame) {
