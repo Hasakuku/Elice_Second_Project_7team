@@ -7,7 +7,7 @@ const checkWrite = require('../../middlewares/checkWrite');
 
 router.get('/search', checkUser, checkAdmin, reviewController.getReviewListByKeyword);
 router.get('/users', checkUser, reviewController.getUserReviewList);
-router.get('/list', checkUser, reviewController.getReviewList);
+router.get('/list', reviewController.getReviewList);
 router.get('/:id', checkUser, reviewController.getReview);
 
 router.put('/:id', checkUser, checkWrite, reviewController.updateReview);

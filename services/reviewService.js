@@ -74,13 +74,13 @@ const reviewService = {
          const reviews = await models[i].find({ [modelNames[i]]: id })
             .skip(skip)
             .limit(limit)
-            .populate({ path: 'user', select: 'email' })
+            .populate({ path: 'user', select: 'nickname' })
             .lean();
 
          for (let review of reviews) {
             results.push({
                _id: review._id,
-               email: review.user.email,
+               nickname: review.user.nickname,
                content: review.content,
                images: review.images,
                rating: review.rating,
