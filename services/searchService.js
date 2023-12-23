@@ -74,11 +74,20 @@ const searchService = {
       const results = {};
 
       for (let item of types) {
-         if (type && type !== `${item}s`) continue;
-         const Model = item === 'cocktail' ? Cocktail : DiyRecipe;
-         const { size, data } = await runPipeline(Model);
-         results[`${item}Size`] = size;
-         results[`${item}s`] = data;
+         let Model;
+         if (type === 'recipes' && item === 'diyRecipe') {
+            Model = DiyRecipe;
+         } else if (type !== 'recipes' && item === 'cocktail') {
+            Model = Cocktail;
+         } else if (!type || type === `${item}s`) {
+            Model = item === 'cocktail' ? Cocktail : DiyRecipe;
+         }
+
+         if (Model) {
+            const { size, data } = await runPipeline(Model);
+            results[`${item}Size`] = size;
+            results[`${item}s`] = data;
+         }
       }
 
       if (!type) results.total = results.cocktailSize + results.diyRecipeSize;
