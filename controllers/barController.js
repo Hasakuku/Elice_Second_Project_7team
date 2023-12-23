@@ -15,10 +15,9 @@ const getBar = asyncHandler(async (req, res) => {
 });
 //* 바 등록
 const createBar = asyncHandler(async (req, res) => {
-   const newImageNames = req.body.newImageNames;
    const data = req.body;
    await barService.createBar(data);
-   res.status(201).json({ newImageNames, message: 'bar 등록 성공' });
+   res.status(201).json({ message: 'bar 등록 성공' });
 });
 //* 바 수정
 const updateBar = asyncHandler(async (req, res) => {

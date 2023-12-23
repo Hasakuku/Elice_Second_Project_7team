@@ -10,19 +10,19 @@ const getBaseList = asyncHandler(async (req, res) => {
 //* 베이스 등록
 const createBase = asyncHandler(async (req, res) => {
    await baseService.createBase(req.body);
-   res.status(201).json({ message: 'bar 등록 성공' });
+   res.status(201).json({ message: 'Base 등록 성공' });
 });
 //* 베이스 수정
 const updateBase = asyncHandler(async (req, res) => {
    const barId = req.params.id;
    await baseService.updateBase(barId, req.body);
-   res.status(200).json({ message: 'bar 수정 성공' });
+   res.status(200).json({ message: 'Base 수정 성공' });
 });
 //* 베이스 삭제
 const deleteBase = asyncHandler(async (req, res) => {
    const barId = req.params.id;
    await baseService.deleteBase(barId);
-   res.status(204).json({ message: 'bar 삭제 성공' });
+   res.status(204).json({ message: 'Base 삭제 성공' });
 });
 
 module.exports = { getBaseList, createBase, updateBase, deleteBase };
