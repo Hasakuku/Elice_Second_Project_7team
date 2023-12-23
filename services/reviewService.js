@@ -30,6 +30,7 @@ const reviewService = {
          for (let review of reviews) {
             results.push({
                _id: review._id,
+               email: review.user.email,
                type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe',
                name: review[type === 'CocktailReview' ? 'cocktail' : 'diyRecipe'].name,
                createdAt: review.createdAt
