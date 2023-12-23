@@ -144,7 +144,7 @@ const reviewService = {
                   name: review[type === 'CocktailReview' ? 'cocktail' : 'diyRecipe'].name,
                   rating: review.rating,
                   content: review.content,
-                  image: review.images,
+                  images: review.images,
                   createdAt: review.createdAt
                });
             }
