@@ -12,7 +12,7 @@ const searchService = {
       const perPages = Number(perPage);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
-      let sortObj = {};
+      let sortObj = { createdAt: -1 };
       if (sort === 'rating') {
          sortObj = { avgRating: -1, ...sortObj };
       } else if (sort === 'review') {
