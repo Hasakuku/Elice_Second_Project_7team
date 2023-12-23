@@ -57,6 +57,7 @@ const diyRecipeService = {
   //* DIY 레시피 상세 조회
   async getDiyRecipe(id) {
     const diyRecipe = await DiyRecipe.findById(id)
+      .populate({ path: 'base', select: 'name' })
       .populate({ path: 'reviews', options: { limit: 2 } })
       .lean(); //id에 맞는 레시피 찾아 리뷰정보랑 같이 반환 limit은 2
     if (!diyRecipe) throw new NotFoundError('DIY 레시피 없습니다.');
@@ -119,11 +120,11 @@ const diyRecipeService = {
     } = data;
     const foundDiyRecipe = await DiyRecipe.findById(id).lean();
     if (!foundDiyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
-
-    const dataKeys = Object.keys(data);
+    const { payload, ...rest } = data;
+    const dataKeys = Object.keys(rest);
     const isSame = dataKeys
       .map((key) => foundDiyRecipe[key] === data[key])
-      .every((value) => value === true);
+      .some((value) => value === true);
 
     if (isSame) {
       throw new ConflictError('같은 내용 수정');
