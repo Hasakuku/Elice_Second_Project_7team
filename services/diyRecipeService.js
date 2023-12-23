@@ -159,6 +159,9 @@ const diyRecipeService = {
       throw new InternalServerError('DIY 레시피 삭제를 실패했습니다.');
   },
   //* 사용자의 레시피 목록 조회
+  async getDiyRecipeListByUser(userId) {
+
+  },
 };
 
 module.exports = diyRecipeService;

@@ -14,7 +14,7 @@ const DiyRecipeSchema = new Schema({
       image: { type: String },
       content: { type: String }
    }],
-   abv: { type: Number, min: 0, max: 100, required: true  }, // 도수
+   abv: { type: Number, min: 1, max: 5, required: true  }, // 도수
    sweet: { type: Number, min: 1, max: 5, required: true, }, // 당도
    bitter: { type: Number, min: 1, max: 5, required: true, }, //쓴맛
    sour: { type: Number, min: 1, max: 5, required: true, }, // 신맛

@@ -19,13 +19,13 @@ const cocktailService = {
       let abvRange = {};
       switch (abv) {
          case 1:
-            abvRange = { $gte: 0, $lt: 10 };
+            abvRange = { $gte: 1, $lt: 3};
             break;
          case 2:
-            abvRange = { $gte: 10, $lt: 20 };
+            abvRange = { $gte: 3, $lt: 4 };
             break;
          case 3:
-            abvRange = { $gte: 20 };
+            abvRange = { $gte: 4 };
             break;
          default:
             throw new BadRequestError('abv 값 오류');
