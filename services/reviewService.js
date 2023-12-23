@@ -4,7 +4,8 @@ const setParameter = require('../utils/setParameter');
 
 const reviewService = {
    //* 리뷰 검색(관리자)
-   async getReviewListByKeyword(keyword, type, cursorId, cursorSort, cursorValue, perPage) {
+   async getReviewListByKeyword(keyword, type, item, page) {
+      const { limit, skip, types } = setParameter(item, page, type);
       let userIds = [];
       if (keyword) {
          const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
@@ -13,37 +14,30 @@ const reviewService = {
       }
       let results = [];
       // type별 검색
-      const types = type ? [type] : ['cocktails', 'recipes'];
       for (let type of types) {
-         const Model = type === 'cocktails' ? CocktailReview : DiyRecipeReview;
-         let query = userIds.length > 0 ? { user: { $in: userIds } } : {};
-         if (cursorId) {
-            query._id = { $lt: cursorId };
-         }
-         if (cursorSort) {
-            query[cursorSort] = { $lt: cursorValue };
-         }
+         const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
+         const query = userIds.length > 0 ? { user: { $in: userIds } } : {};
          const reviews = await Model.find(query)
-            .sort({ [cursorSort]: -1 })
-            .limit(perPage)
+            .skip(skip)
+            .limit(limit)
             .populate({ path: 'user', select: 'email' })
-            .populate({ path: type === 'cocktails' ? 'cocktail' : 'diyRecipe', select: 'name' })
+            .populate({ path: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', select: 'name' })
             .select('_id user cocktail diyRecipe createdAt')
             .lean();
 
          for (let review of reviews) {
             results.push({
                _id: review._id,
-               email: review.user.email,
-               type: type === 'cocktails' ? 'cocktail' : 'diyRecipe',
-               name: review[type === 'cocktails' ? 'cocktail' : 'diyRecipe'].name,
+               type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe',
+               name: review[type === 'CocktailReview' ? 'cocktail' : 'diyRecipe'].name,
                createdAt: review.createdAt
             });
          }
       }
       if (!types.length < 3 && results.length === 0) throw new NotFoundError("검색 결과 없음");
       return results;
-   },
+   }
+,
    //* 리뷰 삭제(관리자)
    async deleteReview(id) {
       const cocktailReview = await CocktailReview.findById(id);
@@ -172,23 +166,6 @@ const reviewService = {
    }
    ,
    //* 리뷰 등록
-   // async createReview(userId, itemId, type, data) {
-   //    const { content, images, rating } = data;
-   //    const models = {
-   //       'cocktails': CocktailReview,
-   //       'recipes': DiyRecipeReview
-   //    };
-   //    const model = models[type];
-
-   //    if (!model) throw new BadRequestError('타입 오류');
-   //    const modelName = type === 'cocktails' ? 'cocktail' : 'diyRecipe';
-   //    const review = new model({
-   //       user: userId,
-   //       [modelName]: itemId,
-   //       content, images, rating,
-   //    });
-   //    await review.save();
-   // },
    async createReview(userId, itemId, type, data) {
       const { content, images, rating } = data;
       const models = {
@@ -219,29 +196,6 @@ const reviewService = {
       await Cocktail.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
    },
    //* 리뷰 삭제
-   // async deleteUserReview(userId, reviewId) {
-   //    const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId });
-   //    if (cocktailReview) {
-   //       await CocktailReview.deleteOne({ _id: reviewId });
-   //       const cocktail = await Cocktail.findOne({ reviews: reviewId });
-   //       if (cocktail) {
-   //          cocktail.reviews.pull(reviewId);
-   //          await cocktail.save();
-   //       }
-   //       return;
-   //    }
-   //    const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: userId });
-   //    if (diyRecipeReview) {
-   //       await DiyRecipeReview.deleteOne({ _id: reviewId });
-   //       const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
-   //       if (diyRecipe) {
-   //          diyRecipe.reviews.pull(reviewId);
-   //          await diyRecipe.save();
-   //       }
-   //       return;
-   //    }
-   //    throw new NotFoundError('리뷰 없음');
-   // },
    async deleteUserReview(userId, reviewId) {
       const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId }).lean();
       if (cocktailReview) {

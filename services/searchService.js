@@ -6,70 +6,50 @@ const setParameter = require('../utils/setParameter');
 const searchService = {
    async searchByKeyword(query) {
       const { keyword, cursorId, sort, cursorValue, perPage, type } = query;
-      // base 검색
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
-      let cursorValues = Number(cursorValue);
-      let perPages = Number(perPage);
-      let dateFromId;
-
-      if (cursorId) dateFromId = new Date(parseInt(cursorId.substring(0, 8), 16) * 1000);
+      const cursorValues = Number(cursorValue);
+      const perPages = Number(perPage);
+      const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
       let sortObj = {};
       if (sort === 'rating') {
-         sortObj.avgRating = -1;
-         sortObj.createdAt = -1;
+         sortObj = { avgRating: -1, ...sortObj };
       } else if (sort === 'review') {
-         sortObj.reviewCount = -1;
-         sortObj.createdAt = -1;
-      } else {
-         sortObj.createdAt = -1;
+         sortObj = { reviewCount: -1, ...sortObj };
       }
-
-      let matchCount = {
+      const matchCount = {
          $or: [
             { name: { $regex: new RegExp(keyword, 'i') }, },
             { base: { $in: baseIds } }
          ]
       };
-      let matchData = {
+
+      const matchData = {
          $and: [
             {
                $or: [
                   { name: { $regex: new RegExp(keyword, 'i') }, _id: { $ne: new mongoose.Types.ObjectId(cursorId) } },
                   { base: { $in: baseIds } }
                ]
-            },
-            { $or: [] }
+            }
          ]
       };
 
+      const addCursorCondition = (key, value) => {
+         const condition1 = { [key]: { $lt: value } };
+         const condition2 = { [key]: value };
+         if (key !== 'createdAt') condition2.createdAt = { $lt: dateFromId };
+         matchData.$and.push({ $or: [condition1, condition2] });
+      };
+
       if (cursorId && cursorValues) {
-         if (sort === 'review') {
-            matchData.$and[1].$or.push(
-               { 'reviewCount': { $lt: cursorValues } },
-               { 'reviewCount': cursorValues, 'createdAt': { $lt: dateFromId } }
-            );
-         } else if (sort === 'rating') {
-            matchData.$and[1].$or.push(
-               { 'avgRating': { $lt: cursorValues } },
-               { 'avgRating': cursorValues, 'createdAt': { $lt: dateFromId } }
-            );
-         } else {
-            matchData.$and[1].$or.push(
-               { 'createdAt': { $lt: dateFromId } }
-            );
-         }
+         if (sort === 'review') addCursorCondition('reviewCount', cursorValues);
+         else if (sort === 'rating') addCursorCondition('avgRating', cursorValues);
+         else addCursorCondition('createdAt', dateFromId);
       } else if (cursorId) {
-         matchData.$and[1].$or.push(
-            { 'createdAt': { $lt: dateFromId } }
-         );
+         addCursorCondition('createdAt', dateFromId);
       }
-
-      if (matchData.$and[1].$or.length === 0) {
-         matchData.$and.pop();
-      }
-
 
       const pipelineCount = [
          { $match: matchCount },
@@ -83,42 +63,28 @@ const searchService = {
          { $limit: perPages || 6 },
       ];
 
-      let total, cocktailSize, diyRecipeSize;
+      const runPipeline = async (Model) => {
+         const total = await Model.aggregate(pipelineCount);
+         const size = total.length > 0 ? total[0].total : 0;
+         const data = await Model.aggregate(pipelineData);
+         return { size, data };
+      };
 
-      if (type === 'cocktails') {
-         total = await Cocktail.aggregate(pipelineCount);
-         if (total.length === 0) total.push({ total: 0 });
-         cocktailSize = total[0].total;
-         
+      const types = ['cocktail', 'diyRecipe'];
+      const results = {};
 
-      } else if (type === 'recipes') {
-         total = await DiyRecipe.aggregate(pipelineCount);
-         if (total.length === 0) total.push({ total: 0 });
-         diyRecipeSize = total[0].total;
-      } else {
-         const totalCocktails = await Cocktail.aggregate(pipelineCount);
-         const totalDiyRecipes = await DiyRecipe.aggregate(pipelineCount);
-         if (totalCocktails.length === 0) totalCocktails.push({ total: 0 });
-         if (totalDiyRecipes.length === 0) totalDiyRecipes.push({ total: 0 });
-         cocktailSize = totalCocktails[0].total;
-         diyRecipeSize = totalDiyRecipes[0].total;
-         total = totalCocktails[0].total + totalDiyRecipes[0].total;
+      for (let item of types) {
+         if (type && type !== `${item}s`) continue;
+         const Model = item === 'cocktail' ? Cocktail : DiyRecipe;
+         const { size, data } = await runPipeline(Model);
+         results[`${item}Size`] = size;
+         results[`${item}s`] = data;
       }
 
+      if (!type) results.total = results.cocktailSize + results.diyRecipeSize;
 
-      if (type === 'cocktails') {
-         const cocktails = await Cocktail.aggregate(pipelineData);
-         return { cocktailSize, cocktails };
-      } else if (type === 'recipes') {
-         const diyRecipes = await DiyRecipe.aggregate(pipelineData);
-         return { diyRecipeSize, diyRecipes };
-      } else {
-         const cocktails = await Cocktail.aggregate(pipelineData);
-         const diyRecipes = await DiyRecipe.aggregate(pipelineData);
-         return { total, cocktailSize, diyRecipeSize, cocktails, diyRecipes };
-      }
+      return results;
    },
-   
 };
 
 module.exports = searchService;
