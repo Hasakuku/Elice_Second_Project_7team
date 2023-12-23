@@ -122,7 +122,7 @@ const reviewService = {
             .sort({ createdAt: -1 })
             .populate(type === 'CocktailReview' ? 'cocktail' : 'diyRecipe')
             .lean();
-         if (reviews.length === 0) throw new NotFoundError('해당 유저의 리뷰 없음');
+         
          for (let review of reviews) {
             // 2개의 리뷰 합친 수 = 페이지당 item 수 
             if (totalItems >= skip + limit) {
@@ -146,6 +146,7 @@ const reviewService = {
             totalItems++;
          }
       }
+      if(!results[0]) throw new NotFoundError('해당 유저의 리뷰 없음');
       return results;
    },
    //* 리뷰 수정
