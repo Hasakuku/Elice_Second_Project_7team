@@ -6,11 +6,13 @@ const reviewService = {
    //* 리뷰 검색(관리자)
    async getReviewListByKeyword(keyword, type, item, page) {
       const { limit, skip, types } = setParameter(item, page, type);
+      let query = {};
       let userIds = [];
       if (keyword) {
          const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
          userIds = users.map(user => user._id);
          if (userIds.length === 0) throw new NotFoundError('일치하는 유저 없음');
+         const query = userIds.length > 0 ? { user: { $in: userIds } } : {};
       }
       let results = [];
       // type별 검색
@@ -34,7 +36,7 @@ const reviewService = {
             });
          }
       }
-      if (!types.length < 3 && results.length === 0) throw new NotFoundError("검색 결과 없음");
+      // if (!types.length < 3 && results.length === 0) throw new NotFoundError("검색 결과 없음");
       return results;
    }
 ,
