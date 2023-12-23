@@ -160,7 +160,8 @@ const diyRecipeService = {
   },
   //* 사용자의 레시피 목록 조회
   async getDiyRecipeListByUser(userId) {
-
+    const diyRecipes = await DiyRecipe.find({ user: userId }).lean();
+    
   },
 };
 

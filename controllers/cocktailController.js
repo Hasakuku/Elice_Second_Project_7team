@@ -12,7 +12,6 @@ const getCustomCocktail = asyncHandler(async (req, res) => {
 
 //* 칵테일 목록 조회
 const getCocktailList = asyncHandler(async (req, res) => {
-
   const result = await cocktailService.getCocktailList(req.query);
   res.status(200).json(result);
 });
