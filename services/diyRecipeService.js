@@ -4,8 +4,6 @@ const { default: mongoose } = require('mongoose');
 
 const diyRecipeService = {
   //* DIY 레시피 목록 조회
-  // MongoDB 에서 레시피 조회 -> option은 조회할 데이터의 조건,
-  // skip은 건너뛸 데이터의 수, limit은 조회할 데이터의 수, sort는 정렬 방식
   async getDiyRecipeList(query) {
     const { cursorId, sort, cursorValue, perPage, abv, sweet, bitter, sour, base } = query;
     const cursorValues = Number(cursorValue);
@@ -69,12 +67,12 @@ const diyRecipeService = {
       { $limit: perPages || 6 },
     ];
 
-    const cocktails = await DiyRecipe.aggregate(pipelineData);
+    const diyRecipes = await DiyRecipe.aggregate(pipelineData);
     const total = await DiyRecipe.aggregate(pipelineCount);
     let diyRecipeSize;
     if (total.length === 0) diyRecipeSize = 0;
     else diyRecipeSize = total[0].total;
-    const results = { diyRecipeSize, cocktails, };
+    const results = { diyRecipeSize, diyRecipes, };
     return results;
   },
   //* DIY 레시피 상세 조회

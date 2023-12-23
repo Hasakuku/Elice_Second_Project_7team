@@ -42,30 +42,58 @@ const reviewService = {
    }
    ,
    //* 리뷰 삭제(관리자)
-   async deleteReview(id) {
-      const cocktailReview = await CocktailReview.findById(id);
+   async deleteReview(reviewId) {
+      const cocktailReview = await CocktailReview.findOne({ _id: reviewId }).lean();
       if (cocktailReview) {
-         await CocktailReview.deleteOne({ _id: id });
-         const cocktail = await Cocktail.findOne({ reviews: id });
+         await CocktailReview.deleteOne({ _id: reviewId });
+         const cocktail = await Cocktail.findOne({ reviews: reviewId });
          if (cocktail) {
-            cocktail.reviews.pull(id);
+            cocktail.reviews.pull(reviewId);
+
+            const result = await CocktailReview.aggregate([
+               { $match: { cocktail: cocktail._id } },
+               {
+                  $group: {
+                     _id: null,
+                     avgRating: { $avg: "$rating" },
+                     reviewCount: { $sum: 1 }
+                  }
+               }
+            ]);
+
+            cocktail.avgRating = result[0] ? result[0].avgRating : 0;
+            cocktail.reviewCount = result[0] ? result[0].reviewCount : 0;
             await cocktail.save();
+
+            return;
          }
-         return;
       }
-      const diyRecipeReview = await DiyRecipeReview.findById(id);
+      const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId });
       if (diyRecipeReview) {
-         await DiyRecipeReview.deleteOne({ _id: id });
-         const diyRecipe = await DiyRecipe.findOne({ reviews: id });
+         await DiyRecipeReview.deleteOne({ _id: reviewId });
+         const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
          if (diyRecipe) {
-            diyRecipe.reviews.pull(id);
+            diyRecipe.reviews.pull(reviewId);
+            const result = await DiyRecipeReview.aggregate([
+               { $match: { diyRecipe: diyRecipe._id } },
+               {
+                  $group: {
+                     _id: null,
+                     avgRating: { $avg: "$rating" },
+                     reviewCount: { $sum: 1 }
+                  }
+               }
+            ]);
+            console.log(result)
+            diyRecipe.avgRating = result[0] ? result[0].avgRating : 0;
+            diyRecipe.reviewCount = result[0] ? result[0].reviewCount : 0;
             await diyRecipe.save();
+            
          }
          return;
       }
-      throw new NotFoundError('리뷰 없음');
-   }
-   ,
+      if (!cocktailReview || !diyRecipeReview) throw new NotFoundError('리뷰 없음');
+   },
    //* 리뷰 목록 조회
    async getReviewList(id, item, page) {
       const { limit, skip } = setParameter(item, page);
@@ -152,8 +180,7 @@ const reviewService = {
          }
       }
       return { data: results };
-   }
-   ,
+   },
    //* 리뷰 수정
    async updateReview(userId, id, type, data) {
       const { content, images, rating } = data;
@@ -190,22 +217,19 @@ const reviewService = {
       await review.save();
 
       const reviews = await model.find({ [modelName]: itemId });
-
       let avgRating = 0;
       reviews.forEach((review) => {
          avgRating += review.rating;
       });
       avgRating /= reviews.length;
       let reviewCount = reviews.length;
-
-
-      await Cocktail.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
+      if (type === 'cocktails') await Cocktail.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
+      if (type === 'recipes') await DiyRecipe.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
    },
    //* 리뷰 삭제
    async deleteUserReview(userId, reviewId) {
       const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId }).lean();
       if (cocktailReview) {
-
          await CocktailReview.deleteOne({ _id: reviewId });
          const cocktail = await Cocktail.findOne({ reviews: reviewId });
          if (cocktail) {
@@ -234,9 +258,7 @@ const reviewService = {
          const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
          if (diyRecipe) {
             diyRecipe.reviews.pull(reviewId);
-
-            // After deleting the review, use aggregation to calculate the average rating and review count
-            const result = await diyRecipeReview.aggregate([
+            const result = await DiyRecipeReview.aggregate([
                { $match: { diyRecipe: diyRecipe._id } },
                {
                   $group: {
@@ -253,6 +275,7 @@ const reviewService = {
          }
          return;
       }
+      if (!cocktailReview || !diyRecipeReview) throw new NotFoundError('리뷰 없음');
    },
    //* 좋아요 추가
    async addLike(userId, id) {
