@@ -13,7 +13,7 @@ const reviewService = {
       }
       let results = [];
       // type별 검색
-      const types = type ? [type] : ['cocktails', 'recipe'];
+      const types = type ? [type] : ['cocktails', 'recipes'];
       for (let type of types) {
          const Model = type === 'cocktails' ? CocktailReview : DiyRecipeReview;
          let query = userIds.length > 0 ? { user: { $in: userIds } } : {};
