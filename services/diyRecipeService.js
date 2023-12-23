@@ -1,58 +1,79 @@
-const DiyRecipe = require('../models/diyRecipeModel');
-const { NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
-const DiyRecipeReview = require('../models/diyRecipeModel');
+const { NotFoundError, ConflictError, InternalServerError, BadRequestError } = require('../utils/customError');
+const { DiyRecipeReview, DiyRecipe, Base } = require('../models');
+const { default: mongoose } = require('mongoose');
 
 const diyRecipeService = {
-  //* DIY 레시피 조회
-  // MongoDB 에서 레시피 조회 -> option은 조회할 데이터의 조건,
-  // skip은 건너뛸 데이터의 수, limit은 조회할 데이터의 수, sort는 정렬 방식
-  async getDiyRecipeList(option, skip, limit, sort) {
-    const diyRecipes = await DiyRecipe.find(option) //option 조건에 해당하는 모든 레시피 데이터 찾기
-      .skip(skip) //skip 만큼 데이터를 건너뛰고
-      .limit(limit) //limit만큼 데이터만 조회 - 리뷰에서 2개까지인것으로 기억하고 정함.
-      .select('_id name image createdAt updatedAt') //모델에 타임스탬프를 통해서 필드에 추가된 createdAt updatedAt까지 선택
-      .populate({
-        path: 'reviews',
-        select: 'rating -_id',
-      })
-      .lean();
+  //* DIY 레시피 목록 조회
+  async getDiyRecipeList(query) {
+    const { cursorId, sort, cursorValue, perPage, abv, sweet, bitter, sour, base } = query;
+    const cursorValues = Number(cursorValue);
+    const perPages = Number(perPage);
+    const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
+    const ranges = {
+      1: [1, 2],
+      2: [3],
+      3: [4, 5]
+    };
 
-    if (diyRecipes.length === 0)
-      throw new NotFoundError('조건에 맞는 DIY 레시피 X');
-
-    for (let diyRecipe of diyRecipes) {
-      let avgRating =
-        diyRecipe.reviews.reduce((acc, review) => acc + review.rating, 0) /
-        diyRecipe.reviews.length; //reduce 함수를 이용해 모든 리뷰 평점 합 / 리뷰의 총수 = 평균
-      diyRecipe.avgRating = avgRating.toFixed(2); // 그리고 toFixed(2)를 이용해 소수점 2번째 자릿수까지 반올림
-      diyRecipe.reviewCount = diyRecipe.reviews.length;
-    } //리뷰 평점과 리뷰 수 계산
-
-    //레시피 정렬하기 인데.. 혹시 몰라서 일단 코드로 구현
-    let sortedDiyRecipes;
-    switch (sort) {
-      case 'rating':
-        sortedDiyRecipes = diyRecipes.sort((a, b) => b.avgRating - a.avgRating);
-        break;
-      case 'review':
-        sortedDiyRecipes = diyRecipes.sort(
-          (a, b) => b.reviewCount - a.reviewCount,
-        );
-        break;
-      default:
-        sortedDiyRecipes = diyRecipes;
+    const option = {};
+    if (abv) option.abv = { $in: ranges[abv] };
+    if (sweet) option.sweet = { $in: ranges[sweet] };
+    if (bitter) option.bitter = { $in: ranges[bitter] };
+    if (sour) option.sour = { $in: ranges[sour] };
+    let foundBase;
+    if (!base) {
+      foundBase = await Base.find({}).select('_id').lean();
+    } else {
+      foundBase = await Base.find({ name: base }).select('_id').lean();
     }
+    if (foundBase.length === 0) throw new BadRequestError("base 값 오류");
 
-    //정렬된 레시피 목록들 반환
-    const result = sortedDiyRecipes.map((item) => {
-      const { reviews, ...rest } = item;
-      return {
-        ...rest,
-        avgRating: item.avgRating,
-        reviewCount: item.reviewCount,
-      };
-    });
-    return result;
+    // base를 쿼리에 추가
+    option.base = { $in: foundBase.map(b => b._id) };
+
+    let sortObj = { createdAt: -1 };
+    if (sort === 'rating') {
+      sortObj = { avgRating: -1, ...sortObj };
+    } else if (sort === 'review') {
+      sortObj = { reviewCount: -1, ...sortObj };
+    }
+    const matchData = { $and: [option] };
+
+    const addCursorCondition = (key, value) => {
+      const condition1 = { [key]: { $lt: value } };
+      const condition2 = { [key]: value };
+      if (key !== 'createdAt') condition2.createdAt = { $lt: dateFromId };
+      matchData.$and.push({ $or: [condition1, condition2,] });
+    };
+
+    if (cursorId && cursorValues) {
+      matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
+      if (sort === 'review') addCursorCondition('reviewCount', cursorValues);
+      else if (sort === 'rating') addCursorCondition('avgRating', cursorValues);
+      else addCursorCondition('createdAt', dateFromId);
+    } else if (cursorId) {
+      matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
+      addCursorCondition('createdAt', dateFromId);
+    }
+    const pipelineCount = [
+      { $match: option },
+      { $sort: sortObj },
+      { $count: 'total' }
+    ];
+    const pipelineData = [
+      { $match: matchData },
+      { $sort: sortObj },
+      { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+      { $limit: perPages || 6 },
+    ];
+
+    const diyRecipes = await DiyRecipe.aggregate(pipelineData);
+    const total = await DiyRecipe.aggregate(pipelineCount);
+    let diyRecipeSize;
+    if (total.length === 0) diyRecipeSize = 0;
+    else diyRecipeSize = total[0].total;
+    const results = { diyRecipeSize, diyRecipes, };
+    return results;
   },
   //* DIY 레시피 상세 조회
   async getDiyRecipe(id) {
@@ -161,7 +182,7 @@ const diyRecipeService = {
   //* 사용자의 레시피 목록 조회
   async getDiyRecipeListByUser(userId) {
     const diyRecipes = await DiyRecipe.find({ user: userId }).lean();
-    
+
   },
 };
 

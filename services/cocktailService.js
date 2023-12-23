@@ -67,7 +67,7 @@ const cocktailService = {
       });
       return result;
    },
-   //*
+   //*칵테일 목록 조회
    async getCocktailList(query) {
       const { cursorId, sort, cursorValue, perPage, abv, sweet, bitter, sour, base } = query;
       const cursorValues = Number(cursorValue);
@@ -107,14 +107,16 @@ const cocktailService = {
          const condition1 = { [key]: { $lt: value } };
          const condition2 = { [key]: value };
          if (key !== 'createdAt') condition2.createdAt = { $lt: dateFromId };
-         matchData.$and.push({ $or: [condition1, condition2, { _id: { $ne: new mongoose.Types.ObjectId(cursorId) } }] });
+         matchData.$and.push({ $or: [condition1, condition2,] });
       };
 
       if (cursorId && cursorValues) {
+         matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
          if (sort === 'review') addCursorCondition('reviewCount', cursorValues);
          else if (sort === 'rating') addCursorCondition('avgRating', cursorValues);
          else addCursorCondition('createdAt', dateFromId);
       } else if (cursorId) {
+         matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
          addCursorCondition('createdAt', dateFromId);
       }
       const pipelineCount = [
@@ -123,17 +125,18 @@ const cocktailService = {
          { $count: 'total' }
       ];
       const pipelineData = [
+         { $match: matchData },
          { $sort: sortObj },
          { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
          { $limit: perPages || 6 },
       ];
 
-      if (matchData.$and.length === 1) {
-         pipelineData.unshift({ $match: matchData });
-      }
       const cocktails = await Cocktail.aggregate(pipelineData);
       const total = await Cocktail.aggregate(pipelineCount);
-      const results = { cocktails, };
+      let cocktailSize;
+      if(total.length === 0) cocktailSize = 0;
+      else cocktailSize = total[0].total;
+      const results = { cocktailSize,cocktails, };
       return results;
    },
    //* 칵테일 상세 조회

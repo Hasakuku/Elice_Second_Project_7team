@@ -3,8 +3,7 @@ const diyRecipeService = require('../services/diyRecipeService');
 
 // DIY 레시피 목록 조회
 const getDiyRecipeList = asyncHandler(async (req, res) => {
-  const { option, skip, limit, sort } = req.query;
-  const result = await diyRecipeService.getDiyRecipeList(option, skip, limit, sort);
+  const result = await diyRecipeService.getDiyRecipeList(req.query);
   res.status(200).json(result);
 });
 
