@@ -211,7 +211,7 @@ const cocktailService = {
    },
    //* 칵테일 상세 조회
    async getCocktail(id) {
-      const cocktail = await Cocktail.findById(id).populate({ path: 'reviews', options: { limit: 2 } }).lean();
+      const cocktail = await Cocktail.findById(id).populate({ path: 'base', select: 'name' }).populate({ path: 'reviews', options: { limit: 2 } }).lean();
       if (!cocktail) throw new NotFoundError('칵테일 없음');
       cocktail.reviews = cocktail.reviews.map(review => ({
          ...review,
@@ -231,20 +231,13 @@ const cocktailService = {
    },
    //* 칵테일 수정
    async updateCocktail(id, data) {
-<<<<<<< HEAD
       const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
-=======
->>>>>>> ef39b77d0f4313c869fb459ee3bfa709b9deac2d
-      const {payload, ...rest} = data;
+      const { payload, ...rest } = data;
       const foundCocktail = await Cocktail.findById(id).lean();
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
       const dataKeys = Object.keys(rest);
-<<<<<<< HEAD
       const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).some(value => value === true);
-=======
-      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
->>>>>>> ef39b77d0f4313c869fb459ee3bfa709b9deac2d
 
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
