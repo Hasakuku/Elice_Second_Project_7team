@@ -1,44 +1,47 @@
+const asyncHandler = require('express-async-handler');
 const diyRecipeService = require('../services/diyRecipeService');
 
-const createDiyRecipe = async (req, res) => {
-  try {
-    const savedDiyRecipe = await diyRecipeService.createDiyRecipe(req.body);
-    res.status(201).json(savedDiyRecipe);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+// DIY 레시피 목록 조회
+const getDiyRecipeList = asyncHandler(async (req, res) => {
+  const { option, skip, limit, sort } = req.query;
+  const result = await diyRecipeService.getDiyRecipeList(option, skip, limit, sort);
+  res.status(200).json(result);
+});
 
-const updateDiyRecipe = async (req, res) => {
-  try {
-    const updatedDiyRecipe = await diyRecipeService.updateDiyRecipe(
-      req.params.id,
-      req.body,
-    );
-    if (!updatedDiyRecipe) {
-      return res.status(404).json({ message: '레시피를 찾을 수 없습니다!' });
-    }
-    res.status(200).json(updatedDiyRecipe);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+// DIY 레시피 상세 조회
+const getDiyRecipe = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const result = await diyRecipeService.getDiyRecipe(id);
+  res.status(200).json(result);
+});
 
-const deleteDiyRecipe = async (req, res) => {
-  try {
-    const deletedDiyRecipe = await diyRecipeService.deleteDiyRecipe(
-      req.params.id,
-    );
-    if (!deletedDiyRecipe) {
-      return res.status(404).json({ message: '레시피를 찾을 수 없습니다!' });
-    }
-    res.status(204).json({ message: '해당 DIY 레시피를 삭제했습니다.' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+// DIY 레시피 등록
+const createDiyRecipe = asyncHandler(async (req, res) => {
+  //유저 정보 
+  const userId = req.body.payload._id;
+  const data = req.body;
+  await diyRecipeService.createDiyRecipe(data,userId);
+  res.status(201).json({ message: '레시피 등록이 완료되었습니다!' });
+});
+
+// DIY 레시피 수정
+const updateDiyRecipe = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const data = req.body;
+  await diyRecipeService.updateDiyRecipe(id, data);
+  res.status(200).json({ message: '레시피 수정이 완료되었습니다!' });
+});
+
+// DIY 레시피 삭제
+const deleteDiyRecipe = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  await diyRecipeService.deleteDiyRecipe(id);
+  res.status(204).json({ message: '레시피 삭제가 완료되었습니다!' });
+});
 
 module.exports = {
+  getDiyRecipeList,
+  getDiyRecipe,
   createDiyRecipe,
   updateDiyRecipe,
   deleteDiyRecipe,
