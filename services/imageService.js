@@ -4,7 +4,7 @@ const mime = require('mime-types');
 
 //* 이미지 업로드
 const uploadImage = async (file) => {
-   const newFileName = Date.now() + path.extname(file.originalname);
+   const newFileName = 10000 * Math.random().toFixed(4) + Date.now() + path.extname(file.originalname);
    const newFilePath = path.join('images/', newFileName);
    await fs.rename(file.path, newFilePath);
    return { originalName: newFileName };
