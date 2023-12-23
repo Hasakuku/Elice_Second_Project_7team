@@ -22,10 +22,11 @@ const createBar = asyncHandler(async (req, res) => {
 });
 //* 바 수정
 const updateBar = asyncHandler(async (req, res) => {
+   const newImageNames = req.body.newImageNames;
    const barId = req.params.id;
    const data = req.body;
    await barService.updateBar(barId, data);
-   res.status(200).json({ message: 'bar 수정 성공' });
+   res.status(200).json({ newImageNames, message: 'bar 수정 성공' });
 });
 //* 바 삭제
 const deleteBar = asyncHandler(async (req, res) => {
