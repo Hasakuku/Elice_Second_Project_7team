@@ -3,19 +3,21 @@ const baseService = require('../services/baseService');
 const { BadRequestError } = require('../utils/customError');
 //* 베이스 목록 조회
 const getBaseList = asyncHandler(async (req, res) => {
-   const { item, page } = req.query;
-   const result = await baseService.getBaseList(item, page);
+   const { perPage, page } = req.query;
+   const result = await baseService.getBaseList({ perPage, page });
    res.status(200).json(result);
 });
 //* 베이스 등록
 const createBase = asyncHandler(async (req, res) => {
-   await baseService.createBase(req.body);
+   const { name, newImageNames } = req.body;
+   await baseService.createBase({ name, newImageNames });
    res.status(201).json({ message: 'Base 등록 성공' });
 });
 //* 베이스 수정
 const updateBase = asyncHandler(async (req, res) => {
    const barId = req.params.id;
-   await baseService.updateBase(barId, req.body);
+   const { name, newImageNames } = req.body;
+   await baseService.updateBase(barId, { name, newImageNames });
    res.status(200).json({ message: 'Base 수정 성공' });
 });
 //* 베이스 삭제

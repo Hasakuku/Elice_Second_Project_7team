@@ -13,10 +13,10 @@ router.post('/wishlist/:id', checkUser, userController.createWish);
 
 router.put('/custom', checkUser, userController.updateUserCustom);
 router.put('/mypage', checkUser, userController.updateUser);
-router.put('/permissions/:id', checkUser, checkAdmin, userController.updateUserPermission);
+router.put('/:id/permissions', checkUser, checkAdmin, userController.updateUserPermission);
 
 router.delete('/wishlist/:id', checkUser, userController.deleteWish);
-router.delete('/delete', checkUser, checkAdmin, userController.deleteUser);
+router.delete('/:id/delete', checkUser, checkAdmin, userController.deleteUser);
 router.delete('/logout', checkUser, userController.logout);
 router.delete('/withdrawal', checkUser, userController.withdrawal);
 
