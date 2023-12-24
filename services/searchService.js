@@ -60,10 +60,10 @@ const searchService = {
       const pipelineData = [
          { $match: matchData },
          { $sort: sortObj },
-         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1 } },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
 
       ];
-      
+
       if (page) {
          pipelineData.push({ $skip: skip });
       }

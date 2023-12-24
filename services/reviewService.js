@@ -4,8 +4,8 @@ const setParameter = require('../utils/setParameter');
 
 const reviewService = {
    //* 리뷰 검색(관리자)
-   async getReviewListByKeyword(keyword, type, item, page) {
-      const { limit, skip, types } = setParameter(item, page, type);
+   async getReviewListByKeyword(keyword, type, perPage, page) {
+      const { limit, skip, types } = setParameter(perPage, page, type);
       let query = {};
       let userIds = [];
       if (keyword) {
@@ -95,8 +95,8 @@ const reviewService = {
       if (!cocktailReview || !diyRecipeReview) throw new NotFoundError('리뷰 없음');
    },
    //* 리뷰 목록 조회
-   async getReviewList(id, item, page) {
-      const { limit, skip } = setParameter(item, page);
+   async getReviewList(id, perPage, page) {
+      const { limit, skip } = setParameter(perPage, page);
       let results = [];
       const models = [CocktailReview, DiyRecipeReview];
       const modelNames = ['cocktail', 'diyRecipe'];
@@ -143,8 +143,8 @@ const reviewService = {
       throw new NotFoundError('리뷰 없음');
    },
    //* 유저 리뷰 목록 조회
-   async getUserReviewList(userId, type, item, page) {
-      const { limit, skip, types } = setParameter(item, page, type);
+   async getUserReviewList(userId, type, perPage, page) {
+      const { limit, skip, types } = setParameter(perPage, page, type);
       let results = [];
       let totalItems = 0;
       for (let type of types) {
