@@ -120,10 +120,9 @@ const diyRecipeService = {
     const foundDiyRecipe = await DiyRecipe.findById(id).lean();
     if (!foundDiyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
 
-    const dataKeys = Object.keys(data);
-    const isSame = dataKeys
-      .map((key) => foundDiyRecipe[key] === data[key])
-      .every((value) => value === true);
+    const {payload , ...rest} = data
+    const dataKeys = Object.keys(rest);
+    const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
 
     if (isSame) {
       throw new ConflictError('같은 내용 수정');
