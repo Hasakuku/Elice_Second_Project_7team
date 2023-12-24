@@ -5,7 +5,8 @@ const setParameter = require('../utils/setParameter');
 
 const searchService = {
    async searchByKeyword(query) {
-      const { keyword, cursorId, sort, cursorValue, perPage, type } = query;
+      const { keyword, cursorId, sort, cursorValue, page, perPage, type } = query;
+      const { skip, limit } = setParameter(perPage, page);
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
       const cursorValues = Number(cursorValue);
@@ -60,8 +61,13 @@ const searchService = {
          { $match: matchData },
          { $sort: sortObj },
          { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1 } },
-         { $limit: perPages || 6 },
+
       ];
+      
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit });
 
       const runPipeline = async (Model) => {
          const total = await Model.aggregate(pipelineCount);
@@ -89,9 +95,7 @@ const searchService = {
             results[`${item}s`] = data;
          }
       }
-
       if (!type) results.total = results.cocktailSize + results.diyRecipeSize;
-
       return results;
    },
 };
