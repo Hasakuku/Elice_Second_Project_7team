@@ -24,11 +24,12 @@ const barService = {
    },
    //* 바 등록
    async createBar(data) {
-      let { name, address, time, x, y, tel } = data;
+      const { name, address, time, x, y, tel } = data;
       const foundBar = await Bar.findOne({ address: address }).lean();
       if (foundBar) throw new ConflictError('이미 등록된 주소');
       let image;
-      if (data.newImageNames) { image = data.newImageNames[0].imageName; }
+
+      if (data.newImageNames && Array.isArray(data.newImageNames)) { image = data.newImageNames[0].imageName; }
       const newBar = new Bar({ name, image, address, x, y, time, tel });
       const result = await newBar.save();
       if (!result) throw new InternalServerError('등록 안됨');
@@ -46,7 +47,7 @@ const barService = {
          });
          image = data.newImageNames[0].imageName;
       }
-      
+
       const dataKeys = Object.keys(data);
       const isSame = dataKeys.map(key => foundBar[key] === data[key]).every(value => value === true);
 

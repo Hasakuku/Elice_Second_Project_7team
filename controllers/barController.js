@@ -3,8 +3,8 @@ const barService = require('../services/barService');
 const { BadRequestError } = require('../utils/customError');
 //* 바 목록 조회
 const getBarList = asyncHandler(async (req, res) => {
-   const query = req.query;
-   const result = await barService.getBarList(query);
+   const { x1, x2, y1, y2 } = req.query;
+   const result = await barService.getBarList({ x1, x2, y1, y2 });
    res.status(200).json(result);
 });
 //* 바 상세 조회
@@ -15,15 +15,15 @@ const getBar = asyncHandler(async (req, res) => {
 });
 //* 바 등록
 const createBar = asyncHandler(async (req, res) => {
-   const data = req.body;
-   await barService.createBar(data);
+   const { name, address, time, x, y, tel, newImageNames } = req.body;
+   await barService.createBar({ name, address, time, x, y, tel, newImageNames });
    res.status(201).json({ message: 'bar 등록 성공' });
 });
 //* 바 수정
 const updateBar = asyncHandler(async (req, res) => {
    const barId = req.params.id;
-   const data = req.body;
-   await barService.updateBar(barId, data);
+   const { name, address, operationTime, map, newImageNames } = req.body;
+   await barService.updateBar(barId, { name, address, operationTime, map, newImageNames });
    res.status(200).json({ message: 'bar 수정 성공' });
 });
 //* 바 삭제

@@ -2,11 +2,13 @@ const { Base, } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
 const fs = require('fs');
 const path = require('path');
+const setParameter = require('../utils/setParameter');
 
 const baseService = {
    //* 베이스 목록 조회
-   async getBaseList() {
-      const baseList = await Base.find({}).select('_id name image').lean();
+   async getBaseList({ perPage, page }) {
+      const { skip, limit } = setParameter(perPage, page);
+      const baseList = await Base.find({}).select('_id name image').skip(skip).limit(limit).lean();
       return baseList;
    },
    //* 베이스 등록
@@ -15,7 +17,7 @@ const baseService = {
       const foundBase = await Base.findOne({ name: name }).lean();
       if (foundBase) throw new ConflictError('이미 등록된 Base');
       let image;
-      if (data.newImageNames) { image = data.newImageNames[0].imageName; }
+      if (data.newImageNames && Array.isArray(data.newImageNames)) { image = data.newImageNames[0].imageName; }
       const newBase = new Base({ name, image, });
       const result = await newBase.save();
       if (!result) throw new InternalServerError('등록 안됨');
@@ -25,7 +27,6 @@ const baseService = {
       const { name, } = data;
       const foundBase = await Base.findById(baseId).lean();
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
-
 
       const dataKeys = Object.keys(data);
       const isSame = dataKeys.map(key => foundBase[key] === data[key]).some(value => value === true);
