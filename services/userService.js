@@ -1,4 +1,4 @@
-const { User, CocktailReview, DiyRecipeReview, DiyRecipe, Cocktail } = require('../models');
+const { User, CocktailReview, DiyRecipeReview, DiyRecipe, Cocktail, Base } = require('../models');
 const { BadRequestError, ConflictError, NotFoundError, InternalServerError, } = require('../utils/customError');
 const mongoose = require('mongoose');
 const setToken = require('../utils/setToken');
@@ -142,7 +142,7 @@ const userService = {
       const limit = item === undefined || item === null ? 10 : item;
       const skip = page ? (page - 1) * limit : 0;
       const userList = await User.find({}).select('_id email isWrite createAt updatedAt').skip(skip).limit(limit).lean();
-      
+
       return userList;
    },
    //* 사용자 삭제(관리자)
@@ -165,6 +165,23 @@ const userService = {
       if (!user) throw new NotFoundError('없어여');
       const result = setToken(user);
       return result;
+   },
+   //* 사용자 커스텀 설정
+   async updateUserCustom(userId, query) {
+      const { base, abv, taste, level } = query;
+      const user = await User.findById(userId);
+      if (!user) throw new NotFoundError('유저 정보 없음');
+      if (!abv || !taste || !level) throw new BadRequestError('도수,맛,단계를 입력하세요');
+      if (!['sweet', 'sour', 'bitter'].includes(taste) || !['1', '2', '3'].includes(level)) {
+         throw new BadRequestError('올바른 정보로 요청 해주세요');
+      }
+      if (base && await Base.find({ name: base }).select('_id').lean()) throw new NotFoundError('Base 값 오류');
+      user.custom = {
+         base: base || undefined,
+         abv: abv,
+         [taste]: level
+      };
+      await user.save();
    },
 };
 

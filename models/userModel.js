@@ -7,7 +7,11 @@ const UserSchema = new Schema({
    email: { type: String, required: true, unique: true },
    nickname: { type: String, },
    custom: {
-      abv: Number, sweet: Number, sour: Number, bitter: Number,
+      base: { type: String, },
+      abv: { type: Number, },
+      sweet: { type: Number, },
+      sour: { type: Number, },
+      bitter: { type: Number, },
    },
    wishes: {
       cocktails: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Cocktail', }],

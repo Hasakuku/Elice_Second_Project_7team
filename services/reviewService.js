@@ -84,7 +84,6 @@ const reviewService = {
                   }
                }
             ]);
-            console.log(result)
             diyRecipe.avgRating = result[0] ? result[0].avgRating : 0;
             diyRecipe.reviewCount = result[0] ? result[0].reviewCount : 0;
             await diyRecipe.save();
