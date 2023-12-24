@@ -2,6 +2,7 @@ const { default: mongoose } = require('mongoose');
 const { Base, Cocktail, CocktailReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
 const setPrameter = require('../utils/setParameter');
+const setParameter = require('../utils/setParameter');
 
 const cocktailService = {
    //* 맞춤 추천 칵테일
@@ -69,9 +70,9 @@ const cocktailService = {
    },
    //*칵테일 목록 조회
    async getCocktailList(query) {
-      const { cursorId, sort, cursorValue, perPage, abv, sweet, bitter, sour, base } = query;
+      const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = query;
+      const { limit, skip } = setParameter(perPage, page);
       const cursorValues = Number(cursorValue);
-      const perPages = Number(perPage);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
       const ranges = {
          1: [1, 2],
@@ -84,6 +85,7 @@ const cocktailService = {
       if (sweet) option.sweet = { $in: ranges[sweet] };
       if (bitter) option.bitter = { $in: ranges[bitter] };
       if (sour) option.sour = { $in: ranges[sour] };
+
       let foundBase;
       if (!base) {
          foundBase = await Base.find({}).select('_id').lean();
@@ -128,15 +130,20 @@ const cocktailService = {
          { $match: matchData },
          { $sort: sortObj },
          { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
-         { $limit: perPages || 6 },
       ];
+
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit });
 
       const cocktails = await Cocktail.aggregate(pipelineData);
       const total = await Cocktail.aggregate(pipelineCount);
+      
       let cocktailSize;
-      if(total.length === 0) cocktailSize = 0;
+      if (total.length === 0) cocktailSize = 0;
       else cocktailSize = total[0].total;
-      const results = { cocktailSize,cocktails, };
+      const results = { cocktailSize, cocktails, };
       return results;
    },
    //* 칵테일 상세 조회

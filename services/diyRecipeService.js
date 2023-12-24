@@ -1,13 +1,14 @@
 const { NotFoundError, ConflictError, InternalServerError, BadRequestError } = require('../utils/customError');
 const { DiyRecipeReview, DiyRecipe, Base } = require('../models');
 const { default: mongoose } = require('mongoose');
+const setParameter = require('../utils/setParameter');
 
 const diyRecipeService = {
   //* DIY 레시피 목록 조회
   async getDiyRecipeList(query) {
-    const { cursorId, sort, cursorValue, perPage, abv, sweet, bitter, sour, base } = query;
+    const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = query;
+    const { limit, skip } = setParameter(perPage, page);
     const cursorValues = Number(cursorValue);
-    const perPages = Number(perPage);
     const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
     const ranges = {
       1: [1, 2],
@@ -64,9 +65,12 @@ const diyRecipeService = {
       { $match: matchData },
       { $sort: sortObj },
       { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
-      { $limit: perPages || 6 },
     ];
 
+    if (page) {
+      pipelineData.push({ $skip: skip });
+    }
+    pipelineData.push({ $limit: limit });
     const diyRecipes = await DiyRecipe.aggregate(pipelineData);
     const total = await DiyRecipe.aggregate(pipelineCount);
     let diyRecipeSize;
