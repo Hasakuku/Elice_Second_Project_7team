@@ -1,6 +1,13 @@
 const asyncHandler = require('express-async-handler');
 const userService = require('../services/userService');
 const { BadRequestError, NotFoundError } = require('../utils/customError');
+//* 사용자 커스텀 설정
+const updateUserCustom = asyncHandler(async (req, res) => {
+   const userId = req.body.payload._id;
+   const query = req.query;
+   await userService.updateUserCustom(userId, query);
+   res.status(200).json({ message: '커스텀 설정 성공' });
+});
 //* 사용자 정보 조회
 const getUser = asyncHandler(async (req, res) => {
    const userId = req.body.payload._id;
@@ -73,4 +80,4 @@ const login = asyncHandler(async (req, res) => {
    res.cookie('jwtToken', result, { httpOnly: true });
    res.status(200).json({ message: '로그인 성공' });
 });
-module.exports = { getUser, logout, updateUser, withdrawal, getWishListByType, createWish, deleteWish, updateUserPermission, getUserList, deleteUser, login };
+module.exports = { getUser, logout, updateUser, withdrawal, getWishListByType, createWish, deleteWish, updateUserPermission, getUserList, deleteUser, login, updateUserCustom };

@@ -11,6 +11,7 @@ router.get('/', checkUser, checkAdmin, userController.getUserList);
 
 router.post('/wishlist/:id', checkUser, userController.createWish);
 
+router.put('/custom', checkUser, userController.updateUserCustom);
 router.put('/mypage', checkUser, userController.updateUser);
 router.put('/permissions/:id', checkUser, checkAdmin, userController.updateUserPermission);
 

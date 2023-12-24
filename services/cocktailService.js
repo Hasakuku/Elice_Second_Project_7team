@@ -139,7 +139,7 @@ const cocktailService = {
 
       const cocktails = await Cocktail.aggregate(pipelineData);
       const total = await Cocktail.aggregate(pipelineCount);
-      
+
       let cocktailSize;
       if (total.length === 0) cocktailSize = 0;
       else cocktailSize = total[0].total;
