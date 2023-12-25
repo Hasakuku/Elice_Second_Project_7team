@@ -5,7 +5,8 @@ const setParameter = require('../utils/setParameter');
 
 const reviewService = {
    //* 리뷰 검색(관리자)
-   async getReviewListByKeyword(keyword, type, perPage, page) {
+   async getReviewListByKeyword(querys) {
+      const { keyword, type, perPage, page } = querys;
       const { limit, skip, types } = setParameter(perPage, page, type);
       let query = {};
       let userIds = [];
