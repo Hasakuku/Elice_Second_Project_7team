@@ -17,7 +17,6 @@ const diyRecipeService = {
       2: [3],
       3: [4, 5]
     };
-
     const option = {};
     if (abv) option.abv = { $in: ranges[abv] };
     if (sweet) option.sweet = { $in: ranges[sweet] };
@@ -96,14 +95,21 @@ const diyRecipeService = {
   //* DIY 레시피 등록
   async createDiyRecipe(data, user) {
     const {
-      name, base, newImageNames, description, ingredient, tags, recipes, abv, sweet, bitter, sour,
+      name, base, newImageNames, recipeImageNames, description, ingredient, tags, recipes, abv, sweet, bitter, sour,
     } = data; //피드백 받았던대로 따로 가져옴
     const foundDiyRecipe = await DiyRecipe.findOne({ name: name }).lean();
     if (foundDiyRecipe) throw new ConflictError('이미 등록된 DIY 레시피 입니다.');
+    //이미지
     let image;
     if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
       image = newImageNames[0].imageName;
     }
+    if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
+      for (let i = 0; i < recipes.length; i++) {
+        recipes[i].image = recipeImageNames[i].imageName;
+      }
+    }
+
     const newDiyRecipe = new DiyRecipe({
       name,
       user,
@@ -123,8 +129,8 @@ const diyRecipeService = {
   },
   //* DIY 레시피 수정
   async updateDiyRecipe(id, data) {
-    const { newImageNames, ...rest } = data;
-    const { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, } = rest;
+    const { newImageNames, recipeImageNames, ...rest } = data;
+    let { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, } = rest;
     const foundDiyRecipe = await DiyRecipe.findById(id).lean();
     if (!foundDiyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
 
@@ -136,19 +142,31 @@ const diyRecipeService = {
     if (isSame) {
       throw new ConflictError('같은 내용 수정');
     }
+    //이미지
     let image;
-    if (newImageNames.length !== 0) {
+    if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
       const imagePath = path.join(__dirname, '../images', foundDiyRecipe.image);
       await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
       image = newImageNames[0].imageName;
+    }
+    if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
+      for (let i = 0; i < recipeImageNames.length; i++) {
+        if (foundDiyRecipe.recipes && foundDiyRecipe.recipes[i] && foundDiyRecipe.recipes[i].image) {
+          const imagePath = path.join(__dirname, '../images', foundDiyRecipe.recipes[i].image);
+          await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+        }
+        if (recipes && recipes[i]) {
+          recipes[i].image = recipeImageNames[i].imageName;
+        } else {
+          recipes = [{ image: recipeImageNames[i].imageName }];
+        }
+      }
     }
     const updateDiyRecipe = await DiyRecipe.updateOne(
       { _id: id },
       { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour, },
       { runValidators: true }, //벨리데이터 추가!
     );
-    if (updateDiyRecipe.modifiedCount === 0)
-      throw new InternalServerError('DIY 레시피 수정을 실패했습니다.');
   },
   //* DIY 레시피 삭제
   async deleteDiyRecipe(id) {
@@ -158,6 +176,12 @@ const diyRecipeService = {
     const imagePath = path.join(__dirname, '../images', diyRecipe.image);
     await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
 
+    for (let i = 0; i < diyRecipe.recipes.length; i++) {
+      if (diyRecipe.recipes && diyRecipe.recipes[i] && diyRecipe.recipes[i].image) {
+         const imagePath = path.join(__dirname, '../images', diyRecipe.recipes[i].image);
+         await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+      }
+   }
     await DiyRecipeReview.deleteMany({ diyRecipe: id });
     const result = await DiyRecipe.deleteOne({ _id: id });
     if (result.deletedCount === 0)
