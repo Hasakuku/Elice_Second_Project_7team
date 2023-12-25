@@ -5,43 +5,33 @@ const setParameter = require('../utils/setParameter');
 
 const reviewService = {
    //* 리뷰 검색(관리자)
-   async getReviewListByKeyword(keyword, type, perPage, page) {
+   async getReviewListByKeyword(querys) {
+      const { keyword, type, perPage, page } = querys;
       const { limit, skip, types } = setParameter(perPage, page, type);
-      let query = {};
       let userIds = [];
       if (keyword) {
          const users = await User.find({ email: { $regex: keyword, $options: 'i' } });
          userIds = users.map(user => user._id);
-         if (userIds.length === 0) throw new NotFoundError('일치하는 유저 없음');
-         const query = userIds.length > 0 ? { user: { $in: userIds } } : {};
       }
       let results = [];
       // type별 검색
       for (let type of types) {
          const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
-         const query = userIds.length > 0 ? { user: { $in: userIds } } : {};
-         const reviews = await Model.find(query)
-            .skip(skip)
-            .limit(limit)
-            .populate({ path: 'user', select: 'email' })
-            .populate({ path: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', select: 'name' })
-            .select('_id user cocktail diyRecipe createdAt')
-            .lean();
-
-         for (let review of reviews) {
-            results.push({
-               _id: review._id,
-               email: review.user.email,
-               type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe',
-               name: review[type === 'CocktailReview' ? 'cocktail' : 'diyRecipe'].name,
-               createdAt: review.createdAt
-            });
-         }
+         const pipeline = [
+            { $match: userIds.length > 0 ? { user: { $in: userIds } } : {} },
+            { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
+            { $unwind: '$user' },
+            { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyrecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe' } },
+            { $unwind: type === 'CocktailReview' ? '$cocktail' : '$diyRecipe' },
+            { $project: { _id: 1, email: '$user.email', type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: type === 'CocktailReview' ? '$cocktail.name' : '$diyRecipe.name', createdAt: 1 } },
+         ];
+         const reviews = await Model.aggregate(pipeline);
+         results.push(...reviews);
       }
-      // if (!types.length < 3 && results.length === 0) throw new NotFoundError("검색 결과 없음");
-      return results;
-   }
-   ,
+      results.sort((a, b) => b.createdAt - a.createdAt);
+      return { total: results.length, reviews: results.slice(skip, skip + limit) };
+   },
+
    //* 리뷰 삭제(관리자)
    async deleteReview(reviewId) {
       const cocktailReview = await CocktailReview.findOne({ _id: reviewId }).lean();
@@ -148,60 +138,60 @@ const reviewService = {
       const { limit, skip, types } = setParameter(perPage, page, type);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
       let results = {};
-  
+
       for (let type of types) {
-          const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
-          let matchData = {
-              $and: [
-                  { user: userId },
-                  { _id: { $ne: new mongoose.Types.ObjectId(cursorId) } }
-              ],
-          };
-  
-          if (cursorId) {
-              matchData.$and.push({
-                  $or: [
-                      { createdAt: { $lt: dateFromId } },
-                      { createdAt: dateFromId, _id: { $lt: cursorId } }
-                  ]
-              });
-          }
-  
-          const pipelineData = [
-              { $match: matchData },
-              { $sort: { createdAt: -1 } },
-              { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyRecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
-              { $unwind: '$item' },
-              { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1 } },
-              { $skip: skip },
-              { $limit: limit },
-          ];
-  
-          const countData = { user: userId };
-  
-          const runPipeline = async () => {
-              const data = await Model.aggregate(pipelineData);
-              const size = await Model.countDocuments(countData);
-              return { size, data };
-          };
-  
-          const { size, data } = await runPipeline();
-          results[type + 'Size'] = size;
+         const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
+         let matchData = {
+            $and: [
+               { user: userId },
+               { _id: { $ne: new mongoose.Types.ObjectId(cursorId) } }
+            ],
+         };
 
-          const groupedData = data.reduce((acc, review) => {
-              const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
-              if (!acc[monthYear]) {
-                  acc[monthYear] = { date: monthYear, list: [] };
-              }
-              acc[monthYear].list.push(review);
-              return acc;
-          }, {});
+         if (cursorId) {
+            matchData.$and.push({
+               $or: [
+                  { createdAt: { $lt: dateFromId } },
+                  { createdAt: dateFromId, _id: { $lt: cursorId } }
+               ]
+            });
+         }
 
-          results[type + 's'] = Object.values(groupedData);
+         const pipelineData = [
+            { $match: matchData },
+            { $sort: { createdAt: -1 } },
+            { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyRecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
+            { $unwind: '$item' },
+            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1 } },
+            { $skip: skip },
+            { $limit: limit },
+         ];
+
+         const countData = { user: userId };
+
+         const runPipeline = async () => {
+            const data = await Model.aggregate(pipelineData);
+            const size = await Model.countDocuments(countData);
+            return { size, data };
+         };
+
+         const { size, data } = await runPipeline();
+         results[type + 'Size'] = size;
+
+         const groupedData = data.reduce((acc, review) => {
+            const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
+            if (!acc[monthYear]) {
+               acc[monthYear] = { date: monthYear, list: [] };
+            }
+            acc[monthYear].list.push(review);
+            return acc;
+         }, {});
+
+         results[type + 's'] = Object.values(groupedData);
       }
-  
+
       return results;
-  },
+   },
    //* 리뷰 수정
    async updateReview(userId, id, type, data) {
       const { content, images, rating } = data;

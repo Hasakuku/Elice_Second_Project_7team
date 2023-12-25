@@ -3,8 +3,8 @@ const reviewService = require('../services/reviewService');
 
 //* 리뷰 검색(관리자)
 const getReviewListByKeyword = asyncHandler(async (req, res) => {
-   const { keyword, type, item, page } = req.query;
-   const result = await reviewService.getReviewListByKeyword(keyword, type, item, page);
+   const { keyword, type, perPage, page } = req.query;
+   const result = await reviewService.getReviewListByKeyword({ keyword, type, perPage, page });
    res.status(200).json(result);
 });
 //* 리뷰 삭제(관리자)
