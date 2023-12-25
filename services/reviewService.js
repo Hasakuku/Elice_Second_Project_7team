@@ -198,15 +198,23 @@ const reviewService = {
    async updateReview(userId, id, type, data) {
       const { content, rating, newImageNames } = data;
 
-      let images;
-      if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
-         images = newImageNames;
-      }
       const models = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview
       };
       const model = models[type];
+      const foundReview = await model.findOne({ _id: id, user: userId }).lean();
+      let images;
+      if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
+         for (let i = 0; i < newImageNames.length; i++) {
+            if (foundReview.images && foundReview.images[i]) {
+               const imagePath = path.join(__dirname, '../images', foundReview.images[i]);
+               await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+            }
+         }
+         images = newImageNames.map(image => image.imageName);
+      }
+
       if (!model) throw new BadRequestError('타입 오류');
       const updateItem = await model.updateOne(
          { user: userId, _id: id },
@@ -226,8 +234,9 @@ const reviewService = {
       const model = models[type];
       //이미지
       let images;
+
       if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
-         images = newImageNames;
+         images = newImageNames.map(image => image.imageName);
       }
 
       if (!model) throw new BadRequestError('타입 오류');
