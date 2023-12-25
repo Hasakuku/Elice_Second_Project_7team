@@ -16,9 +16,8 @@ const deleteReview = asyncHandler(async (req, res) => {
 //* 유저 리뷰 목록 조회
 const getUserReviewList = asyncHandler(async (req, res) => {
    const userId = req.user._id;
-   const { type, item, page } = req.query;
-   const result = await reviewService.getUserReviewList(userId, type, item, page);
-   // if(result.data.length === 0) res.status(204).json('');
+   const { cursorId, type, perPage, page } = req.query;
+   const result = await reviewService.getUserReviewList(userId, { cursorId, type, perPage, page });
    res.status(200).json(result);
 });
 //* 리뷰 목록 조회
