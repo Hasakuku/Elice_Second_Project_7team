@@ -67,9 +67,11 @@ const barService = {
       if (!foundBar) throw new NotFoundError('바 정보 없음');
       // 이미지 파일 삭제
       const imagePath = path.join(__dirname, '../images', foundBar.image);
-      fs.unlink(imagePath, (err) => {
-         if (err) throw new InternalServerError('이미지 삭제 실패');
-      });
+      // await fs.unlink(imagePath, (err) => {
+      //    if (err) throw new InternalServerError('이미지 삭제 실패');
+      // });
+      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+
 
       const result = await Bar.deleteOne({ _id: barId });
       if (result.deletedCount === 0) throw new InternalServerError("바 삭제 실패");
