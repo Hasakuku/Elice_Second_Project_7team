@@ -1,7 +1,9 @@
 const { default: mongoose } = require('mongoose');
 const { User, Cocktail, DiyRecipe, CocktailReview, DiyRecipeReview } = require('../models');
-const { BadRequestError, NotFoundError, ConflictError } = require('../utils/customError');
+const { BadRequestError, NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
+const fs = require('fs').promises;
+const path = require('path');
 
 const reviewService = {
    //* 리뷰 검색(관리자)
@@ -194,7 +196,12 @@ const reviewService = {
    },
    //* 리뷰 수정
    async updateReview(userId, id, type, data) {
-      const { content, images, rating } = data;
+      const { content, rating, newImageNames } = data;
+
+      let images;
+      if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
+         images = newImageNames;
+      }
       const models = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview
@@ -207,16 +214,21 @@ const reviewService = {
          { runValidators: true });
       if (updateItem.matchedCount === 0) throw new NotFoundError('해당 리뷰 없음');
       if (updateItem.modifiedCount === 0) throw new ConflictError('수정한 데이터 없음');
-   }
-   ,
+   },
+
    //* 리뷰 등록
    async createReview(userId, itemId, type, data) {
-      const { content, images, rating } = data;
+      const { content, rating, newImageNames } = data;
       const models = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview
       };
       const model = models[type];
+      //이미지
+      let images;
+      if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
+         images = newImageNames;
+      }
 
       if (!model) throw new BadRequestError('타입 오류');
       const modelName = type === 'cocktails' ? 'cocktail' : 'diyRecipe';
@@ -241,6 +253,10 @@ const reviewService = {
    async deleteUserReview(userId, reviewId) {
       const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId }).lean();
       if (cocktailReview) {
+         for (let image of cocktailReview.images) {
+            const imagePath = path.join(__dirname, '../images', image);
+            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+         }
          await CocktailReview.deleteOne({ _id: reviewId });
          const cocktail = await Cocktail.findOne({ reviews: reviewId });
          if (cocktail) {
@@ -265,6 +281,10 @@ const reviewService = {
       }
       const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: userId });
       if (diyRecipeReview) {
+         for (let image of diyRecipeReview.images) {
+            const imagePath = path.join(__dirname, '../images', image);
+            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+         }
          await DiyRecipeReview.deleteOne({ _id: reviewId });
          const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
          if (diyRecipe) {
@@ -302,7 +322,7 @@ const reviewService = {
       else if (diyRecipeReview) {
          const userLiked = diyRecipeReview.likes.map(String).includes(userId.toString());
          if (userLiked) throw new ConflictError('이미 좋아요를 누름');
-         return await DiyRecipeReview.updateOne(id, { $push: { likes: userId } }, { runValidators: true });
+         return await DiyRecipeReview.updateOne({ _id: id }, { $push: { likes: userId } }, { runValidators: true });
       }
    },
    //* 좋아요 삭제
@@ -310,12 +330,15 @@ const reviewService = {
       const cocktailReview = await CocktailReview.findById(id).lean();
       const diyRecipeReview = await DiyRecipeReview.findById(id).lean();
       if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('일치 데이터 없음');
-
-      if (!cocktailReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
-      else if (cocktailReview.likes.includes(userId)) return await CocktailReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
-
-      if (!diyRecipeReview.likes.includes(userId)) throw new ConflictError('이미 좋아요를 누름');
-      else if (diyRecipeReview.likes.includes(userId)) return await DiyRecipeReview.UpdateOne(id, { $push: { likes: userId } }, { runValidators: true });
+      else if (cocktailReview) {
+         const userLiked = cocktailReview.likes.map(String).includes(userId.toString());
+         if (!userLiked) throw new NotFoundError('좋아요가 없음');
+         return await CocktailReview.updateOne({ _id: id }, { $pull: { likes: userId } }, { runValidators: true });
+      } else if (diyRecipeReview) {
+         const userLiked = diyRecipeReview.likes.map(String).includes(userId.toString());
+         if (!userLiked) throw new NotFoundError('좋아요가 없음');
+         return await DiyRecipeReview.updateOne({ _id: id }, { $pull: { likes: userId } }, { runValidators: true });
+      }
    }
 };
 module.exports = reviewService;
