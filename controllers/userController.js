@@ -37,9 +37,8 @@ const withdrawal = asyncHandler(async (req, res) => {
 //*사용자 찜 목록 조회
 const getWishListByType = asyncHandler(async (req, res) => {
    const userId = req.user._id;
-   const type = req.query.type;
-   if (!type) throw new BadRequestError("요청 타입 없음");
-   const result = await userService.getWishListByType(userId, type);
+   const query = req.query;
+   const result = await userService.getWishListByType(userId, query);
    res.status(200).json(result);
 });
 //* 사용자 찜 추가

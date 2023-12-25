@@ -2,6 +2,7 @@ const { User, CocktailReview, DiyRecipeReview, DiyRecipe, Cocktail, Base } = req
 const { BadRequestError, ConflictError, NotFoundError, InternalServerError, } = require('../utils/customError');
 const mongoose = require('mongoose');
 const setToken = require('../utils/setToken');
+const setParameter = require('../utils/setParameter');
 const userService = {
    //* JWT 토큰에 할당될 사용자 정보
    async getUserTokenPayLoad(userId) {
@@ -40,83 +41,62 @@ const userService = {
       if (withdrawalUser.nModified === 0) throw new ConflictError("탈퇴 실패");
    },
    //*사용자 찜 목록 조회
-   // async getWishListByType(userId, type, item, page) {
-   //    type = (type === 'cocktails') ? 'cocktails' : (type === 'recipes' ? 'diyRecipes' : undefined);
-   //    if (!type) throw new BadRequestError('잘못된 요청입니다.');
-   //    //페이지당 아이템 수
-   //    const limit = item === undefined || item === null ? 10 : item;
-   //    const skip = page ? (page - 1) * limit : 0;
+   async getWishListByType(userId, query) {
+      const { cursorId, cursorValue, page, perPage, type } = query;
+      if (!type) throw new BadRequestError('타입을 입력해주세요');
+      const types = type === 'cocktails' ? 'cocktails' : 'diyRecipes';
+      const { skip, limit } = setParameter(perPage, page);
+      const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
-   //    let userWishList = await User.findById(userId).populate({
-   //       path: `wishes.${type}`,
-   //       populate: {
-   //          path: 'reviews',
-   //          select: 'rating -_id'
-   //       }
-   //    }).skip(skip).limit(limit).lean();
-   //    if (!userWishList) throw new NotFoundError('사용자 정보 없음');
-   //    // if (userWishList.wishes[type].length === 0) throw new NotFoundError('해당 타입의 찜목록 없음');
-   //    // 각 아이템에 대한 평균 평점과 리뷰 수 계산
-   //    for (let item of userWishList.wishes[type]) {
-   //       let avgRating = item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length;
-   //       item.avgRating = avgRating;
-   //       item.reviewCount = item.reviews.length;
-   //    }
-   //    const result = userWishList.wishes[type].map(item => {
-   //       return {
-   //          _id: item._id,
-   //          name: item.name,
-   //          image: item.image,
-   //          avgRating: item.avgRating,
-   //          reviewCount: item.reviewCount,
-   //          createdAt: item.createdAt,
-   //          updatedAt: item.updatedAt,
-   //       };
-   //    });
-   //    return result;
-   // },
-   async getWishListByType(userId, type, item, page) {
-      type = (type === 'cocktails') ? 'cocktails' : (type === 'recipes' ? 'diyRecipes' : undefined);
-      if (!type) throw new BadRequestError('잘못된 요청입니다.');
+      const user = await User.findById(userId);
+      if (!user) throw new NotFoundError("존재하지 않는 사용자입니다.");
 
-      //페이지당 아이템 수
-      const limit = item === undefined || item === null ? 10 : item;
-      const skip = page ? (page - 1) * limit : 0;
+      let matchData = {
+         $and: [
+            { _id: { $in: user.wishes[types], $ne: new mongoose.Types.ObjectId(cursorId) } }
+         ],
+      };
 
-      const pipeline = [
-         { $match: { _id: mongoose.Types.ObjectId(userId) } },
-         { $unwind: `$wishes.${type}` },
-         {
-            $lookup: {
-               from: 'reviews',
-               localField: `wishes.${type}`,
-               foreignField: '_id',
-               as: 'itemReviews'
-            }
-         },
-         {
-            $addFields: {
-               avgRating: { $avg: '$itemReviews.rating' },
-               reviewCount: { $size: '$itemReviews' },
-            }
-         },
-         { $skip: skip },
-         { $limit: limit },
-         {
-            $project: {
-               _id: `$wishes.${type}`,
-               name: 1,
-               image: 1,
-               avgRating: 1,
-               reviewCount: 1,
-               createdAt: 1,
-               updatedAt: 1,
-            }
-         }
+      const countData = { _id: { $in: user.wishes[types] } };
+
+      const addCursorCondition = (key, value) => {
+         const condition1 = { [key]: { $lt: value } };
+         const condition2 = { [key]: value, createdAt: { $lt: dateFromId } };
+         matchData.$and.push({ $or: [condition1, condition2] });
+      };
+
+      if (cursorId) {
+         addCursorCondition('createdAt', dateFromId);
+      }
+
+      const pipelineData = [
+         { $match: matchData },
+         { $sort: { createdAt: -1 } },
       ];
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit }, { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },);
 
-      const result = await User.aggregate(pipeline);
-      return result;
+      const runPipeline = async (model) => {
+         const data = await model.aggregate(pipelineData);
+         const size = await model.countDocuments(countData);
+         return { size, data };
+      };
+      let results = {};
+      if (type === 'cocktails') {
+         const { size, data } = await runPipeline(Cocktail);
+         results['cocktailSize'] = size;
+         results['cocktails'] = data;
+         return results;
+      } else if (type === 'recipes') {
+         const { size, data } = await runPipeline(DiyRecipe);
+         results['diyRecipeSize'] = size;
+         results['diyRecipes'] = data;
+         return results;
+      }
+
+      return results;
    },
 
    //* 사용자 찜 추가

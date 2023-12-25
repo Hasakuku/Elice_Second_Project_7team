@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const { User, Cocktail, DiyRecipe, CocktailReview, DiyRecipeReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
@@ -87,7 +88,7 @@ const reviewService = {
             diyRecipe.avgRating = result[0] ? result[0].avgRating : 0;
             diyRecipe.reviewCount = result[0] ? result[0].reviewCount : 0;
             await diyRecipe.save();
-            
+
          }
          return;
       }
@@ -142,44 +143,65 @@ const reviewService = {
       throw new NotFoundError('리뷰 없음');
    },
    //* 유저 리뷰 목록 조회
-   async getUserReviewList(userId, type, perPage, page) {
+   async getUserReviewList(userId, query) {
+      const { cursorId, type, perPage, page } = query;
       const { limit, skip, types } = setParameter(perPage, page, type);
-      let results = [];
-      let totalItems = 0;
+      const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
+      let results = {};
+  
       for (let type of types) {
-         const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
-         const reviews = await Model.find({ user: userId })
-            .sort({ createdAt: -1 })
-            .populate(type === 'CocktailReview' ? 'cocktail' : 'diyRecipe')
-            .lean();
+          const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
+          let matchData = {
+              $and: [
+                  { user: userId },
+                  { _id: { $ne: new mongoose.Types.ObjectId(cursorId) } }
+              ],
+          };
+  
+          if (cursorId) {
+              matchData.$and.push({
+                  $or: [
+                      { createdAt: { $lt: dateFromId } },
+                      { createdAt: dateFromId, _id: { $lt: cursorId } }
+                  ]
+              });
+          }
+  
+          const pipelineData = [
+              { $match: matchData },
+              { $sort: { createdAt: -1 } },
+              { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyRecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
+              { $unwind: '$item' },
+              { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1 } },
+              { $skip: skip },
+              { $limit: limit },
+          ];
+  
+          const countData = { user: userId };
+  
+          const runPipeline = async () => {
+              const data = await Model.aggregate(pipelineData);
+              const size = await Model.countDocuments(countData);
+              return { size, data };
+          };
+  
+          const { size, data } = await runPipeline();
+          results[type + 'Size'] = size;
 
-         for (let review of reviews) {
-            // 2개의 리뷰 합친 수 = 페이지당 item 수 
-            if (totalItems >= skip + limit) {
-               break;
-            }
-            if (totalItems >= skip) {
-               const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
-               let monthYearData = results.find(data => data.date === monthYear);
-               if (!monthYearData) {
-                  monthYearData = { date: monthYear, list: [] };
-                  results.push(monthYearData);
-               }
-               monthYearData.list.push({
-                  _id: review._id,
-                  type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe',
-                  name: review[type === 'CocktailReview' ? 'cocktail' : 'diyRecipe'].name,
-                  rating: review.rating,
-                  content: review.content,
-                  images: review.images,
-                  createdAt: review.createdAt
-               });
-            }
-            totalItems++;
-         }
+          const groupedData = data.reduce((acc, review) => {
+              const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
+              if (!acc[monthYear]) {
+                  acc[monthYear] = { date: monthYear, list: [] };
+              }
+              acc[monthYear].list.push(review);
+              return acc;
+          }, {});
+
+          results[type + 's'] = Object.values(groupedData);
       }
-      return { data: results };
-   },
+  
+      return results;
+  },
    //* 리뷰 수정
    async updateReview(userId, id, type, data) {
       const { content, images, rating } = data;

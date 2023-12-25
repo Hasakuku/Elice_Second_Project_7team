@@ -144,7 +144,8 @@ const diyRecipeService = {
     } = data;
     const foundDiyRecipe = await DiyRecipe.findById(id).lean();
     if (!foundDiyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
-    const dataKeys = Object.keys(data);
+
+    const dataKeys = Object.keys(dataKeys);
     const isSame = dataKeys
       .map((key) => foundDiyRecipe[key] === data[key])
       .some((value) => value === true);
@@ -209,13 +210,13 @@ const diyRecipeService = {
     const pipelineData = [
       { $match: matchData },
       { $sort: { createdAt: -1 } },
-      { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, month: { $dateToString: { format: "%Y-%m", date: "$createdAt" } } } },
+      { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
 
     ];
     if (page) {
       pipelineData.push({ $skip: skip });
     }
-    pipelineData.push({ $limit: limit }, { $group: { _id: "$month", list: { $push: "$$ROOT" } } }, { $project: { _id: 0, date: "$_id", list: 1 } },);
+    pipelineData.push({ $limit: limit });
 
     const runPipeline = async () => {
       const data = await DiyRecipe.aggregate(pipelineData);
@@ -226,10 +227,20 @@ const diyRecipeService = {
     const results = {};
     const { size, data } = await runPipeline();
     results['diyRecipeSize'] = size;
-    results['diyRecipes'] = data;
+
+    const groupedData = data.reduce((acc, review) => {
+      const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
+      if (!acc[monthYear]) {
+          acc[monthYear] = { date: monthYear, list: [] };
+      }
+      acc[monthYear].list.push(review);
+      return acc;
+    }, {});
+
+    results['diyRecipes'] = Object.values(groupedData);
 
     return results;
-  },
+  }
 };
 
 module.exports = diyRecipeService;
