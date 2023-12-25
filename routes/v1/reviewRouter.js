@@ -19,6 +19,4 @@ router.delete('/:id/likes', checkUser, reviewController.deleteLike);
 router.delete('/:id/users', checkUser, reviewController.deleteUserReview);
 router.delete('/:id', checkUser, checkAdmin, reviewController.deleteReview);
 
-// 로그인 없이 테스트 시 해제 // checkUser, checkAdmin, 
-
 module.exports = router;

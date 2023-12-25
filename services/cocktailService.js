@@ -1,8 +1,9 @@
 const { default: mongoose } = require('mongoose');
 const { Base, Cocktail, CocktailReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
-const setPrameter = require('../utils/setParameter');
 const setParameter = require('../utils/setParameter');
+const fs = require('fs').promises;
+const path = require('path');
 
 const cocktailService = {
    //* 맞춤 추천 칵테일
@@ -158,9 +159,14 @@ const cocktailService = {
    },
    //* 칵테일 등록
    async createCocktail(data) {
-      const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const { name, base, newImageNames, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
       const foundCocktail = await Cocktail.findOne({ name: name }).lean();
       if (foundCocktail) throw new ConflictError('이미 등록된 칵테일');
+      //이미지
+      let image;
+      if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
+         image = newImageNames[0].imageName;
+      }
 
       const newCocktail = new Cocktail({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour });
       const result = await newCocktail.save();
@@ -168,15 +174,23 @@ const cocktailService = {
    },
    //* 칵테일 수정
    async updateCocktail(id, data) {
-      const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const { newImageNames, ...rest } = data;
+      const { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = rest;
       const foundCocktail = await Cocktail.findById(id).lean();
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
-      const dataKeys = Object.keys(data);
+      const dataKeys = Object.keys(rest);
       const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).some(value => value === true);
 
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
+      }
+      // 이미지
+      let image;
+      if (newImageNames !== 0) {
+         const imagePath = path.join(__dirname, '../images', foundCocktail.image);
+         await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+         image = newImageNames[0].imageName;
       }
       const updateCocktail = await Cocktail.updateOne(
          { _id: id },
@@ -189,6 +203,10 @@ const cocktailService = {
    async deleteCocktail(id) {
       const cocktail = await Cocktail.findById(id).lean();
       if (!cocktail) throw new NotFoundError('칵테일 정보 없음');
+      //이미지
+      const imagePath = path.join(__dirname, '../images', cocktail.image);
+      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+
       await CocktailReview.deleteMany({ cocktail: id });
       const result = await Cocktail.deleteOne({ _id: id });
       if (result.deletedCount === 0) throw new InternalServerError("칵테일 삭제 실패");

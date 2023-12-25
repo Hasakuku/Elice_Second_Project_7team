@@ -22,9 +22,8 @@ const getUserReviewList = asyncHandler(async (req, res) => {
 });
 //* 리뷰 목록 조회
 const getReviewList = asyncHandler(async (req, res) => {
-   // const id = req.params.id;
-   const { item, page, id } = req.query;
-   const result = await reviewService.getReviewList(id, item, page);
+   const { perPage, page, id } = req.query;
+   const result = await reviewService.getReviewList(id, perPage, page);
    res.status(200).json(result);
 });
 //* 리뷰 등록

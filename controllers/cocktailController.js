@@ -25,16 +25,16 @@ const getCocktail = asyncHandler(async (req, res) => {
 
 //* 칵테일 등록
 const createCocktail = asyncHandler(async (req, res) => {
-  const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames } = req.body;
-  await cocktailService.createCocktail({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames });
+  const { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames } = req.body;
+  await cocktailService.createCocktail({ name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames });
   res.status(200).json({ message: '칵테일 등록 성공' });
 });
 
 //* 칵테일 수정
 const updateCocktail = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  const data = req.body;
-  await cocktailService.updateCocktail(id, data);
+  const { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames } = req.body;
+  await cocktailService.updateCocktail(id, { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames });
   res.status(200).json({ message: '칵테일 수정 성공' });
 });
 
