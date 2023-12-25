@@ -63,7 +63,8 @@ const updateUserPermission = asyncHandler(async (req, res) => {
 });
 //* 사용자 목록 조회(관리자)
 const getUserList = asyncHandler(async (req, res) => {
-   const result = await userService.getUserList();
+   const { keyword, perPage, page } = req.query;
+   const result = await userService.getUserList({ keyword, perPage, page });
    res.status(200).json(result);
 });
 //* 사용자 삭제(관리자)
