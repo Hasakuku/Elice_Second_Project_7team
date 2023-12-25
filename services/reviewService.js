@@ -162,7 +162,7 @@ const reviewService = {
          const pipelineData = [
             { $match: matchData },
             { $sort: { createdAt: -1 } },
-            { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyRecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
+            { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyrecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
             { $unwind: '$item' },
             { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1 } },
             { $skip: skip },

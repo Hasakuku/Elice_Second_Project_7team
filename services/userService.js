@@ -161,14 +161,31 @@ const userService = {
       await User.updateOne({ _id: userId }, { $set: { isWrite: newPermission } }, { runValidators: true });
    },
    //* 사용자 목록 조회
-   async getUserList(item, page) {
-      //페이지당 아이템 수
-      const limit = item === undefined || item === null ? 10 : item;
-      const skip = page ? (page - 1) * limit : 0;
-      const userList = await User.find({}).select('_id email isWrite createAt updatedAt').skip(skip).limit(limit).lean();
+   async getUserList({ keyword, perPage, page }) {
+      const { limit, skip } = setParameter(perPage, page);
+      const total = await User.countDocuments(
+         keyword ? { email: { $regex: keyword, $options: 'i' } } : {}
+      );
 
-      return userList;
+      const pipeline = [
+         ...(keyword ? [{ $match: { email: { $regex: keyword, $options: 'i' } } }] : []),
+         {
+            $project: {
+               _id: 1,
+               email: 1,
+               isWrite: 1,
+               createAt: 1,
+               updatedAt: 1,
+            },
+         },
+         { $skip: skip },
+         { $limit: limit },
+      ];
+
+      const users = await User.aggregate(pipeline);
+      return { total, users };
    },
+
    //* 사용자 삭제(관리자)
    async deleteUser(userId) {
       const user = await User.findOne({ _id: userId }).lean();
