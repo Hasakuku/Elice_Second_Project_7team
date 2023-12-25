@@ -18,7 +18,7 @@ const getDiyRecipe = asyncHandler(async (req, res) => {
 // DIY 레시피 등록
 const createDiyRecipe = asyncHandler(async (req, res) => {
   //유저 정보 
-  const userId = req.body.payload._id;
+  const userId = req.user._id;
   const data = req.body;
   await diyRecipeService.createDiyRecipe(data, userId);
   res.status(201).json({ message: '레시피 등록이 완료되었습니다!' });
@@ -27,8 +27,8 @@ const createDiyRecipe = asyncHandler(async (req, res) => {
 // DIY 레시피 수정
 const updateDiyRecipe = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  const data = req.body;-
-  await diyRecipeService.updateDiyRecipe(id, data);
+  const data = req.body; -
+    await diyRecipeService.updateDiyRecipe(id, data);
   res.status(200).json({ message: '레시피 수정이 완료되었습니다!' });
 });
 
@@ -41,8 +41,9 @@ const deleteDiyRecipe = asyncHandler(async (req, res) => {
 
 //* 사용자의 레시피 목록 조회
 const getDiyRecipeListByUser = asyncHandler(async (req, res) => {
-  const userId = req.body.payload._id;
-  const result = await diyRecipeService.getDiyRecipeListByUser(userId);
+  const userId = req.user._id;
+  const { page, perPage, cursorId, cursorValue } = req.query;
+  const result = await diyRecipeService.getDiyRecipeListByUser(userId, { page, perPage, cursorId, cursorValue });
   res.status(200).json(result);
 });
 

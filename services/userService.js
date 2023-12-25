@@ -149,6 +149,24 @@ const userService = {
    async deleteUser(userId) {
       const user = await User.findOne({ _id: userId }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
+      const cocktailReviews = await CocktailReview.find({ user: userId });
+      for (let review of cocktailReviews) {
+
+         let cocktail = await Cocktail.findOne({ reviews: review._id });
+         if (cocktail) {
+            cocktail.reviews.pull(review._id);
+            await cocktail.save();
+         }
+      }
+      const diyRecipeReview = await DiyRecipeReview.find({ reviews: userId });
+      for (let review of diyRecipeReview) {
+
+         let diyRecipe = await DiyRecipe.findOne({ reviews: review._id });
+         if (diyRecipe) {
+            diyRecipe.reviews.pull(review._id);
+            await diyRecipe.save();
+         }
+      }
 
       await CocktailReview.deleteMany({ user: userId });
 

@@ -184,9 +184,52 @@ const diyRecipeService = {
       throw new InternalServerError('DIY 레시피 삭제를 실패했습니다.');
   },
   //* 사용자의 레시피 목록 조회
-  async getDiyRecipeListByUser(userId) {
-    const diyRecipes = await DiyRecipe.find({ user: userId }).lean();
+  async getDiyRecipeListByUser(userId, query) {
+    const { cursorId, cursorValue, page, perPage } = query;
+    const { skip, limit } = setParameter(perPage, page);
+    const cursorValues = Number(cursorValue);
+    const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
+    const matchData = {
+      $and: [
+        { user: userId, _id: { $ne: new mongoose.Types.ObjectId(cursorId) } }
+      ]
+    };
+    const countData = { $and: [{ user: userId, }] };
+
+    const addCursorCondition = (key, value) => {
+      const condition1 = { [key]: { $lt: value } };
+      const condition2 = { [key]: value, createdAt: { $lt: dateFromId } };
+      matchData.$and.push({ $or: [condition1, condition2] });
+    };
+
+
+    if (cursorId) {
+      addCursorCondition('createdAt', dateFromId);
+    }
+
+    const pipelineData = [
+      { $match: matchData },
+      { $sort: { createdAt: -1 } },
+      { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, month: { $dateToString: { format: "%Y-%m", date: "$createdAt" } } } },
+    ];
+    if (page) {
+      pipelineData.push({ $skip: skip });
+    }
+    pipelineData.push({ $limit: limit }, { $group: { _id: "$month", list: { $push: "$$ROOT" } } }, { $project: { _id: 0, date: "$_id", list: 1 } },);
+
+    const runPipeline = async () => {
+      const data = await DiyRecipe.aggregate(pipelineData);
+      const size = await DiyRecipe.countDocuments(countData);
+      return { size, data };
+    };
+
+    const results = {};
+    const { size, data } = await runPipeline();
+    results['diyRecipeSize'] = size;
+    results['diyRecipes'] = data;
+
+    return results;
   },
 };
 
