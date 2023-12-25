@@ -5,14 +5,15 @@ const setParameter = require('../utils/setParameter');
 
 const searchService = {
    async searchByKeyword(query) {
-      const { keyword, cursorId, sort, cursorValue, perPage, type } = query;
+      const { keyword, cursorId, sort, cursorValue, page, perPage, type } = query;
+      const { skip, limit } = setParameter(perPage, page);
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
       const cursorValues = Number(cursorValue);
       const perPages = Number(perPage);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
-      let sortObj = {};
+      let sortObj = { createdAt: -1 };
       if (sort === 'rating') {
          sortObj = { avgRating: -1, ...sortObj };
       } else if (sort === 'review') {
@@ -59,9 +60,14 @@ const searchService = {
       const pipelineData = [
          { $match: matchData },
          { $sort: sortObj },
-         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1 } },
-         { $limit: perPages || 6 },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+
       ];
+
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit });
 
       const runPipeline = async (Model) => {
          const total = await Model.aggregate(pipelineCount);
@@ -74,15 +80,22 @@ const searchService = {
       const results = {};
 
       for (let item of types) {
-         if (type && type !== `${item}s`) continue;
-         const Model = item === 'cocktail' ? Cocktail : DiyRecipe;
-         const { size, data } = await runPipeline(Model);
-         results[`${item}Size`] = size;
-         results[`${item}s`] = data;
+         let Model;
+         if (type === 'recipes' && item === 'diyRecipe') {
+            Model = DiyRecipe;
+         } else if (type !== 'recipes' && item === 'cocktail') {
+            Model = Cocktail;
+         } else if (!type || type === `${item}s`) {
+            Model = item === 'cocktail' ? Cocktail : DiyRecipe;
+         }
+
+         if (Model) {
+            const { size, data } = await runPipeline(Model);
+            results[`${item}Size`] = size;
+            results[`${item}s`] = data;
+         }
       }
-
       if (!type) results.total = results.cocktailSize + results.diyRecipeSize;
-
       return results;
    },
 };

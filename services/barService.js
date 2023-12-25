@@ -1,5 +1,7 @@
 const { Bar } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
+const fs = require('fs');
+const path = require('path');
 
 const barService = {
    //* 바 목록 조회
@@ -22,19 +24,29 @@ const barService = {
    },
    //* 바 등록
    async createBar(data) {
-      const { name, image, address, operationTime, map } = data;
+      const { name, address, time, x, y, tel } = data;
       const foundBar = await Bar.findOne({ address: address }).lean();
       if (foundBar) throw new ConflictError('이미 등록된 주소');
+      let image;
 
-      const newBar = new Bar({ name, image, address, operationTime, map });
+      if (data.newImageNames && Array.isArray(data.newImageNames)) { image = data.newImageNames[0].imageName; }
+      const newBar = new Bar({ name, image, address, x, y, time, tel });
       const result = await newBar.save();
       if (!result) throw new InternalServerError('등록 안됨');
    },
    //* 바 수정
    async updateBar(barId, data) {
-      const { name, image, address, operationTime, map } = data;
+      const { name, address, operationTime, map } = data;
       const foundBar = await Bar.findById(barId).lean();
       if (!foundBar) throw new NotFoundError('바 정보 없음');
+      let image;
+      if (data.newImageNames) {
+         const imagePath = path.join(__dirname, '../images', foundBar.image);
+         fs.unlink(imagePath, (err) => {
+            if (err) throw new InternalServerError('이미지 삭제 실패');
+         });
+         image = data.newImageNames[0].imageName;
+      }
 
       const dataKeys = Object.keys(data);
       const isSame = dataKeys.map(key => foundBar[key] === data[key]).every(value => value === true);
@@ -53,6 +65,13 @@ const barService = {
    async deleteBar(barId) {
       const foundBar = await Bar.findById(barId).lean();
       if (!foundBar) throw new NotFoundError('바 정보 없음');
+      // 이미지 파일 삭제
+      const imagePath = path.join(__dirname, '../images', foundBar.image);
+      // await fs.unlink(imagePath, (err) => {
+      //    if (err) throw new InternalServerError('이미지 삭제 실패');
+      // });
+      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+
 
       const result = await Bar.deleteOne({ _id: barId });
       if (result.deletedCount === 0) throw new InternalServerError("바 삭제 실패");

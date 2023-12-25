@@ -1,7 +1,8 @@
-const { User, CocktailReview, DiyRecipeReview, DiyRecipe, Cocktail } = require('../models');
+const { User, CocktailReview, DiyRecipeReview, DiyRecipe, Cocktail, Base } = require('../models');
 const { BadRequestError, ConflictError, NotFoundError, InternalServerError, } = require('../utils/customError');
 const mongoose = require('mongoose');
 const setToken = require('../utils/setToken');
+const setParameter = require('../utils/setParameter');
 const userService = {
    //* JWT 토큰에 할당될 사용자 정보
    async getUserTokenPayLoad(userId) {
@@ -40,41 +41,64 @@ const userService = {
       if (withdrawalUser.nModified === 0) throw new ConflictError("탈퇴 실패");
    },
    //*사용자 찜 목록 조회
-   async getWishListByType(userId, type, item, page) {
-      type = (type === 'cocktails') ? 'cocktails' : (type === 'recipes' ? 'diyRecipes' : undefined);
-      if (!type) throw new BadRequestError('잘못된 요청입니다.');
-      //페이지당 아이템 수
-      const limit = item === undefined || item === null ? 10 : item;
-      const skip = page ? (page - 1) * limit : 0;
+   async getWishListByType(userId, query) {
+      const { cursorId, cursorValue, page, perPage, type } = query;
+      if (!type) throw new BadRequestError('타입을 입력해주세요');
+      const types = type === 'cocktails' ? 'cocktails' : 'diyRecipes';
+      const { skip, limit } = setParameter(perPage, page);
+      const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
-      let userWishList = await User.findById(userId).populate({
-         path: `wishes.${type}`,
-         populate: {
-            path: 'reviews',
-            select: 'rating -_id'
-         }
-      }).skip(skip).limit(limit).lean();
-      if (!userWishList) throw new NotFoundError('사용자 정보 없음');
-      // if (userWishList.wishes[type].length === 0) throw new NotFoundError('해당 타입의 찜목록 없음');
-      // 각 아이템에 대한 평균 평점과 리뷰 수 계산
-      for (let item of userWishList.wishes[type]) {
-         let avgRating = item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length;
-         item.avgRating = avgRating;
-         item.reviewCount = item.reviews.length;
+      const user = await User.findById(userId);
+      if (!user) throw new NotFoundError("존재하지 않는 사용자입니다.");
+
+      let matchData = {
+         $and: [
+            { _id: { $in: user.wishes[types], $ne: new mongoose.Types.ObjectId(cursorId) } }
+         ],
+      };
+
+      const countData = { _id: { $in: user.wishes[types] } };
+
+      const addCursorCondition = (key, value) => {
+         const condition1 = { [key]: { $lt: value } };
+         const condition2 = { [key]: value, createdAt: { $lt: dateFromId } };
+         matchData.$and.push({ $or: [condition1, condition2] });
+      };
+
+      if (cursorId) {
+         addCursorCondition('createdAt', dateFromId);
       }
-      const result = userWishList.wishes[type].map(item => {
-         return {
-            _id: item._id,
-            name: item.name,
-            image: item.image,
-            avgRating: item.avgRating,
-            reviewCount: item.reviewCount,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-         };
-      });
-      return result;
+
+      const pipelineData = [
+         { $match: matchData },
+         { $sort: { createdAt: -1 } },
+      ];
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit }, { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },);
+
+      const runPipeline = async (model) => {
+         const data = await model.aggregate(pipelineData);
+         const size = await model.countDocuments(countData);
+         return { size, data };
+      };
+      let results = {};
+      if (type === 'cocktails') {
+         const { size, data } = await runPipeline(Cocktail);
+         results['cocktailSize'] = size;
+         results['cocktails'] = data;
+         return results;
+      } else if (type === 'recipes') {
+         const { size, data } = await runPipeline(DiyRecipe);
+         results['diyRecipeSize'] = size;
+         results['diyRecipes'] = data;
+         return results;
+      }
+
+      return results;
    },
+
    //* 사용자 찜 추가
    async createWish(userId, id) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
@@ -142,13 +166,31 @@ const userService = {
       const limit = item === undefined || item === null ? 10 : item;
       const skip = page ? (page - 1) * limit : 0;
       const userList = await User.find({}).select('_id email isWrite createAt updatedAt').skip(skip).limit(limit).lean();
-      
+
       return userList;
    },
    //* 사용자 삭제(관리자)
    async deleteUser(userId) {
       const user = await User.findOne({ _id: userId }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
+      const cocktailReviews = await CocktailReview.find({ user: userId });
+      for (let review of cocktailReviews) {
+
+         let cocktail = await Cocktail.findOne({ reviews: review._id });
+         if (cocktail) {
+            cocktail.reviews.pull(review._id);
+            await cocktail.save();
+         }
+      }
+      const diyRecipeReview = await DiyRecipeReview.find({ reviews: userId });
+      for (let review of diyRecipeReview) {
+
+         let diyRecipe = await DiyRecipe.findOne({ reviews: review._id });
+         if (diyRecipe) {
+            diyRecipe.reviews.pull(review._id);
+            await diyRecipe.save();
+         }
+      }
 
       await CocktailReview.deleteMany({ user: userId });
 
@@ -165,6 +207,23 @@ const userService = {
       if (!user) throw new NotFoundError('없어여');
       const result = setToken(user);
       return result;
+   },
+   //* 사용자 커스텀 설정
+   async updateUserCustom(userId, query) {
+      const { base, abv, taste, level } = query;
+      const user = await User.findById(userId);
+      if (!user) throw new NotFoundError('유저 정보 없음');
+      if (!abv || !taste || !level) throw new BadRequestError('도수,맛,단계를 입력하세요');
+      if (!['sweet', 'sour', 'bitter'].includes(taste) || !['1', '2', '3'].includes(level)) {
+         throw new BadRequestError('올바른 정보로 요청 해주세요');
+      }
+      if (base && await Base.find({ name: base }).select('_id').lean()) throw new NotFoundError('Base 값 오류');
+      user.custom = {
+         base: base || undefined,
+         abv: abv,
+         [taste]: level
+      };
+      await user.save();
    },
 };
 

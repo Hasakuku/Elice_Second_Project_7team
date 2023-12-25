@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-const imageRouter = require('./imageRouter');
 const userRouter = require('./userRouter');
 const cocktailRouter = require('./cocktailRouter');
 const diyRecipeRouter = require('./diyRecipeRouter');
@@ -12,7 +11,6 @@ const baseRouter = require('./baseRouter');
 const reviewRouter = require('./reviewRouter');
 
 router.use('/search', searchRouter);
-router.use('/images', imageRouter);
 router.use('/auth', kakaoRouter);
 
 router.use('/reviews', reviewRouter);

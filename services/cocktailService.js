@@ -2,6 +2,7 @@ const { default: mongoose } = require('mongoose');
 const { Base, Cocktail, CocktailReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
 const setPrameter = require('../utils/setParameter');
+const setParameter = require('../utils/setParameter');
 
 const cocktailService = {
    //* 맞춤 추천 칵테일
@@ -19,13 +20,13 @@ const cocktailService = {
       let abvRange = {};
       switch (abv) {
          case 1:
-            abvRange = { $gte: 0, $lt: 10 };
+            abvRange = { $gte: 1, $lt: 3 };
             break;
          case 2:
-            abvRange = { $gte: 10, $lt: 20 };
+            abvRange = { $gte: 3, $lt: 4 };
             break;
          case 3:
-            abvRange = { $gte: 20 };
+            abvRange = { $gte: 4 };
             break;
          default:
             throw new BadRequestError('abv 값 오류');
@@ -67,21 +68,25 @@ const cocktailService = {
       });
       return result;
    },
+   //*칵테일 목록 조회
    async getCocktailList(query) {
-      const { base, sort, abv, sweet, bitter, sour, cursorId, cursorValue, perPage } = query;
+      const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = query;
+      const { limit, skip } = setParameter(perPage, page);
+      const cursorValues = Number(cursorValue);
+      const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
+      const ranges = {
+         1: [1, 2],
+         2: [3],
+         3: [4, 5]
+      };
+
+      const option = {};
+      if (abv) option.abv = { $in: ranges[abv] };
+      if (sweet) option.sweet = { $in: ranges[sweet] };
+      if (bitter) option.bitter = { $in: ranges[bitter] };
+      if (sour) option.sour = { $in: ranges[sour] };
+
       let foundBase;
-      let option = {}; // find할 옵션
-      let cursorValues = Number(cursorValue);
-      let perPages = Number(perPage);
-      let dateFromId;
-      let mongoId;
-
-      if (cursorId) {
-         dateFromId = new Date(parseInt(cursorId.substring(0, 8), 16) * 1000);
-         mongoId = new mongoose.Types.ObjectId(cursorId);
-      }
-
-      // base 미선택시 모든 베이스를 대상
       if (!base) {
          foundBase = await Base.find({}).select('_id').lean();
       } else {
@@ -92,122 +97,54 @@ const cocktailService = {
       // base를 쿼리에 추가
       option.base = { $in: foundBase.map(b => b._id) };
 
-      // abv, sweet, bitter, sour가 주어진 경우 옵션에 추가
-      if (abv) {
-         switch (abv) {
-            case '1':
-               option.abv = { $gte: 0, $lt: 10 };
-               break;
-            case '2':
-               option.abv = { $gte: 10, $lt: 20 };
-               break;
-            case '3':
-               option.abv = { $gte: 20 };
-               break;
-            default:
-               throw new BadRequestError('abv 값 오류');
-         }
-      }
-      if (sweet) {
-         switch (sweet) {
-            case '1':
-               option.sweet = { $in: [1, 2] };
-               break;
-            case '2':
-               option.sweet = { $eq: 3 };
-               break;
-            case '3':
-               option.sweet = { $in: [4, 5] };
-               break;
-            default:
-               throw new BadRequestError('sweet 값 오류');
-         }
-      }
-
-      if (bitter) {
-         switch (bitter) {
-            case '1':
-               option.bitter = { $in: [1, 2] };
-               break;
-            case '2':
-               option.bitter = { $eq: 3 };
-               break;
-            case '3':
-               option.bitter = { $in: [4, 5] };
-               break;
-            default:
-               throw new BadRequestError('bitter 값 오류');
-         }
-      }
-      if (sour) {
-         switch (sour) {
-            case '1':
-               option.sour = { $in: [1, 2] };
-               break;
-            case '2':
-               option.sour = { $eq: 3 };
-               break;
-            case '3':
-               option.sour = { $in: [4, 5] };
-               break;
-            default:
-               throw new BadRequestError('sour 값 오류');
-         }
-      }
-
-      let sortObj = {};
+      let sortObj = { createdAt: -1 };
       if (sort === 'rating') {
-         sortObj.avgRating = -1;
-         sortObj.createdAt = -1;
+         sortObj = { avgRating: -1, ...sortObj };
       } else if (sort === 'review') {
-         sortObj.reviewCount = -1;
-         sortObj.createdAt = -1;
-      } else {
-         sortObj.createdAt = -1;
+         sortObj = { reviewCount: -1, ...sortObj };
       }
+      const matchData = { $and: [option] };
 
-      let match = {
-         $or: [
-            { name: { $regex: new RegExp(base, 'i') }, _id: { $ne: mongoId } },
-            { base: { $in: foundBase.map(b => b._id) } }
-         ]
+      const addCursorCondition = (key, value) => {
+         const condition1 = { [key]: { $lt: value } };
+         const condition2 = { [key]: value };
+         if (key !== 'createdAt') condition2.createdAt = { $lt: dateFromId };
+         matchData.$and.push({ $or: [condition1, condition2,] });
       };
+
       if (cursorId && cursorValues) {
-         if (sort === 'review') {
-            match['$or'] = [
-               { 'reviewCount': { $lt: cursorValues } },
-               { 'reviewCount': cursorValues, 'createdAt': { $lt: dateFromId } },
-            ];
-         } else if (sort === 'rating') {
-            match['$or'] = [
-               { 'avgRating': { $lt: cursorValues } },
-               { 'avgRating': cursorValues, 'createdAt': { $lt: dateFromId } },
-            ];
-         } else {
-            match['$or'] = [
-               { 'createdAt': { $lt: dateFromId } },
-            ];
-         }
+         matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
+         if (sort === 'review') addCursorCondition('reviewCount', cursorValues);
+         else if (sort === 'rating') addCursorCondition('avgRating', cursorValues);
+         else addCursorCondition('createdAt', dateFromId);
       } else if (cursorId) {
-         match['$or'] = [
-            { 'createdAt': { $lt: dateFromId } },
-         ];
+         matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
+         addCursorCondition('createdAt', dateFromId);
       }
-      let pipelineCount = [
-         { $match: match },
+      const pipelineCount = [
+         { $match: option },
+         { $sort: sortObj },
          { $count: 'total' }
       ];
-      let pipelineData = [
-         { $match: match },
+      const pipelineData = [
+         { $match: matchData },
          { $sort: sortObj },
-         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, } },
-         { $limit: perPages || 6 },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
       ];
-      let total;
-      total = await Cocktail.aggregate(pipelineCount);
-      const cocktails = await Cocktail.aggregate(pipelineData);
 
-      return { total: total[0].total, cocktails };
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit });
+
+      const cocktails = await Cocktail.aggregate(pipelineData);
+      const total = await Cocktail.aggregate(pipelineCount);
+
+      let cocktailSize;
+      if (total.length === 0) cocktailSize = 0;
+      else cocktailSize = total[0].total;
+      const results = { cocktailSize, cocktails, };
+      return results;
    },
    //* 칵테일 상세 조회
    async getCocktail(id) {
@@ -232,11 +169,10 @@ const cocktailService = {
    //* 칵테일 수정
    async updateCocktail(id, data) {
       const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
-      const { payload, ...rest } = data;
       const foundCocktail = await Cocktail.findById(id).lean();
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
-      const dataKeys = Object.keys(rest);
+      const dataKeys = Object.keys(data);
       const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).some(value => value === true);
 
       if (isSame) {

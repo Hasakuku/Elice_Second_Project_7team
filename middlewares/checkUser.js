@@ -19,6 +19,6 @@ module.exports = asyncHandler(async (req, res, next) => {
    // 토큰에 유저정보 할당
    const getUserTokenPayLoad = await userService.getUserTokenPayLoad(user.id);
    // req.body.payload 유저 정보 할당
-   req.body.payload = getUserTokenPayLoad;
+   req.user = getUserTokenPayLoad;
    next();
 });
