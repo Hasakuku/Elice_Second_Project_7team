@@ -58,7 +58,6 @@ const diyRecipeService = {
     }
     const pipelineCount = [
       { $match: option },
-      { $sort: sortObj },
       { $count: 'total' }
     ];
     const pipelineData = [
@@ -145,8 +144,7 @@ const diyRecipeService = {
     } = data;
     const foundDiyRecipe = await DiyRecipe.findById(id).lean();
     if (!foundDiyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
-    const { payload, ...rest } = data;
-    const dataKeys = Object.keys(rest);
+    const dataKeys = Object.keys(data);
     const isSame = dataKeys
       .map((key) => foundDiyRecipe[key] === data[key])
       .some((value) => value === true);
@@ -212,6 +210,7 @@ const diyRecipeService = {
       { $match: matchData },
       { $sort: { createdAt: -1 } },
       { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, month: { $dateToString: { format: "%Y-%m", date: "$createdAt" } } } },
+
     ];
     if (page) {
       pipelineData.push({ $skip: skip });

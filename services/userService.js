@@ -40,41 +40,85 @@ const userService = {
       if (withdrawalUser.nModified === 0) throw new ConflictError("탈퇴 실패");
    },
    //*사용자 찜 목록 조회
+   // async getWishListByType(userId, type, item, page) {
+   //    type = (type === 'cocktails') ? 'cocktails' : (type === 'recipes' ? 'diyRecipes' : undefined);
+   //    if (!type) throw new BadRequestError('잘못된 요청입니다.');
+   //    //페이지당 아이템 수
+   //    const limit = item === undefined || item === null ? 10 : item;
+   //    const skip = page ? (page - 1) * limit : 0;
+
+   //    let userWishList = await User.findById(userId).populate({
+   //       path: `wishes.${type}`,
+   //       populate: {
+   //          path: 'reviews',
+   //          select: 'rating -_id'
+   //       }
+   //    }).skip(skip).limit(limit).lean();
+   //    if (!userWishList) throw new NotFoundError('사용자 정보 없음');
+   //    // if (userWishList.wishes[type].length === 0) throw new NotFoundError('해당 타입의 찜목록 없음');
+   //    // 각 아이템에 대한 평균 평점과 리뷰 수 계산
+   //    for (let item of userWishList.wishes[type]) {
+   //       let avgRating = item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length;
+   //       item.avgRating = avgRating;
+   //       item.reviewCount = item.reviews.length;
+   //    }
+   //    const result = userWishList.wishes[type].map(item => {
+   //       return {
+   //          _id: item._id,
+   //          name: item.name,
+   //          image: item.image,
+   //          avgRating: item.avgRating,
+   //          reviewCount: item.reviewCount,
+   //          createdAt: item.createdAt,
+   //          updatedAt: item.updatedAt,
+   //       };
+   //    });
+   //    return result;
+   // },
    async getWishListByType(userId, type, item, page) {
       type = (type === 'cocktails') ? 'cocktails' : (type === 'recipes' ? 'diyRecipes' : undefined);
       if (!type) throw new BadRequestError('잘못된 요청입니다.');
+
       //페이지당 아이템 수
       const limit = item === undefined || item === null ? 10 : item;
       const skip = page ? (page - 1) * limit : 0;
 
-      let userWishList = await User.findById(userId).populate({
-         path: `wishes.${type}`,
-         populate: {
-            path: 'reviews',
-            select: 'rating -_id'
+      const pipeline = [
+         { $match: { _id: mongoose.Types.ObjectId(userId) } },
+         { $unwind: `$wishes.${type}` },
+         {
+            $lookup: {
+               from: 'reviews',
+               localField: `wishes.${type}`,
+               foreignField: '_id',
+               as: 'itemReviews'
+            }
+         },
+         {
+            $addFields: {
+               avgRating: { $avg: '$itemReviews.rating' },
+               reviewCount: { $size: '$itemReviews' },
+            }
+         },
+         { $skip: skip },
+         { $limit: limit },
+         {
+            $project: {
+               _id: `$wishes.${type}`,
+               name: 1,
+               image: 1,
+               avgRating: 1,
+               reviewCount: 1,
+               createdAt: 1,
+               updatedAt: 1,
+            }
          }
-      }).skip(skip).limit(limit).lean();
-      if (!userWishList) throw new NotFoundError('사용자 정보 없음');
-      // if (userWishList.wishes[type].length === 0) throw new NotFoundError('해당 타입의 찜목록 없음');
-      // 각 아이템에 대한 평균 평점과 리뷰 수 계산
-      for (let item of userWishList.wishes[type]) {
-         let avgRating = item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length;
-         item.avgRating = avgRating;
-         item.reviewCount = item.reviews.length;
-      }
-      const result = userWishList.wishes[type].map(item => {
-         return {
-            _id: item._id,
-            name: item.name,
-            image: item.image,
-            avgRating: item.avgRating,
-            reviewCount: item.reviewCount,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-         };
-      });
+      ];
+
+      const result = await User.aggregate(pipeline);
       return result;
    },
+
    //* 사용자 찜 추가
    async createWish(userId, id) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
