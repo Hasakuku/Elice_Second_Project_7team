@@ -15,7 +15,7 @@ const deleteReview = asyncHandler(async (req, res) => {
 });
 //* 유저 리뷰 목록 조회
 const getUserReviewList = asyncHandler(async (req, res) => {
-   const userId = req.body.payload._id;
+   const userId = req.user._id;
    const { type, item, page } = req.query;
    const result = await reviewService.getUserReviewList(userId, type, item, page);
    // if(result.data.length === 0) res.status(204).json('');
@@ -30,7 +30,7 @@ const getReviewList = asyncHandler(async (req, res) => {
 });
 //* 리뷰 등록
 const createReview = asyncHandler(async (req, res) => {
-   const userId = req.body.payload._id;
+   const userId = req.user._id;
    const itemId = req.params.id;
    const type = req.query.type;
    const data = req.body;
@@ -39,14 +39,14 @@ const createReview = asyncHandler(async (req, res) => {
 });
 //* 리뷰 상세 조회
 const getReview = asyncHandler(async (req, res) => {
-   const userId = req.body.payload._id;
+   const userId = req.user._id;
    const id = req.params.id;
    const result = await reviewService.getReview(userId, id);
    res.status(200).json(result);
 });
 //* 리뷰 수정
 const updateReview = asyncHandler(async (req, res) => {
-   const userId = req.body.payload._id;
+   const userId = req.user._id;
    const id = req.params.id;
    const type = req.query.type;
    const data = req.body;
@@ -55,7 +55,7 @@ const updateReview = asyncHandler(async (req, res) => {
 });
 //* 리뷰 삭제
 const deleteUserReview = asyncHandler(async (req, res) => {
-   const userId = req.body.payload._id;
+   const userId = req.user._id;
    const id = req.params.id;
    await reviewService.deleteUserReview(userId, id);
    res.status(204).json("");
@@ -64,14 +64,14 @@ const deleteUserReview = asyncHandler(async (req, res) => {
 //* 좋아요 추가
 const addLike = asyncHandler(async (req, res) => {
    const id = req.params.id;
-   const userId = req.body.payload._id;
+   const userId = req.user._id;
    await reviewService.addLike(userId, id);
    res.status(201).json({ message: '좋아요 추가 성공' });
 });
 //* 좋아요 삭제
 const deleteLike = asyncHandler(async (req, res) => {
    const id = req.params.id;
-   const userId = req.body.payload._id;
+   const userId = req.user._id;
    await reviewService.deleteLike(userId, id);
    res.status(204).json({ message: '좋아요 삭제 성공' });
 });
