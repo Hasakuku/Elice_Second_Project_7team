@@ -105,7 +105,7 @@ const userService = {
       if (!user) throw new NotFoundError('사용자 정보 없음');
 
       if (user.wishes.cocktails.map(String).includes(id.toString()) || user.wishes.diyRecipes.map(String).includes(id.toString())) {
-         throw new ConflictError('찜 목록에 이미 아이템이 있음');
+         return;
       }
 
       const foundCocktail = await Cocktail.findOne({ _id: id }).lean();
@@ -143,7 +143,7 @@ const userService = {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError('사용자 정보 없음');
       if (!user.wishes.cocktails.map(String).includes(id.toString()) && !user.wishes.diyRecipes.map(String).includes(id.toString())) {
-         throw new NotFoundError('찜 목록에 아이템이 없음');
+         return;
       }
       const foundCocktail = await Cocktail.findOne({ _id: id });
       if (foundCocktail) {
