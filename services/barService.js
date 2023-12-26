@@ -2,19 +2,25 @@ const { Bar } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
 const fs = require('fs');
 const path = require('path');
+const setParameter = require('../utils/setParameter');
 
 const barService = {
    //* 바 목록 조회
    async getBarList(query) {
-      const { x1, x2, y1, y2 } = query;
-      const data = await Bar.find({
-         x: { $gt: x1, $lt: x2 },
-         y: { $gt: y1, $lt: y2 },
-      });
-      // 수동으로 필터링
-      const filteredData = data.filter((data) => data.address);
-      console.log(filteredData.map((data) => data.address));
-      return filteredData;
+      const { x1, x2, y1, y2, keyword, perPage, page } = query;
+      const { skip, limit } = setParameter(perPage, page);
+      let conditions = {};
+      if (keyword) {
+         conditions.name = { $regex: new RegExp(keyword, 'i') };
+      }
+      if (x1 && x2 && y1 && y2) {
+         conditions.x = { $gt: x1, $lt: x2 };
+         conditions.y = { $gt: y1, $lt: y2 };
+      }
+      const total = await Bar.countDocuments(conditions);
+      const bars = await Bar.find(conditions).skip(skip).limit(limit).lean();
+
+      return { total, bars };
    },
    //* 바 상세 조회
    async getBar(barId) {
