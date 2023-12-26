@@ -165,6 +165,7 @@ const reviewService = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview
       };
+
       const model = models[type];
       const foundReview = await model.findOne({ _id: id, user: userId }).lean();
       let images;
@@ -194,6 +195,11 @@ const reviewService = {
    //* 리뷰 등록
    async createReview(userId, itemId, type, data) {
       const { content, rating, newImageNames } = data;
+      
+      const Model = type === 'cocktails' ? Cocktail : DiyRecipe;
+      const foundItem = await Model.findById(itemId).lean();
+      if (!foundItem) throw new NotFoundError(`${type} 정보 없음`);
+
       const models = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview

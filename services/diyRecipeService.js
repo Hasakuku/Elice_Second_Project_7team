@@ -152,7 +152,7 @@ const diyRecipeService = {
     const dataKeys = Object.keys(rest);
     const isSame = dataKeys
       .map((key) => foundDiyRecipe[key] === data[key])
-      .some((value) => value === true);
+      .every((value) => value === true);
 
     if (isSame) {
       throw new ConflictError('같은 내용 수정');

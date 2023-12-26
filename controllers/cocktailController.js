@@ -5,10 +5,8 @@ const verifyUserToken = require('../utils/verifyUserToken');
 
 //* 맞춤 추천 칵테일
 const getCustomCocktail = asyncHandler(async (req, res) => {
-  let { base, abv, taste, level } = req.query;
-  abv = Number(abv);
-  level = Number(level);
-  const result = await cocktailService.getCustomCocktail(base, abv, taste, level);
+  const user = req.user;
+  const result = await cocktailService.getCustomCocktail(user);
   res.status(200).json(result);
 });
 
