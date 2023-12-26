@@ -280,7 +280,7 @@ const reviewService = {
          }
          return;
       }
-      if (!cocktailReview || !diyRecipeReview) throw new NotFoundError('리뷰 없음');
+      if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('리뷰 없음');
    },
    //* 좋아요 추가
    async addLike(userId, id) {
