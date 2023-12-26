@@ -28,6 +28,7 @@ const kakaoService = {
       const data = {
          kakaoId: user.data.id,
          nickname: user.data.kakao_account.profile.nickname,
+         image: user.data.kakao_account.profile.image,
          email: user.data.kakao_account.email,
       };
 

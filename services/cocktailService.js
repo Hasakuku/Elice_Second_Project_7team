@@ -1,5 +1,5 @@
 const { default: mongoose } = require('mongoose');
-const { Base, Cocktail, CocktailReview } = require('../models');
+const { Base, Cocktail, CocktailReview, User } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
 const fs = require('fs').promises;
@@ -7,9 +7,11 @@ const path = require('path');
 
 const cocktailService = {
    //* 맞춤 추천 칵테일
-   async getCustomCocktail(base, abv, taste, level) {
+   async getCustomCocktail(user) {
+      const userCustom = await User.findById(user._id).select('custom').lean();
+      const { abv, base, sweet, sour, bitter } = userCustom.custom;
+
       let foundBase;
-      if (!level || level < 1 || level > 5) throw new BadRequestError("level 값 오류");
       // base 미선택시 모든 베이스를 대상
       if (!base) {
          foundBase = await Base.find({}).select('_id').lean();
@@ -21,32 +23,22 @@ const cocktailService = {
       let abvRange = {};
       switch (abv) {
          case 1:
-            abvRange = { $gte: 1, $lt: 3 };
+            abvRange = { $gte: 1, $lt: 2 };
             break;
          case 2:
             abvRange = { $gte: 3, $lt: 4 };
             break;
          case 3:
-            abvRange = { $gte: 4 };
+            abvRange = { $gte: 5 };
             break;
          default:
             throw new BadRequestError('abv 값 오류');
       }
       // 맛 설정
-      let tasteQuery = {};
-      switch (taste) {
-         case 'sweet':
-            tasteQuery = { sweet: { $gt: level } };
-            break;
-         case 'sour':
-            tasteQuery = { sour: { $gt: level } };
-            break;
-         case 'bitter':
-            tasteQuery = { bitter: { $gt: level } };
-            break;
-         default:
-            throw new BadRequestError('taste 값 오류');
-      }
+      const tasteQuery = {};
+      if (sweet) tasteQuery.sweet = { $gt: sweet };
+      if (sour) tasteQuery.sour = { $gt: sour };
+      if (bitter) tasteQuery.bitter = { $gt: bitter };
 
       const cocktails = await Cocktail.find({
          base: { $in: foundBase },
@@ -198,7 +190,7 @@ const cocktailService = {
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
       const dataKeys = Object.keys(rest);
-      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).some(value => value === true);
+      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
 
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
@@ -215,7 +207,7 @@ const cocktailService = {
          image = newImageNames[0].imageName;
       }
       let recipes = [];
-      
+
       let maxLength = Math.max(content.length, recipeImageNames ? recipeImageNames.length : 0);
 
       for (let i = 0; i < maxLength; i++) {
