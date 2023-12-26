@@ -83,21 +83,19 @@ const reviewService = {
       }
       throw new NotFoundError('리뷰 없음');
    },
-   //* 유저 리뷰 목록 조회
+   //* 유저 리뷰 목록 조회,
    async getUserReviewList(userId, query) {
       const { cursorId, type, perPage, page } = query;
-      const { limit, skip } = setParameter(perPage, page, type);
+      const { limit, skip, types } = setParameter(perPage, page, type);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
       let results = { total: 0, data: {} };
-
-      const types = type ? [type] : ['cocktails', 'recipes'];
 
       let totalFetched = 0;
 
       for (let type of types) {
          if (totalFetched >= limit) break;
 
-         const Model = type === 'cocktails' ? CocktailReview : DiyRecipeReview;
+         const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
          let matchData = {
             $and: [
                { user: userId },
@@ -117,9 +115,9 @@ const reviewService = {
          const pipelineData = [
             { $match: matchData },
             { $sort: { createdAt: -1 } },
-            { $lookup: { from: type === 'cocktails' ? 'cocktails' : 'diyrecipes', localField: type === 'cocktails' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
+            { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyrecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
             { $unwind: '$item' },
-            { $project: { _id: 1, type: type === 'cocktails' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
+            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
             { $skip: skip },
             { $limit: limit - totalFetched },
          ];
@@ -145,9 +143,9 @@ const reviewService = {
                results.data[monthYear] = { date: monthYear, list: [] };
             }
             results.data[monthYear].list.push(review);
+            results.data[monthYear].list.sort((a, b) => b.createdAt - a.createdAt); // 최신 순으로 정렬
          }
       }
-
       if (type === 'cocktails') {
          results.total = await CocktailReview.countDocuments({ user: userId });
       } else if (type === 'recipes') {
@@ -157,10 +155,8 @@ const reviewService = {
       }
 
       results.data = Object.values(results.data);
-
       return results;
-   }
-   ,
+   },
    //* 리뷰 수정
    async updateReview(userId, id, type, data) {
       const { content, rating, newImageNames } = data;
