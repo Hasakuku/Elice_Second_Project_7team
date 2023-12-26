@@ -17,9 +17,8 @@ const barService = {
          conditions.x = { $gt: x1, $lt: x2 };
          conditions.y = { $gt: y1, $lt: y2 };
       }
-      const total = await Bar.countDocuments(conditions);
       const bars = await Bar.find(conditions).skip(skip).limit(limit).lean();
-
+      const total = await Bar.countDocuments(conditions);
       return { total, bars };
    },
    //* 바 상세 조회
@@ -49,7 +48,9 @@ const barService = {
       if (data.newImageNames) {
          const imagePath = path.join(__dirname, '../images', foundBar.image);
          fs.unlink(imagePath, (err) => {
-            if (err) throw new InternalServerError('이미지 삭제 실패');
+            if (err.code !== 'ENOENT') {
+               throw new InternalServerError('이미지 삭제 실패');
+            }
          });
          image = data.newImageNames[0].imageName;
       }
@@ -73,10 +74,11 @@ const barService = {
       if (!foundBar) throw new NotFoundError('바 정보 없음');
       // 이미지 파일 삭제
       const imagePath = path.join(__dirname, '../images', foundBar.image);
-      // await fs.unlink(imagePath, (err) => {
-      //    if (err) throw new InternalServerError('이미지 삭제 실패');
-      // });
-      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+      await fs.unlink(imagePath).catch(err => {
+         if (err.code !== 'ENOENT') {
+            throw new InternalServerError('이미지 삭제 실패');
+         }
+      });
 
 
       const result = await Bar.deleteOne({ _id: barId });

@@ -34,58 +34,6 @@ const reviewService = {
       return { total: results.length, reviews: results.slice(skip, skip + limit) };
    },
 
-   //* 리뷰 삭제(관리자)
-   async deleteReview(reviewId) {
-      const cocktailReview = await CocktailReview.findOne({ _id: reviewId }).lean();
-      if (cocktailReview) {
-         await CocktailReview.deleteOne({ _id: reviewId });
-         const cocktail = await Cocktail.findOne({ reviews: reviewId });
-         if (cocktail) {
-            cocktail.reviews.pull(reviewId);
-
-            const result = await CocktailReview.aggregate([
-               { $match: { cocktail: cocktail._id } },
-               {
-                  $group: {
-                     _id: null,
-                     avgRating: { $avg: "$rating" },
-                     reviewCount: { $sum: 1 }
-                  }
-               }
-            ]);
-
-            cocktail.avgRating = result[0] ? result[0].avgRating : 0;
-            cocktail.reviewCount = result[0] ? result[0].reviewCount : 0;
-            await cocktail.save();
-
-            return;
-         }
-      }
-      const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId });
-      if (diyRecipeReview) {
-         await DiyRecipeReview.deleteOne({ _id: reviewId });
-         const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
-         if (diyRecipe) {
-            diyRecipe.reviews.pull(reviewId);
-            const result = await DiyRecipeReview.aggregate([
-               { $match: { diyRecipe: diyRecipe._id } },
-               {
-                  $group: {
-                     _id: null,
-                     avgRating: { $avg: "$rating" },
-                     reviewCount: { $sum: 1 }
-                  }
-               }
-            ]);
-            diyRecipe.avgRating = result[0] ? result[0].avgRating : 0;
-            diyRecipe.reviewCount = result[0] ? result[0].reviewCount : 0;
-            await diyRecipe.save();
-
-         }
-         return;
-      }
-      if (!cocktailReview || !diyRecipeReview) throw new NotFoundError('리뷰 없음');
-   },
    //* 리뷰 목록 조회
    async getReviewList(id, perPage, page) {
       const { limit, skip } = setParameter(perPage, page);
@@ -209,7 +157,11 @@ const reviewService = {
          for (let i = 0; i < newImageNames.length; i++) {
             if (foundReview.images && foundReview.images[i]) {
                const imagePath = path.join(__dirname, '../images', foundReview.images[i]);
-               await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+               await fs.unlink(imagePath).catch(err => {
+                  if (err.code !== 'ENOENT') {
+                     throw new InternalServerError('이미지 삭제 실패');
+                  }
+               });
             }
          }
          images = newImageNames.map(image => image.imageName);
@@ -259,12 +211,18 @@ const reviewService = {
       if (type === 'recipes') await DiyRecipe.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
    },
    //* 리뷰 삭제
-   async deleteUserReview(userId, reviewId) {
-      const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId }).lean();
+   async deleteReview(user, reviewId) {
+      let cocktailReview;
+      if (!user.isAdmin) cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: user._id }).lean();
+      else cocktailReview = await CocktailReview.findById(reviewId).lean();
       if (cocktailReview) {
          for (let image of cocktailReview.images) {
             const imagePath = path.join(__dirname, '../images', image);
-            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+            await fs.unlink(imagePath).catch(err => {
+               if (err.code !== 'ENOENT') {
+                  throw new InternalServerError('이미지 삭제 실패');
+               }
+            });
          }
          await CocktailReview.deleteOne({ _id: reviewId });
          const cocktail = await Cocktail.findOne({ reviews: reviewId });
@@ -288,11 +246,18 @@ const reviewService = {
             return;
          }
       }
-      const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: userId });
+      let diyRecipeReview;
+      if (!user.isAdmin) diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: user._id }).lean();
+      else diyRecipeReview = await DiyRecipeReview.findById(reviewId).lean();
+      diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: user._id });
       if (diyRecipeReview) {
          for (let image of diyRecipeReview.images) {
             const imagePath = path.join(__dirname, '../images', image);
-            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+            await fs.unlink(imagePath).catch(err => {
+               if (err.code !== 'ENOENT') {
+                  throw new InternalServerError('이미지 삭제 실패');
+               }
+            });
          }
          await DiyRecipeReview.deleteOne({ _id: reviewId });
          const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });

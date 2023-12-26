@@ -1,4 +1,4 @@
-const { NotFoundError, ConflictError, InternalServerError, BadRequestError } = require('../utils/customError');
+const { NotFoundError, ConflictError, InternalServerError, BadRequestError, ForbiddenError } = require('../utils/customError');
 const { DiyRecipeReview, DiyRecipe, Base } = require('../models');
 const { default: mongoose } = require('mongoose');
 const setParameter = require('../utils/setParameter');
@@ -128,11 +128,11 @@ const diyRecipeService = {
     if (!result) throw new InternalServerError('등록 할 수 없습니다.');
   },
   //* DIY 레시피 수정
-  async updateDiyRecipe(id, data) {
+  async updateDiyRecipe(userId, id, data) {
     const { newImageNames, recipeImageNames, ...rest } = data;
     let { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, } = rest;
-    const foundDiyRecipe = await DiyRecipe.findById(id).lean();
-    if (!foundDiyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
+    const foundDiyRecipe = await DiyRecipe.findOne({ _id: id, user: userId }).lean();
+    if (!foundDiyRecipe) throw new ForbiddenError('사용자가 작성한 레시피가 아닙니다.');
 
     const dataKeys = Object.keys(rest);
     const isSame = dataKeys
@@ -146,14 +146,22 @@ const diyRecipeService = {
     let image;
     if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
       const imagePath = path.join(__dirname, '../images', foundDiyRecipe.image);
-      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+      await fs.unlink(imagePath).catch(err => {
+        if (err.code !== 'ENOENT') {
+          throw new InternalServerError('이미지 삭제 실패');
+        }
+      });
       image = newImageNames[0].imageName;
     }
     if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
       for (let i = 0; i < recipeImageNames.length; i++) {
         if (foundDiyRecipe.recipes && foundDiyRecipe.recipes[i] && foundDiyRecipe.recipes[i].image) {
           const imagePath = path.join(__dirname, '../images', foundDiyRecipe.recipes[i].image);
-          await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+          await fs.unlink(imagePath).catch(err => {
+            if (err.code !== 'ENOENT') {
+              throw new InternalServerError('레시피 이미지 삭제 실패');
+            }
+          });
         }
         if (recipes && recipes[i]) {
           recipes[i].image = recipeImageNames[i].imageName;
@@ -162,26 +170,40 @@ const diyRecipeService = {
         }
       }
     }
-    const updateDiyRecipe = await DiyRecipe.updateOne(
+    await DiyRecipe.updateOne(
       { _id: id },
       { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour, },
       { runValidators: true }, //벨리데이터 추가!
     );
   },
   //* DIY 레시피 삭제
-  async deleteDiyRecipe(id) {
-    const diyRecipe = await DiyRecipe.findById(id).lean();
-    if (!diyRecipe) throw new NotFoundError('DIY 레시피 정보 X');
+  async deleteDiyRecipe(user, id) {
+    let diyRecipe;
+    if (!user.isAdmin) {
+      diyRecipe = await DiyRecipe.findOne({ _id: id, user: user._id }).lean();
+      if (!diyRecipe) throw new ForbiddenError('작성자가 아닙니다.');
+    }
+    else diyRecipe = await DiyRecipe.findById(id).lean();
+
+    if (!diyRecipe) throw new NotFoundError('DIY 레시피 정보 없습니다.');
     //이미지
     const imagePath = path.join(__dirname, '../images', diyRecipe.image);
-    await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+    await fs.unlink(imagePath).catch(err => {
+      if (err.code !== 'ENOENT') {
+        throw new InternalServerError('이미지 삭제 실패');
+      }
+    });
 
     for (let i = 0; i < diyRecipe.recipes.length; i++) {
       if (diyRecipe.recipes && diyRecipe.recipes[i] && diyRecipe.recipes[i].image) {
-         const imagePath = path.join(__dirname, '../images', diyRecipe.recipes[i].image);
-         await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+        const imagePath = path.join(__dirname, '../images', diyRecipe.recipes[i].image);
+        await fs.unlink(imagePath).catch(err => {
+          if (err.code !== 'ENOENT') {
+            throw new InternalServerError('레시피 이미지 삭제 실패');
+          }
+        });
       }
-   }
+    }
     await DiyRecipeReview.deleteMany({ diyRecipe: id });
     const result = await DiyRecipe.deleteOne({ _id: id });
     if (result.deletedCount === 0)

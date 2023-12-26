@@ -190,19 +190,26 @@ const cocktailService = {
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
       }
-      // if (!recipes) recipes = [];
       // 이미지
       let image;
       if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
          const imagePath = path.join(__dirname, '../images', foundCocktail.image);
-         await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+         await fs.unlink(imagePath).catch(err => {
+            if (err.code !== 'ENOENT') {
+               throw new InternalServerError('이미지 삭제 실패');
+            }
+         });
          image = newImageNames[0].imageName;
       }
       if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
          for (let i = 0; i < recipeImageNames.length; i++) {
             if (foundCocktail.recipes && foundCocktail.recipes[i] && foundCocktail.recipes[i].image) {
                const imagePath = path.join(__dirname, '../images', foundCocktail.recipes[i].image);
-               await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+               await fs.unlink(imagePath).catch(err => {
+                  if (err.code !== 'ENOENT') {
+                     throw new InternalServerError('레시피 이미지 삭제 실패');
+                  }
+               });
             }
             if (recipes && recipes[i]) {
                recipes[i].image = recipeImageNames[i].imageName;
@@ -225,12 +232,20 @@ const cocktailService = {
       if (!cocktail) throw new NotFoundError('칵테일 정보 없음');
       //이미지
       const imagePath = path.join(__dirname, '../images', cocktail.image);
-      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+      await fs.unlink(imagePath).catch(err => {
+         if (err.code !== 'ENOENT') {
+            throw new InternalServerError('이미지 삭제 실패');
+         }
+      });
 
       for (let i = 0; i < cocktail.recipes.length; i++) {
          if (cocktail.recipes && cocktail.recipes[i] && cocktail.recipes[i].image) {
             const imagePath = path.join(__dirname, '../images', cocktail.recipes[i].image);
-            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+            await fs.unlink(imagePath).catch(err => {
+               if (err.code !== 'ENOENT') {
+                  throw new InternalServerError('레시피 이미지 삭제 실패');
+               }
+            });
          }
       }
 
