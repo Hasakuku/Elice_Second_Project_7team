@@ -20,8 +20,8 @@ const DiyRecipeSchema = new Schema({
    sour: { type: Number, min: 1, max: 5, required: true, }, // 신맛
    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiyRecipeReview', }],
    wishes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
-   avgRating: Number,
-   reviewCount: Number
+   avgRating: { type: Number, default: 0 },
+   reviewCount: { type: Number, default: 0 }
 }, {
    timestamps: true, versionKey: false
 });
