@@ -89,77 +89,78 @@ const reviewService = {
       const { limit, skip } = setParameter(perPage, page, type);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
       let results = { total: 0, data: {} };
-  
-      const types = type ? [type] : ['CocktailReview', 'DiyRecipeReview'];
-  
+
+      const types = type ? [type] : ['cocktails', 'recipes'];
+
       let totalFetched = 0;
-  
+
       for (let type of types) {
-          if (totalFetched >= limit) break;
-  
-          const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
-          let matchData = {
-              $and: [
-                  { user: userId },
-                  { _id: { $ne: new mongoose.Types.ObjectId(cursorId) } }
-              ],
-          };
-  
-          if (cursorId) {
-              matchData.$and.push({
-                  $or: [
-                      { createdAt: { $lt: dateFromId } },
-                      { createdAt: dateFromId, _id: { $lt: cursorId } }
-                  ]
-              });
-          }
-  
-          const pipelineData = [
-              { $match: matchData },
-              { $sort: { createdAt: -1 } },
-              { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyrecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
-              { $unwind: '$item' },
-              { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
-              { $skip: skip },
-              { $limit: limit - totalFetched },
-          ];
-  
-          const countData = { user: userId };
-  
-          const runPipeline = async () => {
-              let data = await Model.aggregate(pipelineData);
-              const size = await Model.countDocuments(countData);
-              data = data.map(item => {
-                  const { likes, ...rest } = item;
-                  return {
-                      ...rest,
-                      isLiked: Array.isArray(likes) && likes.map(like => like.toString()).includes(userId),
-                  };
-              });
-              return { size, data };
-          };
-  
-          const { size, data } = await runPipeline();
-          totalFetched += data.length;
-  
-          for (let review of data) {
-              const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
-              if (!results.data[monthYear]) {
-                  results.data[monthYear] = { date: monthYear, list: [] };
-              }
-              results.data[monthYear].list.push(review);
-          }
+         if (totalFetched >= limit) break;
+
+         const Model = type === 'cocktails' ? CocktailReview : DiyRecipeReview;
+         let matchData = {
+            $and: [
+               { user: userId },
+               { _id: { $ne: new mongoose.Types.ObjectId(cursorId) } }
+            ],
+         };
+
+         if (cursorId) {
+            matchData.$and.push({
+               $or: [
+                  { createdAt: { $lt: dateFromId } },
+                  { createdAt: dateFromId, _id: { $lt: cursorId } }
+               ]
+            });
+         }
+
+         const pipelineData = [
+            { $match: matchData },
+            { $sort: { createdAt: -1 } },
+            { $lookup: { from: type === 'cocktails' ? 'cocktails' : 'diyrecipes', localField: type === 'cocktails' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
+            { $unwind: '$item' },
+            { $project: { _id: 1, type: type === 'cocktails' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
+            { $skip: skip },
+            { $limit: limit - totalFetched },
+         ];
+
+         const runPipeline = async () => {
+            let data = await Model.aggregate(pipelineData);
+            data = data.map(item => {
+               const { likes, ...rest } = item;
+               return {
+                  ...rest,
+                  isLiked: Array.isArray(likes) && likes.map(like => like.toString()).includes(userId),
+               };
+            });
+            return data;
+         };
+
+         const data = await runPipeline();
+         totalFetched += data.length;
+
+         for (let review of data) {
+            const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
+            if (!results.data[monthYear]) {
+               results.data[monthYear] = { date: monthYear, list: [] };
+            }
+            results.data[monthYear].list.push(review);
+         }
       }
+
       if (type === 'cocktails') {
-          results.total = await CocktailReview.countDocuments({ user: userId });
+         results.total = await CocktailReview.countDocuments({ user: userId });
       } else if (type === 'recipes') {
-          results.total = await DiyRecipeReview.countDocuments({ user: userId });
+         results.total = await DiyRecipeReview.countDocuments({ user: userId });
       } else {
-          results.total = await CocktailReview.countDocuments({ user: userId }) + await DiyRecipeReview.countDocuments({ user: userId });
+         results.total = await CocktailReview.countDocuments({ user: userId }) + await DiyRecipeReview.countDocuments({ user: userId });
       }
+
       results.data = Object.values(results.data);
+
       return results;
-  },
+   }
+   ,
    //* 리뷰 수정
    async updateReview(userId, id, type, data) {
       const { content, rating, newImageNames } = data;
