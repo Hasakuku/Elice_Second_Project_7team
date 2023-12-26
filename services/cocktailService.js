@@ -1,6 +1,9 @@
+const { default: mongoose } = require('mongoose');
 const { Base, Cocktail, CocktailReview } = require('../models');
 const { BadRequestError, NotFoundError, ConflictError, InternalServerError } = require('../utils/customError');
-const setPrameter = require('../utils/setParameter');
+const setParameter = require('../utils/setParameter');
+const fs = require('fs').promises;
+const path = require('path');
 
 const cocktailService = {
    //* 맞춤 추천 칵테일
@@ -18,13 +21,13 @@ const cocktailService = {
       let abvRange = {};
       switch (abv) {
          case 1:
-            abvRange = { $gte: 0, $lt: 10 };
+            abvRange = { $gte: 1, $lt: 3 };
             break;
          case 2:
-            abvRange = { $gte: 10, $lt: 20 };
+            abvRange = { $gte: 3, $lt: 4 };
             break;
          case 3:
-            abvRange = { $gte: 20 };
+            abvRange = { $gte: 4 };
             break;
          default:
             throw new BadRequestError('abv 값 오류');
@@ -66,13 +69,25 @@ const cocktailService = {
       });
       return result;
    },
-   //* 칵테일 목록 조회
-   async getCocktailList(base, sort, abv, sweet, bitter, sour, item, page) {
-      let foundBase;
-      let option = {};// find할 옵션
-      const { limit, skip } = setPrameter(item, page);
+   //*칵테일 목록 조회
+   async getCocktailList(query) {
+      const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = query;
+      const { limit, skip } = setParameter(perPage, page);
+      const cursorValues = Number(cursorValue);
+      const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
+      const ranges = {
+         1: [1, 2],
+         2: [3],
+         3: [4, 5]
+      };
 
-      // base 미선택시 모든 베이스를 대상
+      const option = {};
+      if (abv) option.abv = { $in: ranges[abv] };
+      if (sweet) option.sweet = { $in: ranges[sweet] };
+      if (bitter) option.bitter = { $in: ranges[bitter] };
+      if (sour) option.sour = { $in: ranges[sour] };
+
+      let foundBase;
       if (!base) {
          foundBase = await Base.find({}).select('_id').lean();
       } else {
@@ -83,111 +98,58 @@ const cocktailService = {
       // base를 쿼리에 추가
       option.base = { $in: foundBase.map(b => b._id) };
 
-      // abv, sweet, bitter, sour가 주어진 경우 옵션에 추가
-      if (abv) {
-         switch (abv) {
-            case 1:
-               option.abv = { $gte: 0, $lt: 10 };
-               break;
-            case 2:
-               option.abv = { $gte: 10, $lt: 20 };
-               break;
-            case 3:
-               option.abv = { $gte: 20 };
-               break;
-            default:
-               throw new BadRequestError('abv 값 오류');
-         }
+      let sortObj = { createdAt: -1 };
+      if (sort === 'rating') {
+         sortObj = { avgRating: -1, ...sortObj };
+      } else if (sort === 'review') {
+         sortObj = { reviewCount: -1, ...sortObj };
       }
-      if (sweet) {
-         switch (sweet) {
-            case 1:
-               option.sweet = { $in: [1, 2] };
-               break;
-            case 2:
-               option.sweet = { $eq: 3 };
-               break;
-            case 3:
-               option.sweet = { $in: [4, 5] };
-               break;
-            default:
-               throw new BadRequestError('sweet 값 오류');
-         }
-      }
-      if (bitter) {
-         switch (bitter) {
-            case 1:
-               option.bitter = { $in: [1, 2] };
-               break;
-            case 2:
-               option.bitter = { $eq: 3 };
-               break;
-            case 3:
-               option.bitter = { $in: [4, 5] };
-               break;
-            default:
-               throw new BadRequestError('bitter 값 오류');
-         }
-      }
-      if (sour) {
-         switch (sour) {
-            case 1:
-               option.sour = { $in: [1, 2] };
-               break;
-            case 2:
-               option.sour = { $eq: 3 };
-               break;
-            case 3:
-               option.sour = { $in: [4, 5] };
-               break;
-            default:
-               throw new BadRequestError('sour 값 오류');
-         }
-      }
+      const matchData = { $and: [option] };
 
-      // 칵테일 조회
-      const cocktails = await Cocktail.find(option)
-         .skip(skip)
-         .limit(limit)
-         .select('_id name image createdAt updatedAt')
-         .populate({
-            path: 'reviews',
-            select: 'rating -_id'
-         })
-         .lean();
-      if (cocktails.length === 0) throw new NotFoundError('조건에 맞는 칵테일 없음');
-      // 각 칵테일에 대한 평균 평점과 리뷰 수 계산
-      for (let cocktail of cocktails) {
-         let avgRating = cocktail.reviews.reduce((acc, review) => acc + review.rating, 0) / cocktail.reviews.length;
-         cocktail.avgRating = avgRating.toFixed(2);
-         cocktail.reviewCount = cocktail.reviews.length;
-      }
+      const addCursorCondition = (key, value) => {
+         const condition1 = { [key]: { $lt: value } };
+         const condition2 = { [key]: value };
+         if (key !== 'createdAt') condition2.createdAt = { $lt: dateFromId };
+         matchData.$and.push({ $or: [condition1, condition2,] });
+      };
 
-      // 정렬 적용
-      let sortedCocktails;
-      switch (sort) {
-         case 'rating':
-            sortedCocktails = cocktails.sort((a, b) => b.avgRating - a.avgRating);
-            break;
-         case 'review':
-            sortedCocktails = cocktails.sort((a, b) => b.reviewCount - a.reviewCount);
-            break;
-         default:
-            sortedCocktails = cocktails;
+      if (cursorId && cursorValues) {
+         matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
+         if (sort === 'review') addCursorCondition('reviewCount', cursorValues);
+         else if (sort === 'rating') addCursorCondition('avgRating', cursorValues);
+         else addCursorCondition('createdAt', dateFromId);
+      } else if (cursorId) {
+         matchData.$and.push({ _id: { $ne: new mongoose.Types.ObjectId(cursorId) } });
+         addCursorCondition('createdAt', dateFromId);
       }
-      const result = sortedCocktails.map(item => {
-         const { reviews, ...rest } = item;
-         return {
-            ...rest,
-            avgRating: item.avgRating,
-            reviewCount: item.reviewCount,
-         };
-      });
-      return result;
+      const pipelineCount = [
+         { $match: option },
+         { $sort: sortObj },
+         { $count: 'total' }
+      ];
+      const pipelineData = [
+         { $match: matchData },
+         { $sort: sortObj },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+      ];
+
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit });
+
+      const cocktails = await Cocktail.aggregate(pipelineData);
+      const total = await Cocktail.aggregate(pipelineCount);
+
+      let cocktailSize;
+      if (total.length === 0) cocktailSize = 0;
+      else cocktailSize = total[0].total;
+      const results = { cocktailSize, cocktails, };
+      return results;
    },
    //* 칵테일 상세 조회
    async getCocktail(id) {
-      const cocktail = await Cocktail.findById(id).populate({ path: 'reviews', options: { limit: 2 } }).lean();
+      const cocktail = await Cocktail.findById(id).populate({ path: 'base', select: 'name' }).populate({ path: 'reviews', options: { limit: 2 } }).lean();
       if (!cocktail) throw new NotFoundError('칵테일 없음');
       cocktail.reviews = cocktail.reviews.map(review => ({
          ...review,
@@ -197,26 +159,59 @@ const cocktailService = {
    },
    //* 칵테일 등록
    async createCocktail(data) {
-      const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const { name, base, newImageNames, recipeImageNames, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
       const foundCocktail = await Cocktail.findOne({ name: name }).lean();
       if (foundCocktail) throw new ConflictError('이미 등록된 칵테일');
+      //이미지
+      let image;
+      if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
+         image = newImageNames[0].imageName;
+      }
+      if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
 
+         for (let i = 0; i < recipes.length; i++) {
+            recipes[i].image = recipeImageNames[i].imageName;
+         }
+      }
       const newCocktail = new Cocktail({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour });
       const result = await newCocktail.save();
       if (!result) throw new InternalServerError('등록 안됨');
    },
    //* 칵테일 수정
    async updateCocktail(id, data) {
-      const { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const { newImageNames, recipeImageNames, ...rest } = data;
+      let { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = rest;
       const foundCocktail = await Cocktail.findById(id).lean();
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
-      const dataKeys = Object.keys(data);
-      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
+      const dataKeys = Object.keys(rest);
+      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).some(value => value === true);
 
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
       }
+      // if (!recipes) recipes = [];
+      // 이미지
+      let image;
+      if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
+         const imagePath = path.join(__dirname, '../images', foundCocktail.image);
+         await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+         image = newImageNames[0].imageName;
+      }
+      if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
+         for (let i = 0; i < recipeImageNames.length; i++) {
+            if (foundCocktail.recipes && foundCocktail.recipes[i] && foundCocktail.recipes[i].image) {
+               const imagePath = path.join(__dirname, '../images', foundCocktail.recipes[i].image);
+               await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+            }
+            if (recipes && recipes[i]) {
+               recipes[i].image = recipeImageNames[i].imageName;
+            } else {
+               recipes = [{ image: recipeImageNames[i].imageName }];
+            }
+         }
+      }
+
       const updateCocktail = await Cocktail.updateOne(
          { _id: id },
          { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour },
@@ -228,6 +223,17 @@ const cocktailService = {
    async deleteCocktail(id) {
       const cocktail = await Cocktail.findById(id).lean();
       if (!cocktail) throw new NotFoundError('칵테일 정보 없음');
+      //이미지
+      const imagePath = path.join(__dirname, '../images', cocktail.image);
+      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+
+      for (let i = 0; i < cocktail.recipes.length; i++) {
+         if (cocktail.recipes && cocktail.recipes[i] && cocktail.recipes[i].image) {
+            const imagePath = path.join(__dirname, '../images', cocktail.recipes[i].image);
+            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('레시피 이미지 삭제 실패'); });
+         }
+      }
+
       await CocktailReview.deleteMany({ cocktail: id });
       const result = await Cocktail.deleteOne({ _id: id });
       if (result.deletedCount === 0) throw new InternalServerError("칵테일 삭제 실패");

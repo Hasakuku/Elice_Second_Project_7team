@@ -13,7 +13,10 @@
    <button id="refresh">Refresh Token</button>
    <button id="logout">Logout</button>
    <a href="/api/v1/auth/kakao/redirectWithdrawal">withdrawal</a>
-
+   <button onclick="fetchImage()">이미지 가져오기</button>
+   <img id="image" src="1703261972932.png" alt="">
+   <img id="image" src="1703269457229.png" alt="">
+   <img id="image" src="1703269459632.png" alt="">
    <script>
       $('#refresh').click(function () {
          $.post('/api/v1/auth/kakao/user', function (data) {

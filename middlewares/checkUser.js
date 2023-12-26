@@ -9,7 +9,7 @@ module.exports = asyncHandler(async (req, res, next) => {
    
    const jwtToken = req.cookies.jwtToken;
    if (!jwtToken) {
-      throw new NotFoundError("쿠키에 토큰 없음");
+      throw new UnauthorizedError("쿠키에 토큰 없음");
    }
    // 토큰 검사
    const user = jwt.verify(jwtToken, jwtSecret, function (err, decoded) {
@@ -19,6 +19,6 @@ module.exports = asyncHandler(async (req, res, next) => {
    // 토큰에 유저정보 할당
    const getUserTokenPayLoad = await userService.getUserTokenPayLoad(user.id);
    // req.body.payload 유저 정보 할당
-   req.body.payload = getUserTokenPayLoad;
+   req.user = getUserTokenPayLoad;
    next();
 });

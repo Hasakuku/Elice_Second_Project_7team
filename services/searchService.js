@@ -1,85 +1,103 @@
-const { Base, Cocktail, DiyRecipe } = require('../models');
+const { default: mongoose } = require('mongoose');
+const { Base, Cocktail, DiyRecipe, CocktailReview } = require('../models');
 const { NotFoundError, BadRequestError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
 
 const searchService = {
-   async searchByKeyword(keyword, type, sort, item, page) {
-      const { limit, skip,} = setParameter(item, page);
-      const types = (type === 'cocktails' ? ['cocktails']
-      : type === 'recipes' ? ['diyRecipes']
-         : type === undefined || type === null ? ['cocktails', 'diyRecipes']
-            : (() => { throw new BadRequestError('타입 오류'); })());
-      // base 검색
+   async searchByKeyword(query) {
+      const { keyword, cursorId, sort, cursorValue, page, perPage, type } = query;
+      const { skip, limit } = setParameter(perPage, page);
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
+      const cursorValues = Number(cursorValue);
+      const perPages = Number(perPage);
+      const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
-      let results = {};
-      // type별 검색
-      for (let type of types) {
-         const Model = type === 'cocktails' ? Cocktail : DiyRecipe;
-         const items = await Model.find({
-            $or: [
-               { name: { $regex: keyword, $options: 'i' } },
-               { base: { $in: baseIds } }
-            ],
-         }).populate('base').populate({ path: 'reviews', select: 'rating' }).skip(skip).limit(limit).lean();
-         if (types.length < 3 && !items.length === 0) throw new NotFoundError("검색 결과가 없음");
-         // 평균 별점& 리뷰 숫자 계산.
-         let itemResults = [];
-         for (let item of items) {
-            const avgRating = (item.reviews.reduce((acc, reviews) => acc + reviews.rating, 0) / item.reviews.length).toFixed(2);
-            const reviewCount = item.reviews.length;
-            itemResults.push({
-               _id: item._id,
-               name: item.name,
-               image: item.image,
-               avgRating,
-               reviewCount
-            });
-         }
-
-         // 정렬 적용
-         let sortedItems;
-         switch (sort) {
-            case 'rating':
-               sortedItems = itemResults.sort((a, b) => b.avgRating - a.avgRating);
-               break;
-            case 'review':
-               sortedItems = itemResults.sort((a, b) => b.reviewCount - a.reviewCount);
-               break;
-            default:
-               sortedItems = itemResults;
-         }
-         results[type] = sortedItems;
+      let sortObj = { createdAt: -1 };
+      if (sort === 'rating') {
+         sortObj = { avgRating: -1, ...sortObj };
+      } else if (sort === 'review') {
+         sortObj = { reviewCount: -1, ...sortObj };
       }
-      return results;
-   },
-   async countByKeyword(keyword) {
-      // base 검색
-      const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
-      const baseIds = base.map(base => base._id);
+      const matchCount = {
+         $or: [
+            { name: { $regex: new RegExp(keyword, 'i') }, },
+            { base: { $in: baseIds } }
+         ]
+      };
+
+      const matchData = {
+         $and: [
+            {
+               $or: [
+                  { name: { $regex: new RegExp(keyword, 'i') }, _id: { $ne: new mongoose.Types.ObjectId(cursorId) } },
+                  { base: { $in: baseIds } }
+               ]
+            }
+         ]
+      };
+
+      const addCursorCondition = (key, value) => {
+         const condition1 = { [key]: { $lt: value } };
+         const condition2 = { [key]: value };
+         if (key !== 'createdAt') condition2.createdAt = { $lt: dateFromId };
+         matchData.$and.push({ $or: [condition1, condition2] });
+      };
+
+      if (cursorId && cursorValues) {
+         if (sort === 'review') addCursorCondition('reviewCount', cursorValues);
+         else if (sort === 'rating') addCursorCondition('avgRating', cursorValues);
+         else addCursorCondition('createdAt', dateFromId);
+      } else if (cursorId) {
+         addCursorCondition('createdAt', dateFromId);
+      }
+
+      const pipelineCount = [
+         { $match: matchCount },
+         { $count: 'total' }
+      ];
+
+      const pipelineData = [
+         { $match: matchData },
+         { $sort: sortObj },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+
+      ];
+
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit });
+
+      const runPipeline = async (Model) => {
+         const total = await Model.aggregate(pipelineCount);
+         const size = total.length > 0 ? total[0].total : 0;
+         const data = await Model.aggregate(pipelineData);
+         return { size, data };
+      };
 
       const types = ['cocktail', 'diyRecipe'];
+      const results = {};
 
-      let totalCounts = {};
-      let total = 0;
-      // type별 검색
-      for (let type of types) {
-         const Model = type === 'cocktail' ? Cocktail : DiyRecipe;
-         // 검색 결과 갯수 계산
-         const totalCount = await Model.countDocuments({
-            $or: [
-               { name: { $regex: keyword, $options: 'i' } },
-               { base: { $in: baseIds } }
-            ],
-         });
-         totalCounts[type] = totalCount;
-         total += totalCount;
+      for (let item of types) {
+         let Model;
+         if (type === 'recipes' && item === 'diyRecipe') {
+            Model = DiyRecipe;
+         } else if (type !== 'recipes' && item === 'cocktail') {
+            Model = Cocktail;
+         } else if (!type || type === `${item}s`) {
+            Model = item === 'cocktail' ? Cocktail : DiyRecipe;
+         }
+
+         if (Model) {
+            const { size, data } = await runPipeline(Model);
+            results[`${item}Size`] = size;
+            results[`${item}s`] = data;
+         }
       }
-      totalCounts['total'] = total;
-      if (!total) throw new NotFoundError('검색 결과 없음');
-      return totalCounts;
-   }
+      if (!type) results.total = results.cocktailSize + results.diyRecipeSize;
+      return results;
+   },
 };
 
 module.exports = searchService;
