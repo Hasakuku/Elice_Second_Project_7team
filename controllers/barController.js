@@ -3,8 +3,8 @@ const barService = require('../services/barService');
 const { BadRequestError } = require('../utils/customError');
 //* 바 목록 조회
 const getBarList = asyncHandler(async (req, res) => {
-   const { x1, x2, y1, y2 } = req.query;
-   const result = await barService.getBarList({ x1, x2, y1, y2 });
+   const { x1, x2, y1, y2, keyword, perPage, page } = req.query;
+   const result = await barService.getBarList({ x1, x2, y1, y2, keyword, perPage, page });
    res.status(200).json(result);
 });
 //* 바 상세 조회
