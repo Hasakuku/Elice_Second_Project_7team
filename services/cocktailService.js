@@ -8,7 +8,8 @@ const path = require('path');
 const cocktailService = {
    //* 맞춤 추천 칵테일
    async getCustomCocktail(user) {
-      const userCustom = await User.findById(user._id).select('custom').lean();
+      const userCustom = await User.findById(user._id).select('custom -_id').lean();
+      if (Object.keys(userCustom)) throw new BadRequestError('설문조사를 하세요');
       const { abv, base, sweet, sour, bitter } = userCustom.custom;
 
       let foundBase;
