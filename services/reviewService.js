@@ -35,7 +35,7 @@ const reviewService = {
    },
 
    //* 리뷰 목록 조회
-   async getReviewList(id, perPage, page) {
+   async getReviewList(user, { perPage, page, id }) {
       const { limit, skip } = setParameter(perPage, page);
       let results = [];
       const models = [CocktailReview, DiyRecipeReview];
@@ -47,7 +47,7 @@ const reviewService = {
             .limit(limit)
             .populate({ path: 'user', select: 'nickname' })
             .lean();
-
+         let userId = user ? user.id.toString() : '';
          for (let review of reviews) {
             results.push({
                _id: review._id,
@@ -55,6 +55,7 @@ const reviewService = {
                content: review.content,
                images: review.images,
                rating: review.rating,
+               isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
                likesCount: review.likes.length,
                createdAt: review.createdAt
             });
@@ -112,7 +113,7 @@ const reviewService = {
             { $sort: { createdAt: -1 } },
             { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyrecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
             { $unwind: '$item' },
-            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1 } },
+            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
             { $skip: skip },
             { $limit: limit },
          ];
@@ -120,8 +121,15 @@ const reviewService = {
          const countData = { user: userId };
 
          const runPipeline = async () => {
-            const data = await Model.aggregate(pipelineData);
+            let data = await Model.aggregate(pipelineData);
             const size = await Model.countDocuments(countData);
+            data = data.map(item => {
+               const { likes, ...rest } = item;
+               return {
+                  ...rest,
+                  isLiked: Array.isArray(likes) && likes.map(like => like.toString()).includes(userId),
+               };
+            });
             return { size, data };
          };
 

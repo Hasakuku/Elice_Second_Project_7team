@@ -1,5 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const cocktailService = require('../services/cocktailService');
+const { NotFoundError, UnauthorizedError } = require('../utils/customError');
+const verifyUserToken = require('../utils/verifyUserToken');
 
 //* 맞춤 추천 칵테일
 const getCustomCocktail = asyncHandler(async (req, res) => {
@@ -12,14 +14,16 @@ const getCustomCocktail = asyncHandler(async (req, res) => {
 
 //* 칵테일 목록 조회
 const getCocktailList = asyncHandler(async (req, res) => {
+  const user = verifyUserToken(req);
   const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = req.query;
-  const result = await cocktailService.getCocktailList({ cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base });
+  const result = await cocktailService.getCocktailList(user, { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base });
   res.status(200).json(result);
 });
 //* 칵테일 상세 조회
 const getCocktail = asyncHandler(async (req, res) => {
+  const user = verifyUserToken(req);
   const id = req.params.id;
-  const result = await cocktailService.getCocktail(id);
+  const result = await cocktailService.getCocktail(user, id);
   res.status(200).json(result);
 });
 

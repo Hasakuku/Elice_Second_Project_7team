@@ -4,13 +4,12 @@ const { NotFoundError, BadRequestError } = require('../utils/customError');
 const setParameter = require('../utils/setParameter');
 
 const searchService = {
-   async searchByKeyword(query) {
+   async searchByKeyword(user, query) {
       const { keyword, cursorId, sort, cursorValue, page, perPage, type } = query;
       const { skip, limit } = setParameter(perPage, page);
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
       const cursorValues = Number(cursorValue);
-      const perPages = Number(perPage);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
       let sortObj = { createdAt: -1 };
@@ -60,7 +59,7 @@ const searchService = {
       const pipelineData = [
          { $match: matchData },
          { $sort: sortObj },
-         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, wishes: 1 } },
 
       ];
 
@@ -72,7 +71,16 @@ const searchService = {
       const runPipeline = async (Model) => {
          const total = await Model.aggregate(pipelineCount);
          const size = total.length > 0 ? total[0].total : 0;
-         const data = await Model.aggregate(pipelineData);
+         let data = await Model.aggregate(pipelineData);
+
+         let userId = user ? user.id.toString() : '';
+         data = data.map(item => {
+            const { wishes, ...rest } = item;
+            return {
+               ...rest,
+               isWished: Array.isArray(wishes) && wishes.map(wish => wish.toString()).includes(userId),
+            };
+         });
          return { size, data };
       };
 
