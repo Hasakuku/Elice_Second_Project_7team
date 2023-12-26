@@ -24,7 +24,7 @@ const baseService = {
    },
    //* 베이스 수정
    async updateBase(baseId, data) {
-      const { name, newImageNames} = data;
+      const { name, newImageNames } = data;
       const foundBase = await Base.findById(baseId).lean();
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
 
@@ -38,7 +38,9 @@ const baseService = {
       if (newImageNames.length !== 0) {
          const imagePath = path.join(__dirname, '../images', foundBase.image);
          fs.unlink(imagePath, (err) => {
-            if (err) throw new InternalServerError('이미지 삭제 실패');
+            if (err.code !== 'ENOENT') {
+               throw new InternalServerError('이미지 삭제 실패');
+            }
          });
          image = newImageNames[0].imageName;
       }
@@ -55,7 +57,11 @@ const baseService = {
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
       // 이미지 파일 삭제
       const imagePath = path.join(__dirname, '../images', foundBase.image);
-      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+      await fs.unlink(imagePath).catch(err => {
+         if (err.code !== 'ENOENT') {
+            throw new InternalServerError('이미지 삭제 실패');
+         }
+      });
 
       const result = await Base.deleteOne({ _id: baseId });
       if (result.deletedCount === 0) throw new InternalServerError("Base 삭제 실패");

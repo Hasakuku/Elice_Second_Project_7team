@@ -7,12 +7,12 @@ const getReviewListByKeyword = asyncHandler(async (req, res) => {
    const result = await reviewService.getReviewListByKeyword({ keyword, type, perPage, page });
    res.status(200).json(result);
 });
-//* 리뷰 삭제(관리자)
-const deleteReview = asyncHandler(async (req, res) => {
-   const id = req.params.id;
-   await reviewService.deleteReview(id);
-   res.status(204).json("");
-});
+// //* 리뷰 삭제(관리자)
+// const deleteReview = asyncHandler(async (req, res) => {
+//    const id = req.params.id;
+//    await reviewService.deleteReview(id);
+//    res.status(204).json("");
+// });
 //* 유저 리뷰 목록 조회
 const getUserReviewList = asyncHandler(async (req, res) => {
    const userId = req.user._id;
@@ -52,10 +52,10 @@ const updateReview = asyncHandler(async (req, res) => {
    res.status(200).json({ message: '리뷰 수정 성공' });
 });
 //* 리뷰 삭제
-const deleteUserReview = asyncHandler(async (req, res) => {
-   const userId = req.user._id;
+const deleteReview = asyncHandler(async (req, res) => {
+   const user = req.user;
    const id = req.params.id;
-   await reviewService.deleteUserReview(userId, id);
+   await reviewService.deleteReview(user, id);
    res.status(204).json("");
 });
 
@@ -81,7 +81,6 @@ module.exports = {
    getReviewList,
    updateReview,
    createReview,
-   deleteUserReview,
    addLike,
    deleteLike
 };
