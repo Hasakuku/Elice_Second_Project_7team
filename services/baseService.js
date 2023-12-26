@@ -35,7 +35,7 @@ const baseService = {
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
 
       const dataKeys = Object.keys(data);
-      const isSame = dataKeys.map(key => foundBase[key] === data[key]).some(value => value === true);
+      const isSame = dataKeys.map(key => foundBase[key] === data[key]).every(value => value === true);
 
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
