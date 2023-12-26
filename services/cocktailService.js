@@ -169,7 +169,7 @@ const cocktailService = {
    },
    //* 칵테일 등록
    async createCocktail(data) {
-      const { name, base, newImageNames, recipeImageNames, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = data;
+      const { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour } = data;
       const foundCocktail = await Cocktail.findOne({ name: name }).lean();
       if (foundCocktail) throw new ConflictError('이미 등록된 칵테일');
       //이미지
@@ -177,10 +177,13 @@ const cocktailService = {
       if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
          image = newImageNames[0].imageName;
       }
+      let recipes = [];
       if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
-
          for (let i = 0; i < recipes.length; i++) {
-            recipes[i].image = recipeImageNames[i].imageName;
+            let recipe = {};
+            recipe.content = content[i];
+            recipe.image = recipeImageNames[i].imageName;
+            recipes.push(recipe);
          }
       }
       const newCocktail = new Cocktail({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour });
@@ -190,7 +193,7 @@ const cocktailService = {
    //* 칵테일 수정
    async updateCocktail(id, data) {
       const { newImageNames, recipeImageNames, ...rest } = data;
-      let { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour } = rest;
+      let { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour } = rest;
       const foundCocktail = await Cocktail.findById(id).lean();
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
@@ -211,8 +214,18 @@ const cocktailService = {
          });
          image = newImageNames[0].imageName;
       }
-      if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
-         for (let i = 0; i < recipeImageNames.length; i++) {
+      let recipes = [];
+      
+      let maxLength = Math.max(content.length, recipeImageNames ? recipeImageNames.length : 0);
+
+      for (let i = 0; i < maxLength; i++) {
+         let recipe = {};
+
+         if (content[i]) {
+            recipe.content = content[i];
+         }
+
+         if (recipeImageNames && recipeImageNames[i]) {
             if (foundCocktail.recipes && foundCocktail.recipes[i] && foundCocktail.recipes[i].image) {
                const imagePath = path.join(__dirname, '../images', foundCocktail.recipes[i].image);
                await fs.unlink(imagePath).catch(err => {
@@ -221,13 +234,12 @@ const cocktailService = {
                   }
                });
             }
-            if (recipes && recipes[i]) {
-               recipes[i].image = recipeImageNames[i].imageName;
-            } else {
-               recipes = [{ image: recipeImageNames[i].imageName }];
-            }
+            recipe.image = recipeImageNames[i].imageName;
          }
+
+         recipes.push(recipe);
       }
+
 
       const updateCocktail = await Cocktail.updateOne(
          { _id: id },

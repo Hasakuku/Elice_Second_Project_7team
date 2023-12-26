@@ -29,16 +29,16 @@ const getCocktail = asyncHandler(async (req, res) => {
 
 //* 칵테일 등록
 const createCocktail = asyncHandler(async (req, res) => {
-  const { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames, recipeImageNames } = req.body;
-  await cocktailService.createCocktail({ name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames, recipeImageNames });
-  res.status(200).json({ message: '칵테일 등록 성공' });
+  const { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, newImageNames, recipeImageNames } = req.body;
+  await cocktailService.createCocktail({ name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, newImageNames, recipeImageNames });
+  res.status(201).json({ message: '칵테일 등록 성공' });
 });
 
 //* 칵테일 수정
 const updateCocktail = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  const { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames, recipeImageNames } = req.body;
-  await cocktailService.updateCocktail(id, { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, newImageNames, recipeImageNames });
+  const { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, newImageNames, recipeImageNames } = req.body;
+  await cocktailService.updateCocktail(id, { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, newImageNames, recipeImageNames });
   res.status(200).json({ message: '칵테일 수정 성공' });
 });
 
