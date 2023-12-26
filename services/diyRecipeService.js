@@ -106,7 +106,7 @@ const diyRecipeService = {
   //* DIY 레시피 등록
   async createDiyRecipe(data, user) {
     const {
-      name, base, newImageNames, recipeImageNames, description, ingredient, tags, recipes, abv, sweet, bitter, sour,
+      name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour,
     } = data; //피드백 받았던대로 따로 가져옴
     const foundDiyRecipe = await DiyRecipe.findOne({ name: name }).lean();
     if (foundDiyRecipe) throw new ConflictError('이미 등록된 DIY 레시피 입니다.');
@@ -115,9 +115,13 @@ const diyRecipeService = {
     if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
       image = newImageNames[0].imageName;
     }
+    let recipes = [];
     if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
-      for (let i = 0; i < recipes.length; i++) {
-        recipes[i].image = recipeImageNames[i].imageName;
+      for (let i = 0; i < content.length; i++) {
+        let recipe = {};
+        recipe.content = content[i];
+        recipe.image = recipeImageNames[i].imageName;
+        recipes.push(recipe);
       }
     }
 
@@ -141,7 +145,7 @@ const diyRecipeService = {
   //* DIY 레시피 수정
   async updateDiyRecipe(userId, id, data) {
     const { newImageNames, recipeImageNames, ...rest } = data;
-    let { name, base, description, ingredient, tags, recipes, abv, sweet, bitter, sour, } = rest;
+    let { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, } = rest;
     const foundDiyRecipe = await DiyRecipe.findOne({ _id: id, user: userId }).lean();
     if (!foundDiyRecipe) throw new ForbiddenError('사용자가 작성한 레시피가 아닙니다.');
 
@@ -164,8 +168,18 @@ const diyRecipeService = {
       });
       image = newImageNames[0].imageName;
     }
-    if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
-      for (let i = 0; i < recipeImageNames.length; i++) {
+    let recipes = [];
+
+    let maxLength = Math.max(content.length, recipeImageNames ? recipeImageNames.length : 0);
+
+    for (let i = 0; i < maxLength; i++) {
+      let recipe = {};
+
+      if (content[i]) {
+        recipe.content = content[i];
+      }
+
+      if (recipeImageNames && recipeImageNames[i]) {
         if (foundDiyRecipe.recipes && foundDiyRecipe.recipes[i] && foundDiyRecipe.recipes[i].image) {
           const imagePath = path.join(__dirname, '../images', foundDiyRecipe.recipes[i].image);
           await fs.unlink(imagePath).catch(err => {
@@ -174,12 +188,10 @@ const diyRecipeService = {
             }
           });
         }
-        if (recipes && recipes[i]) {
-          recipes[i].image = recipeImageNames[i].imageName;
-        } else {
-          recipes = [{ image: recipeImageNames[i].imageName }];
-        }
+        recipe.image = recipeImageNames[i].imageName;
       }
+
+      recipes.push(recipe);
     }
     await DiyRecipe.updateOne(
       { _id: id },
