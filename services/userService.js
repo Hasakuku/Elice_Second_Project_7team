@@ -168,7 +168,7 @@ const userService = {
          );
          await DiyRecipe.updateOne(
             { _id: id },
-            { $push: { 'wishes': userId } },
+            { $pull: { 'wishes': userId } },
             { runValidators: true }
          );
          return;
