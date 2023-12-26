@@ -7,7 +7,7 @@ const path = require('path');
 
 const diyRecipeService = {
   //* DIY 레시피 목록 조회
-  async getDiyRecipeList(query) {
+  async getDiyRecipeList(user, query) {
     const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = query;
     const { limit, skip } = setParameter(perPage, page);
     const cursorValues = Number(cursorValue);
@@ -64,7 +64,7 @@ const diyRecipeService = {
     const pipelineData = [
       { $match: matchData },
       { $sort: sortObj },
-      { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+      { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, wishes: 1 } },
     ];
 
     if (page) {
@@ -73,21 +73,32 @@ const diyRecipeService = {
     pipelineData.push({ $limit: limit });
     const diyRecipes = await DiyRecipe.aggregate(pipelineData);
     const total = await DiyRecipe.aggregate(pipelineCount);
+    let userId = user ? user.id.toString() : '';
+    let diyRecipeWishes = diyRecipes.map(diyRecipe => {
+      const { wishes, ...rest } = diyRecipe;
+      return {
+        ...rest,
+        isWished: Array.isArray(wishes) && wishes.map(wish => wish.toString()).includes(userId),
+      };
+    });
     let diyRecipeSize;
     if (total.length === 0) diyRecipeSize = 0;
     else diyRecipeSize = total[0].total;
-    const results = { diyRecipeSize, diyRecipes, };
+    const results = { diyRecipeSize, diyRecipes: diyRecipeWishes, };
     return results;
   },
   //* DIY 레시피 상세 조회
-  async getDiyRecipe(id) {
+  async getDiyRecipe(user, id) {
     const diyRecipe = await DiyRecipe.findById(id)
       .populate({ path: 'base', select: 'name' })
       .populate({ path: 'reviews', options: { limit: 2 } })
       .lean(); //id에 맞는 레시피 찾아 리뷰정보랑 같이 반환 limit은 2
     if (!diyRecipe) throw new NotFoundError('DIY 레시피 없습니다.');
+    let userId = user ? user.id.toString() : '';
+    diyRecipe.isWished = Array.isArray(diyRecipe.wishes) && diyRecipe.wishes.map(wish => wish.toString()).includes(userId);
     diyRecipe.reviews = diyRecipe.reviews.map((review) => ({
       ...review,
+      isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
       likeCount: review.likes.length,
     }));
     return diyRecipe;

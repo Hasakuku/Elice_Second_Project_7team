@@ -70,7 +70,7 @@ const cocktailService = {
       return result;
    },
    //*칵테일 목록 조회
-   async getCocktailList(query) {
+   async getCocktailList(user, query) {
       const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = query;
       const { limit, skip } = setParameter(perPage, page);
       const cursorValues = Number(cursorValue);
@@ -130,7 +130,7 @@ const cocktailService = {
       const pipelineData = [
          { $match: matchData },
          { $sort: sortObj },
-         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, wishes: 1 } },
       ];
 
       if (page) {
@@ -140,22 +140,32 @@ const cocktailService = {
 
       const cocktails = await Cocktail.aggregate(pipelineData);
       const total = await Cocktail.aggregate(pipelineCount);
-
+      let userId = user ? user.id.toString() : '';
+      let cocktailWishes = cocktails.map(cocktail => {
+         const { wishes, ...rest } = cocktail;
+         return {
+            ...rest,
+            isWished: Array.isArray(wishes) && wishes.map(wish => wish.toString()).includes(userId),
+         };
+      });
       let cocktailSize;
       if (total.length === 0) cocktailSize = 0;
       else cocktailSize = total[0].total;
-      const results = { cocktailSize, cocktails, };
+      const results = { cocktailSize, cocktails: cocktailWishes };
       return results;
    },
    //* 칵테일 상세 조회
-   async getCocktail(id) {
-      const cocktail = await Cocktail.findById(id).populate({ path: 'base', select: 'name' }).populate({ path: 'reviews', options: { limit: 2 } }).lean();
-      if (!cocktail) throw new NotFoundError('칵테일 없음');
-      cocktail.reviews = cocktail.reviews.map(review => ({
+   async getCocktail(user, id) {
+      const cocktails = await Cocktail.findById(id).populate({ path: 'base', select: 'name' }).populate({ path: 'reviews', options: { limit: 2 } }).lean();
+      if (!cocktails) throw new NotFoundError('칵테일 없음');
+      let userId = user ? user.id.toString() : '';
+      cocktails.isWished = Array.isArray(cocktails.wishes) && cocktails.wishes.map(wish => wish.toString()).includes(userId);
+      cocktails.reviews = cocktails.reviews.map(review => ({
          ...review,
+         isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
          likeCount: review.likes.length,
       }));
-      return cocktail;
+      return cocktails;
    },
    //* 칵테일 등록
    async createCocktail(data) {

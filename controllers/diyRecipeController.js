@@ -1,17 +1,21 @@
 const asyncHandler = require('express-async-handler');
 const diyRecipeService = require('../services/diyRecipeService');
+const { UnauthorizedError } = require('../utils/customError');
+const verifyUserToken = require('../utils/verifyUserToken');
 
 //* DIY 레시피 목록 조회
 const getDiyRecipeList = asyncHandler(async (req, res) => {
+  const user = verifyUserToken(req);
   const { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base } = req.query;
-  const result = await diyRecipeService.getDiyRecipeList({ cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base });
+  const result = await diyRecipeService.getDiyRecipeList(user, { cursorId, sort, cursorValue, page, perPage, abv, sweet, bitter, sour, base });
   res.status(200).json(result);
 });
 
 //* DIY 레시피 상세 조회
 const getDiyRecipe = asyncHandler(async (req, res) => {
+  const user = verifyUserToken(req);
   const id = req.params.id;
-  const result = await diyRecipeService.getDiyRecipe(id);
+  const result = await diyRecipeService.getDiyRecipe(user, id);
   res.status(200).json(result);
 });
 
