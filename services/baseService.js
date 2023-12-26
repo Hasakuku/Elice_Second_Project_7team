@@ -11,6 +11,12 @@ const baseService = {
       const baseList = await Base.find({}).select('_id name image').skip(skip).limit(limit).lean();
       return baseList;
    },
+   //* 베이스 조회
+   async getBase(id) {
+      const base = await Base.findById(id).lean();
+      if(!base) throw new NotFoundError('Base를 찾을 수 없음');
+      return base;
+   },
    //* 베이스 등록
    async createBase(data) {
       const { name, newImageNames } = data;
