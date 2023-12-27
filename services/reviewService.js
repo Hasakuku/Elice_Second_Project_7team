@@ -197,9 +197,7 @@ const reviewService = {
       return results;
    },
    //* 리뷰 수정
-   async updateReview(userId, id, type, data) {
-      const { content, rating, newImageNames } = data;
-
+   async updateReview(userId, id, type, { content, rating, newImageNames }) {
       const models = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview
@@ -232,9 +230,7 @@ const reviewService = {
    },
 
    //* 리뷰 등록
-   async createReview(userId, itemId, type, data) {
-      const { content, rating, newImageNames } = data;
-
+   async createReview(userId, itemId, type, { content, rating, newImageNames, }) {
       const Model = type === 'cocktails' ? Cocktail : DiyRecipe;
       const foundItem = await Model.findById(itemId).lean();
       if (!foundItem) throw new NotFoundError(`${type} 정보 없음`);

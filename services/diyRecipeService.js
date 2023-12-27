@@ -104,10 +104,8 @@ const diyRecipeService = {
     return diyRecipe;
   },
   //* DIY 레시피 등록
-  async createDiyRecipe(data, user) {
-    const {
-      name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour,
-    } = data; //피드백 받았던대로 따로 가져옴
+  async createDiyRecipe(user, { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, }) {
+    //피드백 받았던대로 따로 가져옴
     const foundDiyRecipe = await DiyRecipe.findOne({ name: name }).lean();
     if (foundDiyRecipe) throw new ConflictError('이미 등록된 DIY 레시피 입니다.');
     //이미지
@@ -143,13 +141,12 @@ const diyRecipeService = {
     if (!result) throw new InternalServerError('등록 할 수 없습니다.');
   },
   //* DIY 레시피 수정
-  async updateDiyRecipe(userId, id, data) {
-    const { newImageNames, recipeImageNames, ...rest } = data;
-    let { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, } = rest;
+  async updateDiyRecipe(userId, id, newImageNames, recipeImageNames, data) {
+    let { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, } = data;
     const foundDiyRecipe = await DiyRecipe.findOne({ _id: id, user: userId }).lean();
     if (!foundDiyRecipe) throw new ForbiddenError('사용자가 작성한 레시피가 아닙니다.');
 
-    const dataKeys = Object.keys(rest);
+    const dataKeys = Object.keys(data);
     const isSame = dataKeys
       .map((key) => foundDiyRecipe[key] === data[key])
       .every((value) => value === true);

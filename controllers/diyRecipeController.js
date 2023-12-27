@@ -23,8 +23,8 @@ const getDiyRecipe = asyncHandler(async (req, res) => {
 const createDiyRecipe = asyncHandler(async (req, res) => {
   //유저 정보 
   const userId = req.user._id;
-  const data = req.body;
-  await diyRecipeService.createDiyRecipe(data, userId);
+  const { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, } = req.body;
+  await diyRecipeService.createDiyRecipe(userId, { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, },);
   res.status(201).json({ message: '레시피 등록이 완료되었습니다!' });
 });
 
@@ -32,8 +32,9 @@ const createDiyRecipe = asyncHandler(async (req, res) => {
 const updateDiyRecipe = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const id = req.params.id;
-  const data = req.body;
-  await diyRecipeService.updateDiyRecipe(userId, id, data);
+  const { newImageNames, recipeImageNames, ...rest } = req.body;
+  const { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, } = rest;
+  await diyRecipeService.updateDiyRecipe(userId, id, newImageNames, recipeImageNames, { name, base, description, ingredient, tags, content, abv, sweet, bitter, sour, });
   res.status(200).json({ message: '레시피 수정이 완료되었습니다!' });
 });
 

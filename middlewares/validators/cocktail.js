@@ -1,6 +1,6 @@
 const { body, query } = require('express-validator');
 
-exports.getCocktailList = [
+exports.checkGetCocktailList = [
    query('base')
       .optional().trim()
       .isIn(['진', '럼', '데킬라', '보드카', '리큐르', '위스키', '맥주']).withMessage('존재하지 않는 베이스입니다.'),
@@ -27,13 +27,13 @@ exports.getCocktailList = [
       .isInt().withMessage('perPage는 숫자여야 합니다.'),
    query('cursorId')
       .optional().trim()
-      .isMongoId().withMessage('cursorId는 필수입니다.'),
+      .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.'),
    query('cursorValue')
       .optional().trim()
       .isFloat().withMessage('cursorValue는 숫자여야 합니다.'),
 ];
 
-exports.createCocktail = [
+exports.checkCreateCocktail = [
    body('name')
       .notEmpty().withMessage('필수로 입력해야 합니다.'),
    body('base')
@@ -68,7 +68,7 @@ exports.createCocktail = [
       .isEmpty().withMessage('reviewCount는 입력되지 않아야 합니다.'),
 ];
 
-exports.updateCocktail = [
+exports.checkUpdateCocktail = [
    body('name')
       .optional(),
    body('base')

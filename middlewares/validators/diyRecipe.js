@@ -1,6 +1,6 @@
 const { body, query } = require('express-validator');
 
-exports.getDiyRecipeList = [
+exports.checkGetDiyRecipeList = [
    query('base')
       .optional().trim()
       .isIn(['진', '럼', '데킬라', '보드카', '리큐르', '위스키', '맥주']).withMessage('존재하지 않는 베이스입니다.'),
@@ -33,7 +33,7 @@ exports.getDiyRecipeList = [
       .isFloat().withMessage('cursorValue는 숫자여야 합니다.'),
 ];
 
-exports.getDiyRecipeListByUser = [
+exports.checkGetDiyRecipeListByUser = [
    query('cursorId')
       .optional().trim()
       .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.'),
@@ -45,7 +45,7 @@ exports.getDiyRecipeListByUser = [
       .isInt().withMessage('perPage는 숫자여야 합니다.'),
 ];
 
-exports.createDiyRecipe =[
+exports.checkCreateDiyRecipe =[
    body('name')
       .notEmpty().withMessage('필수로 입력해야 합니다.'),
    body('base')
@@ -80,7 +80,7 @@ exports.createDiyRecipe =[
       .isEmpty().withMessage('reviewCount는 입력되지 않아야 합니다.'),
 ];
 
-exports.updateDiyRecipe = [
+exports.checkUpdateDiyRecipe = [
    body('name')
       .optional(),
    body('base')

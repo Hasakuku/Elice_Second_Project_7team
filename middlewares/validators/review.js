@@ -1,16 +1,13 @@
 const { body, query } = require('express-validator');
 
-exports.getReviewListByKeyword = [
-   query('keyword')
-      .optional().trim()
-      .isLength({ max: 24 }).withMessage('검색은 24자 제한입니다.'),
+exports.checkGetReviewListByKeyword = [
    query('page')
       .optional().trim()
       .isInt().withMessage('page는 숫자여야 합니다.'),
    query('perPage')
       .optional().trim()
       .isInt().withMessage('perPage는 숫자여야 합니다.'),];
-exports.getReviewList = [
+exports.checkGetReviewList = [
    query('id')
       .optional().trim()
       .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.'),
@@ -24,7 +21,8 @@ exports.getReviewList = [
       .optional().trim()
       .isInt().withMessage('perPage는 숫자여야 합니다.'),
 ];
-exports.getUserReviewList = [
+
+exports.checkGetUserReviewList = [
    query('type')
       .optional().trim()
       .isIn(['cocktails', 'recipes']).withMessage('cocktails recipes 또는 입력값이 없어야 합니다.'),
@@ -38,7 +36,7 @@ exports.getUserReviewList = [
       .optional().trim()
       .isInt().withMessage('perPage는 숫자여야 합니다.'),
 ];
-exports.updateReview = [
+exports.checkUpdateReview = [
    body('newImageNames.*')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),
@@ -49,7 +47,7 @@ exports.updateReview = [
       .optional()
       .isInt({ min: 1, max: 5 }).withMessage('평점은 0에서 5 사이의 정수 값이어야 합니다'),
 ];
-exports.createReview = [
+exports.checkCreateReview = [
    body('newImageNames.*')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),

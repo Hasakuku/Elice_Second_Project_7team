@@ -17,7 +17,7 @@ const userService = {
       return user;
    },
    //* 사용자 정보 수정
-   async updateUser(userId, email, nickname) {
+   async updateUser(userId, { email, nickname }) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
 
@@ -41,8 +41,7 @@ const userService = {
       if (withdrawalUser.nModified === 0) throw new ConflictError("탈퇴 실패");
    },
    //*사용자 찜 목록 조회
-   async getWishListByType(userId, query) {
-      const { cursorId, cursorValue, page, perPage, type } = query;
+   async getWishListByType(userId, { cursorId, page, perPage, type }) {
       if (!type) throw new BadRequestError('타입을 입력해주세요');
       const types = type === 'cocktails' ? 'cocktails' : 'diyRecipes';
       const { skip, limit } = setParameter(perPage, page);
@@ -239,16 +238,14 @@ const userService = {
       const result = await User.deleteOne({ _id: userId });
       if (result.deletedCount === 0) throw new ConflictError('삭제 데이터 없음');
    },
-   async login(data) {
-      const { id, pw } = data;
+   async login({ id, pw }) {
       const user = await User.findOne({ id: id, pw: pw });
       if (!user) throw new NotFoundError('없어여');
       const result = setToken(user);
       return result;
    },
    //* 사용자 커스텀 설정
-   async updateUserCustom(userId, query) {
-      const { base, abv, taste, level } = query;
+   async updateUserCustom(userId, { base, abv, taste, level }) {
       const user = await User.findById(userId);
       if (!user) throw new NotFoundError('유저 정보 없음');
       if (!abv || !taste || !level) throw new BadRequestError('도수,맛,단계를 입력하세요');
