@@ -8,13 +8,14 @@ const baseService = {
    //* 베이스 목록 조회
    async getBaseList({ perPage, page }) {
       const { skip, limit } = setParameter(perPage, page);
-      const baseList = await Base.find({}).select('_id name image').skip(skip).limit(limit).lean();
-      return baseList;
+      const total = await Base.countDocuments();
+      const bases = await Base.find({}).select('_id name image').skip(skip).limit(limit).lean();
+      return { total, bases };
    },
    //* 베이스 조회
    async getBase(id) {
       const base = await Base.findById(id).lean();
-      if(!base) throw new NotFoundError('Base를 찾을 수 없음');
+      if (!base) throw new NotFoundError('Base를 찾을 수 없음');
       return base;
    },
    //* 베이스 등록
