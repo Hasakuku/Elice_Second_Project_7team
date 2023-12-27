@@ -146,14 +146,6 @@ const diyRecipeService = {
     const foundDiyRecipe = await DiyRecipe.findOne({ _id: id, user: userId }).lean();
     if (!foundDiyRecipe) throw new ForbiddenError('사용자가 작성한 레시피가 아닙니다.');
 
-    const dataKeys = Object.keys(data);
-    const isSame = dataKeys
-      .map((key) => foundDiyRecipe[key] === data[key])
-      .every((value) => value === true);
-
-    if (isSame) {
-      throw new ConflictError('같은 내용 수정');
-    }
     //이미지
     let image;
     if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
@@ -189,6 +181,14 @@ const diyRecipeService = {
       }
 
       recipes.push(recipe);
+    }
+    const dataKeys = Object.keys({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour, });
+    const isSame = dataKeys
+      .map((key) => foundDiyRecipe[key] === data[key])
+      .every((value) => value === true);
+
+    if (isSame) {
+      throw new ConflictError('같은 내용 수정');
     }
     await DiyRecipe.updateOne(
       { _id: id },
