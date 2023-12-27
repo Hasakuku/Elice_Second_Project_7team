@@ -99,7 +99,7 @@ const diyRecipeService = {
     diyRecipe.reviews = diyRecipe.reviews.map((review) => ({
       ...review,
       isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
-      likeCount: review.likes.length,
+      likeCount: review.likes.length || 0,
     }));
     return diyRecipe;
   },
