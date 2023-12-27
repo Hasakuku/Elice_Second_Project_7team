@@ -45,7 +45,7 @@ const barService = {
       const foundBar = await Bar.findById(barId).lean();
       if (!foundBar) throw new NotFoundError('바 정보 없음');
       let image;
-      if (data.newImageNames) {
+      if (data.newImageNames.length !== 0) {
          const imagePath = path.join(__dirname, '../images', foundBar.image);
          fs.unlink(imagePath, (err) => {
             if (err.code !== 'ENOENT') {
