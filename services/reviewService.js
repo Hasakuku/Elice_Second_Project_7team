@@ -39,7 +39,7 @@ const reviewService = {
       const { limit, skip } = setParameter(perPage, page);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
       const types = ['CocktailReview', 'DiyRecipeReview'];
-      let results = { total: 0, data: {} };
+      let results = { total: 0, data: [] };
 
       let totalFetched = 0;
 
@@ -67,8 +67,10 @@ const reviewService = {
             { $match: matchData },
             { $sort: { createdAt: -1 } },
             { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyrecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
+            { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
             { $unwind: '$item' },
-            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', nickname: 1, rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
+            { $unwind: '$user' },
+            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', nickname: '$user.nickname', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
             { $skip: skip },
             { $limit: limit - totalFetched },
          ];
@@ -88,14 +90,8 @@ const reviewService = {
          const data = await runPipeline();
          totalFetched += data.length;
 
-         for (let review of data) {
-            const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
-            if (!results.data[monthYear]) {
-               results.data[monthYear] = { date: monthYear, list: [] };
-            }
-            results.data[monthYear].list.push(review);
-            results.data[monthYear].list.sort((a, b) => b.createdAt - a.createdAt); // 최신 순으로 정렬
-         }
+         results.data.push(...data);
+
          if (type === 'CocktailReview') {
             results.total = await CocktailReview.countDocuments({ cocktail: id });
          } else if (type === 'DiyRecipeReview') {
@@ -103,8 +99,8 @@ const reviewService = {
          }
       }
 
-      results.data = Object.values(results.data);
       return results;
+
    },
    //* 리뷰 상세 조회
    async getReview(userId, id) {
