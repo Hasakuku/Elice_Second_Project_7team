@@ -6,7 +6,7 @@ exports.getCocktailList = [
       .isIn(['진', '럼', '데킬라', '보드카', '리큐르', '위스키', '맥주']).withMessage('존재하지 않는 베이스입니다.'),
    query('sort')
       .optional().trim()
-      .isIn(['rating', 'review']).withMessage('sort는 배열이어야 합니다.'),
+      .isIn(['rating', 'review']).withMessage('rating이나 review 또는 입력값이 없어야 합니다.'),
    query('abv')
       .optional().trim()
       .isInt({ min: 1, max: 5 }).withMessage('abv는 1~5 사이의 숫자여야 합니다.'),
@@ -30,7 +30,7 @@ exports.getCocktailList = [
       .isMongoId().withMessage('cursorId는 필수입니다.'),
    query('cursorValue')
       .optional().trim()
-      .isInt().withMessage('cursorValue는 숫자여야 합니다.'),
+      .isFloat().withMessage('cursorValue는 숫자여야 합니다.'),
 ];
 
 exports.createCocktail = [
