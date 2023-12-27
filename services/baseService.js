@@ -11,6 +11,12 @@ const baseService = {
       const baseList = await Base.find({}).select('_id name image').skip(skip).limit(limit).lean();
       return baseList;
    },
+   //* 베이스 조회
+   async getBase(id) {
+      const base = await Base.findById(id).lean();
+      if(!base) throw new NotFoundError('Base를 찾을 수 없음');
+      return base;
+   },
    //* 베이스 등록
    async createBase(data) {
       const { name, newImageNames } = data;
@@ -24,12 +30,12 @@ const baseService = {
    },
    //* 베이스 수정
    async updateBase(baseId, data) {
-      const { name, newImageNames} = data;
+      const { name, newImageNames } = data;
       const foundBase = await Base.findById(baseId).lean();
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
 
       const dataKeys = Object.keys(data);
-      const isSame = dataKeys.map(key => foundBase[key] === data[key]).some(value => value === true);
+      const isSame = dataKeys.map(key => foundBase[key] === data[key]).every(value => value === true);
 
       if (isSame) {
          throw new ConflictError('같은 내용 수정');
@@ -38,7 +44,9 @@ const baseService = {
       if (newImageNames.length !== 0) {
          const imagePath = path.join(__dirname, '../images', foundBase.image);
          fs.unlink(imagePath, (err) => {
-            if (err) throw new InternalServerError('이미지 삭제 실패');
+            if (err.code !== 'ENOENT') {
+               throw new InternalServerError('이미지 삭제 실패');
+            }
          });
          image = newImageNames[0].imageName;
       }
@@ -55,7 +63,11 @@ const baseService = {
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
       // 이미지 파일 삭제
       const imagePath = path.join(__dirname, '../images', foundBase.image);
-      await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+      await fs.unlink(imagePath).catch(err => {
+         if (err.code !== 'ENOENT') {
+            throw new InternalServerError('이미지 삭제 실패');
+         }
+      });
 
       const result = await Base.deleteOne({ _id: baseId });
       if (result.deletedCount === 0) throw new InternalServerError("Base 삭제 실패");

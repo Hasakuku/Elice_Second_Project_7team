@@ -7,6 +7,12 @@ const getBaseList = asyncHandler(async (req, res) => {
    const result = await baseService.getBaseList({ perPage, page });
    res.status(200).json(result);
 });
+//* 베이스 조회
+const getBase = asyncHandler(async (req,res) => {
+   const id = req.params.id;
+   const result = await baseService.getBase(id);
+   res.status(200).json(result);
+});
 //* 베이스 등록
 const createBase = asyncHandler(async (req, res) => {
    const { name, newImageNames } = req.body;
@@ -27,4 +33,4 @@ const deleteBase = asyncHandler(async (req, res) => {
    res.status(204).json({ message: 'Base 삭제 성공' });
 });
 
-module.exports = { getBaseList, createBase, updateBase, deleteBase };
+module.exports = { getBaseList, createBase, updateBase, deleteBase, getBase };

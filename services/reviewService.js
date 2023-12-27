@@ -34,60 +34,8 @@ const reviewService = {
       return { total: results.length, reviews: results.slice(skip, skip + limit) };
    },
 
-   //* 리뷰 삭제(관리자)
-   async deleteReview(reviewId) {
-      const cocktailReview = await CocktailReview.findOne({ _id: reviewId }).lean();
-      if (cocktailReview) {
-         await CocktailReview.deleteOne({ _id: reviewId });
-         const cocktail = await Cocktail.findOne({ reviews: reviewId });
-         if (cocktail) {
-            cocktail.reviews.pull(reviewId);
-
-            const result = await CocktailReview.aggregate([
-               { $match: { cocktail: cocktail._id } },
-               {
-                  $group: {
-                     _id: null,
-                     avgRating: { $avg: "$rating" },
-                     reviewCount: { $sum: 1 }
-                  }
-               }
-            ]);
-
-            cocktail.avgRating = result[0] ? result[0].avgRating : 0;
-            cocktail.reviewCount = result[0] ? result[0].reviewCount : 0;
-            await cocktail.save();
-
-            return;
-         }
-      }
-      const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId });
-      if (diyRecipeReview) {
-         await DiyRecipeReview.deleteOne({ _id: reviewId });
-         const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
-         if (diyRecipe) {
-            diyRecipe.reviews.pull(reviewId);
-            const result = await DiyRecipeReview.aggregate([
-               { $match: { diyRecipe: diyRecipe._id } },
-               {
-                  $group: {
-                     _id: null,
-                     avgRating: { $avg: "$rating" },
-                     reviewCount: { $sum: 1 }
-                  }
-               }
-            ]);
-            diyRecipe.avgRating = result[0] ? result[0].avgRating : 0;
-            diyRecipe.reviewCount = result[0] ? result[0].reviewCount : 0;
-            await diyRecipe.save();
-
-         }
-         return;
-      }
-      if (!cocktailReview || !diyRecipeReview) throw new NotFoundError('리뷰 없음');
-   },
    //* 리뷰 목록 조회
-   async getReviewList(id, perPage, page) {
+   async getReviewList(user, { perPage, page, id }) {
       const { limit, skip } = setParameter(perPage, page);
       let results = [];
       const models = [CocktailReview, DiyRecipeReview];
@@ -99,7 +47,7 @@ const reviewService = {
             .limit(limit)
             .populate({ path: 'user', select: 'nickname' })
             .lean();
-
+         let userId = user ? user.id.toString() : '';
          for (let review of reviews) {
             results.push({
                _id: review._id,
@@ -107,6 +55,7 @@ const reviewService = {
                content: review.content,
                images: review.images,
                rating: review.rating,
+               isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
                likesCount: review.likes.length,
                createdAt: review.createdAt
             });
@@ -134,14 +83,18 @@ const reviewService = {
       }
       throw new NotFoundError('리뷰 없음');
    },
-   //* 유저 리뷰 목록 조회
+   //* 유저 리뷰 목록 조회,
    async getUserReviewList(userId, query) {
       const { cursorId, type, perPage, page } = query;
       const { limit, skip, types } = setParameter(perPage, page, type);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
-      let results = {};
+      let results = { total: 0, data: {} };
+
+      let totalFetched = 0;
 
       for (let type of types) {
+         if (totalFetched >= limit) break;
+
          const Model = type === 'CocktailReview' ? CocktailReview : DiyRecipeReview;
          let matchData = {
             $and: [
@@ -164,34 +117,44 @@ const reviewService = {
             { $sort: { createdAt: -1 } },
             { $lookup: { from: type === 'CocktailReview' ? 'cocktails' : 'diyrecipes', localField: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', foreignField: '_id', as: 'item' } },
             { $unwind: '$item' },
-            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1 } },
+            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
             { $skip: skip },
-            { $limit: limit },
+            { $limit: limit - totalFetched },
          ];
 
-         const countData = { user: userId };
-
          const runPipeline = async () => {
-            const data = await Model.aggregate(pipelineData);
-            const size = await Model.countDocuments(countData);
-            return { size, data };
+            let data = await Model.aggregate(pipelineData);
+            data = data.map(item => {
+               const { likes, ...rest } = item;
+               return {
+                  ...rest,
+                  isLiked: Array.isArray(likes) && likes.map(like => like.toString()).includes(userId),
+               };
+            });
+            return data;
          };
 
-         const { size, data } = await runPipeline();
-         results[type + 'Size'] = size;
+         const data = await runPipeline();
+         totalFetched += data.length;
 
-         const groupedData = data.reduce((acc, review) => {
+         for (let review of data) {
             const monthYear = `${review.createdAt.getFullYear()}-${review.createdAt.getMonth() + 1}`;
-            if (!acc[monthYear]) {
-               acc[monthYear] = { date: monthYear, list: [] };
+            if (!results.data[monthYear]) {
+               results.data[monthYear] = { date: monthYear, list: [] };
             }
-            acc[monthYear].list.push(review);
-            return acc;
-         }, {});
-
-         results[type + 's'] = Object.values(groupedData);
+            results.data[monthYear].list.push(review);
+            results.data[monthYear].list.sort((a, b) => b.createdAt - a.createdAt); // 최신 순으로 정렬
+         }
+      }
+      if (type === 'cocktails') {
+         results.total = await CocktailReview.countDocuments({ user: userId });
+      } else if (type === 'recipes') {
+         results.total = await DiyRecipeReview.countDocuments({ user: userId });
+      } else {
+         results.total = await CocktailReview.countDocuments({ user: userId }) + await DiyRecipeReview.countDocuments({ user: userId });
       }
 
+      results.data = Object.values(results.data);
       return results;
    },
    //* 리뷰 수정
@@ -202,6 +165,7 @@ const reviewService = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview
       };
+
       const model = models[type];
       const foundReview = await model.findOne({ _id: id, user: userId }).lean();
       let images;
@@ -209,7 +173,11 @@ const reviewService = {
          for (let i = 0; i < newImageNames.length; i++) {
             if (foundReview.images && foundReview.images[i]) {
                const imagePath = path.join(__dirname, '../images', foundReview.images[i]);
-               await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+               await fs.unlink(imagePath).catch(err => {
+                  if (err.code !== 'ENOENT') {
+                     throw new InternalServerError('이미지 삭제 실패');
+                  }
+               });
             }
          }
          images = newImageNames.map(image => image.imageName);
@@ -227,6 +195,11 @@ const reviewService = {
    //* 리뷰 등록
    async createReview(userId, itemId, type, data) {
       const { content, rating, newImageNames } = data;
+      
+      const Model = type === 'cocktails' ? Cocktail : DiyRecipe;
+      const foundItem = await Model.findById(itemId).lean();
+      if (!foundItem) throw new NotFoundError(`${type} 정보 없음`);
+
       const models = {
          'cocktails': CocktailReview,
          'recipes': DiyRecipeReview
@@ -259,12 +232,18 @@ const reviewService = {
       if (type === 'recipes') await DiyRecipe.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
    },
    //* 리뷰 삭제
-   async deleteUserReview(userId, reviewId) {
-      const cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: userId }).lean();
+   async deleteReview(user, reviewId) {
+      let cocktailReview;
+      if (!user.isAdmin) cocktailReview = await CocktailReview.findOne({ _id: reviewId, user: user._id }).lean();
+      else cocktailReview = await CocktailReview.findById(reviewId).lean();
       if (cocktailReview) {
          for (let image of cocktailReview.images) {
             const imagePath = path.join(__dirname, '../images', image);
-            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+            await fs.unlink(imagePath).catch(err => {
+               if (err.code !== 'ENOENT') {
+                  throw new InternalServerError('이미지 삭제 실패');
+               }
+            });
          }
          await CocktailReview.deleteOne({ _id: reviewId });
          const cocktail = await Cocktail.findOne({ reviews: reviewId });
@@ -288,11 +267,18 @@ const reviewService = {
             return;
          }
       }
-      const diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: userId });
+      let diyRecipeReview;
+      if (!user.isAdmin) diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: user._id }).lean();
+      else diyRecipeReview = await DiyRecipeReview.findById(reviewId).lean();
+      diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: user._id });
       if (diyRecipeReview) {
          for (let image of diyRecipeReview.images) {
             const imagePath = path.join(__dirname, '../images', image);
-            await fs.unlink(imagePath).catch(err => { throw new InternalServerError('이미지 삭제 실패'); });
+            await fs.unlink(imagePath).catch(err => {
+               if (err.code !== 'ENOENT') {
+                  throw new InternalServerError('이미지 삭제 실패');
+               }
+            });
          }
          await DiyRecipeReview.deleteOne({ _id: reviewId });
          const diyRecipe = await DiyRecipe.findOne({ reviews: reviewId });
@@ -315,7 +301,7 @@ const reviewService = {
          }
          return;
       }
-      if (!cocktailReview || !diyRecipeReview) throw new NotFoundError('리뷰 없음');
+      if (!cocktailReview && !diyRecipeReview) throw new NotFoundError('리뷰 없음');
    },
    //* 좋아요 추가
    async addLike(userId, id) {

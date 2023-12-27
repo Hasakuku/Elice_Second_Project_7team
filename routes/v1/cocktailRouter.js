@@ -6,7 +6,7 @@ const checkAdmin = require('../../middlewares/checkAdmin');
 const { validateCocktail } = require('../../middlewares/validators');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
 
-router.get('/custom', cocktailController.getCustomCocktail); // 맞춤 추천 칵테일
+router.get('/custom', checkUser, cocktailController.getCustomCocktail); // 맞춤 추천 칵테일
 router.get('/:id', cocktailController.getCocktail); // 칵테일 상세 조회
 router.get('/', cocktailController.getCocktailList); // 칵테일 목록 조회
 

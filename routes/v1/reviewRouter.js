@@ -17,7 +17,6 @@ router.post('/create/:id', checkUser, checkWrite, uploadImage, imageHandler, val
 router.post('/:id/likes', checkUser, reviewController.addLike);
 
 router.delete('/:id/likes', checkUser, reviewController.deleteLike);
-router.delete('/:id/users', checkUser, reviewController.deleteUserReview);
 router.delete('/:id', checkUser, checkAdmin, reviewController.deleteReview);
 
 module.exports = router;

@@ -23,12 +23,12 @@ if (isDevelopment) {
   app.use(logger('dev'));
 }
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
 //^ 백엔드 테스트시 아래 주석 해제
-// app.use(express.static('public'));
+app.use(express.static('public'));
 app.use(express.static('images'));
 
 app.use("/api", router);

@@ -1,16 +1,14 @@
 const { default: mongoose } = require('mongoose');
-const { Base, Cocktail, DiyRecipe, CocktailReview } = require('../models');
-const { NotFoundError, BadRequestError } = require('../utils/customError');
+const { Base, Cocktail, DiyRecipe, User } = require('../models');
 const setParameter = require('../utils/setParameter');
 
 const searchService = {
-   async searchByKeyword(query) {
+   async searchByKeyword(user, query) {
       const { keyword, cursorId, sort, cursorValue, page, perPage, type } = query;
       const { skip, limit } = setParameter(perPage, page);
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);
       const cursorValues = Number(cursorValue);
-      const perPages = Number(perPage);
       const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
       let sortObj = { createdAt: -1 };
@@ -60,9 +58,194 @@ const searchService = {
       const pipelineData = [
          { $match: matchData },
          { $sort: sortObj },
-         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } },
+         { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, wishes: 1 } },
 
       ];
+
+      if (page) {
+         pipelineData.push({ $skip: skip });
+      }
+      pipelineData.push({ $limit: limit });
+
+      const runPipeline = async (Model) => {
+         const total = await Model.aggregate(pipelineCount);
+         const size = total.length > 0 ? total[0].total : 0;
+         let data = await Model.aggregate(pipelineData);
+
+         let userId = user ? user.id.toString() : '';
+         data = data.map(item => {
+            const { wishes, ...rest } = item;
+            return {
+               ...rest,
+               isWished: Array.isArray(wishes) && wishes.map(wish => wish.toString()).includes(userId),
+            };
+         });
+         return { size, data };
+      };
+
+      const types = ['cocktail', 'diyRecipe'];
+      const results = {};
+
+      for (let item of types) {
+         let Model;
+         if (type === 'recipes' && item === 'diyRecipe') {
+            Model = DiyRecipe;
+         } else if (type !== 'recipes' && item === 'cocktail') {
+            Model = Cocktail;
+         } else if (!type || type === `${item}s`) {
+            Model = item === 'cocktail' ? Cocktail : DiyRecipe;
+         }
+
+         if (Model) {
+            const { size, data } = await runPipeline(Model);
+            results[`${item}Size`] = size;
+            results[`${item}s`] = data;
+         }
+      }
+      if (!type) results.total = results.cocktailSize + results.diyRecipeSize;
+      return results;
+   },
+   // async searchForAdmin({ keyword, perPage, page, type }) {
+   //    const { skip, limit } = setParameter(perPage, page);
+   //    let users = [];
+   //    let base = [];
+   //    if (keyword) {
+   //       base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
+   //       if (type === 'recipes') {
+   //          users = await User.find({ email: { $regex: keyword, $options: 'i' } }).select('_id').lean();
+   //       }
+   //    } else base = await Base.find({}).select('_id').lean();
+   //    const userIds = users.map(user => user._id);
+   //    const baseIds = base.map(base => base._id);
+
+   //    let sortObj = { createdAt: -1 };
+   //    const matchCount = {
+   //       $or: [
+   //          { base: { $in: baseIds } },
+   //       ]
+   //    };
+   //    if (keyword) matchCount.$or.unshift({ name: { $regex: new RegExp(keyword, 'i') } });
+   //    if (users.length !== 0) matchCount.$or.push({ user: { $in: userIds } },);
+   //    const matchData = {
+   //       $or: [
+   //          { base: { $in: baseIds } },
+   //       ]
+   //    };
+   //    if (keyword) matchCount.$or.unshift({ name: { $regex: new RegExp(keyword, 'i') } });
+   //    if (users.length !== 0) matchData.$or.push({ user: { $in: userIds } },);
+
+   //    const pipelineCount = [
+   //       { $match: matchCount },
+   //       { $count: 'total' }
+   //    ];
+
+   //    const pipelineData = [
+   //       { $match: matchData },
+   //       { $sort: sortObj },
+   //    ];
+
+   //    if (type === 'recipes') {
+   //       pipelineData.push(
+   //          {
+   //             $lookup: {
+   //                from: "users",
+   //                localField: "user",
+   //                foreignField: "_id",
+   //                as: "user"
+   //             }
+   //          },
+   //          { $unwind: "$user" },
+   //          { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1, email: '$user.email' } }
+   //       );
+   //    } else {
+   //       pipelineData.push(
+   //          { $project: { _id: 1, name: 1, avgRating: 1, reviewCount: 1, createdAt: 1, image: 1 } }
+   //       );
+   //    }
+
+   //    if (page) {
+   //       pipelineData.push({ $skip: skip });
+   //    }
+   //    pipelineData.push({ $limit: limit });
+
+   //    const runPipeline = async (Model) => {
+   //       const total = await Model.aggregate(pipelineCount);
+   //       const size = total.length > 0 ? total[0].total : 0;
+   //       const data = await Model.aggregate(pipelineData);
+   //       return { size, data };
+   //    };
+
+   //    const types = ['cocktail', 'diyRecipe'];
+   //    const results = {};
+
+   //    for (let item of types) {
+   //       let Model;
+   //       if (type === 'recipes' && item === 'diyRecipe') {
+   //          Model = DiyRecipe;
+   //       } else if (type !== 'recipes' && item === 'cocktail') {
+   //          Model = Cocktail;
+   //       } else if (!type || type === `${item}s`) {
+   //          Model = item === 'cocktail' ? Cocktail : DiyRecipe;
+   //       }
+
+   //       if (Model) {
+   //          const { size, data } = await runPipeline(Model);
+   //          results[`${item}Size`] = size;
+   //          results[`${item}s`] = data;
+   //       }
+   //    }
+   //    return results;
+   // }
+   async searchForAdmin({ keyword, perPage, page, type }) {
+      const { skip, limit } = setParameter(perPage, page);
+      let users = [];
+      let base = [];
+      if (keyword) {
+         base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
+         if (type === 'recipes') {
+            users = await User.find({ email: { $regex: keyword, $options: 'i' } }).select('_id').lean();
+         }
+      } else base = await Base.find({}).select('_id').lean();
+      const userIds = users.map(user => user._id);
+      const baseIds = base.map(base => base._id);
+
+      let sortObj = { createdAt: -1 };
+      const matchObj = {
+         $or: [
+            { base: { $in: baseIds } },
+         ]
+      };
+      if (keyword) matchObj.$or.unshift({ name: { $regex: new RegExp(keyword, 'i') } });
+      if (users.length !== 0) matchObj.$or.push({ user: { $in: userIds } });
+
+      const pipelineCount = [
+         { $match: matchObj },
+         { $count: 'total' }
+      ];
+
+      const pipelineData = [
+         { $match: matchObj },
+         { $sort: sortObj },
+      ];
+
+      if (type === 'recipes') {
+         pipelineData.push(
+            {
+               $lookup: {
+                  from: "users",
+                  localField: "user",
+                  foreignField: "_id",
+                  as: "user"
+               }
+            },
+            { $unwind: "$user" },
+            { $project: { _id: 1, name: 1, createdAt: 1, email: '$user.email' } }
+         );
+      } else {
+         pipelineData.push(
+            { $project: { _id: 1, name: 1, createdAt: 1, } }
+         );
+      }
 
       if (page) {
          pipelineData.push({ $skip: skip });
@@ -95,9 +278,9 @@ const searchService = {
             results[`${item}s`] = data;
          }
       }
-      if (!type) results.total = results.cocktailSize + results.diyRecipeSize;
       return results;
-   },
+   }
+
 };
 
 module.exports = searchService;

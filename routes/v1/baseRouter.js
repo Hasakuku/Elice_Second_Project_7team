@@ -6,6 +6,7 @@ const checkAdmin = require('../../middlewares/checkAdmin');
 const { validateBase } = require('../../middlewares/validators');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
 
+router.get('/:id', baseController.getBase);
 router.get('/', baseController.getBaseList);
 router.post('/', checkUser, checkAdmin, validateBase, uploadImage, imageHandler, baseController.createBase);
 router.put('/:id', checkUser, checkAdmin, validateBase, uploadImage, imageHandler, baseController.updateBase);
