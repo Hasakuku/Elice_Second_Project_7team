@@ -56,7 +56,7 @@ const reviewService = {
                images: review.images,
                rating: review.rating,
                isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
-               likesCount: review.likes.length,
+               likeCount: review.likes.length,
                createdAt: review.createdAt
             });
          }
