@@ -17,7 +17,7 @@ if (isDevelopment) {
   app.use(
     cors({
       // origin: config.frontendURI, // 출처 허용 옵션
-      origin:'*',
+      origin: '*',
       credentials: true, // 사용자 인증이 필요한 리소스(쿠키 등) 접근
     }));
   app.use(logger('dev'));
@@ -28,8 +28,8 @@ app.use(cookieParser());
 
 
 //^ 백엔드 테스트시 아래 주석 해제
-app.use(express.static('public'));
-app.use(express.static('images'));
+// app.use(express.static('public'));
+app.use('/images', express.static('images'));
 
 app.use("/api", router);
 

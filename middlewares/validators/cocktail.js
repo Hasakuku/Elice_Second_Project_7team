@@ -27,7 +27,7 @@ exports.checkGetCocktailList = [
       .isInt().withMessage('perPage는 숫자여야 합니다.'),
    query('cursorId')
       .optional().trim()
-      .isMongoId().withMessage('cursorId는 필수입니다.'),
+      .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.'),
    query('cursorValue')
       .optional().trim()
       .isFloat().withMessage('cursorValue는 숫자여야 합니다.'),

@@ -8,7 +8,7 @@ const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
 const { validate, review } = require('../../middlewares/validators');
 // const { validateCocktailReview } = require('../../middlewares/validators');
 
-router.get('/search', checkUser, checkAdmin, validate(review.checkGetReviewListByKeyword), reviewController.getReviewListByKeyword);
+router.get('/search', checkUser, checkAdmin, reviewController.getReviewListByKeyword);
 router.get('/users', checkUser, validate(review.checkGetUserReviewList), reviewController.getUserReviewList);
 router.get('/list', validate(review.checkGetReviewList), reviewController.getReviewList);
 router.get('/:id', checkUser, reviewController.getReview);
