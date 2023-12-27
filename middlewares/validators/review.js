@@ -1,9 +1,6 @@
 const { body, query } = require('express-validator');
 
 exports.getReviewListByKeyword = [
-   query('keyword')
-      .optional().trim()
-      .isLength({ max: 24 }).withMessage('검색은 24자 제한입니다.'),
    query('page')
       .optional().trim()
       .isInt().withMessage('page는 숫자여야 합니다.'),
@@ -24,6 +21,7 @@ exports.getReviewList = [
       .optional().trim()
       .isInt().withMessage('perPage는 숫자여야 합니다.'),
 ];
+
 exports.getUserReviewList = [
    query('type')
       .optional().trim()

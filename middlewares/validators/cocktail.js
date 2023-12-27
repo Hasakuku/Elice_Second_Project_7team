@@ -1,6 +1,6 @@
 const { body, query } = require('express-validator');
 
-exports.getCocktailList = [
+exports.checkGetCocktailList = [
    query('base')
       .optional().trim()
       .isIn(['진', '럼', '데킬라', '보드카', '리큐르', '위스키', '맥주']).withMessage('존재하지 않는 베이스입니다.'),

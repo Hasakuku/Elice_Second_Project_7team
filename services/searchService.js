@@ -3,8 +3,7 @@ const { Base, Cocktail, DiyRecipe, User } = require('../models');
 const setParameter = require('../utils/setParameter');
 
 const searchService = {
-   async searchByKeyword(user, query) {
-      const { keyword, cursorId, sort, cursorValue, page, perPage, type } = query;
+   async searchByKeyword(user, { keyword, cursorId, sort, cursorValue, page, perPage, type }) {
       const { skip, limit } = setParameter(perPage, page);
       const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
       const baseIds = base.map(base => base._id);

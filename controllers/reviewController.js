@@ -27,8 +27,8 @@ const createReview = asyncHandler(async (req, res) => {
    const userId = req.user._id;
    const itemId = req.params.id;
    const type = req.query.type;
-   const data = req.body;
-   await reviewService.createReview(userId, itemId, type, data);
+   const { content, rating, newImageNames, } = req.body;
+   await reviewService.createReview(userId, itemId, type, { content, rating, newImageNames, });
    res.status(201).json({ message: '리뷰 등록 성공' });
 });
 //* 리뷰 상세 조회
@@ -43,8 +43,8 @@ const updateReview = asyncHandler(async (req, res) => {
    const userId = req.user._id;
    const id = req.params.id;
    const type = req.query.type;
-   const data = req.body;
-   await reviewService.updateReview(userId, id, type, data);
+   const { content, rating, newImageNames } = req.body;
+   await reviewService.updateReview(userId, id, type, { content, rating, newImageNames });
    res.status(200).json({ message: '리뷰 수정 성공' });
 });
 //* 리뷰 삭제

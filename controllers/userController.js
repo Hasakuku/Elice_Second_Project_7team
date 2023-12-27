@@ -4,8 +4,8 @@ const { BadRequestError, NotFoundError } = require('../utils/customError');
 //* 사용자 커스텀 설정
 const updateUserCustom = asyncHandler(async (req, res) => {
    const userId = req.user._id;
-   const query = req.query;
-   await userService.updateUserCustom(userId, query);
+   const { base, abv, taste, level } = req.query;
+   await userService.updateUserCustom(userId, { base, abv, taste, level });
    res.status(200).json({ message: '커스텀 설정 성공' });
 });
 //* 사용자 정보 조회
@@ -25,7 +25,7 @@ const updateUser = asyncHandler(async (req, res) => {
    const { email, nickname } = req.body;
    if (!email && !nickname) throw new BadRequestError("요청 데이터 없음");
 
-   await userService.updateUser(userId, email, nickname);
+   await userService.updateUser(userId, { email, nickname });
    res.status(200).json('업데이트 성공');
 });
 //* 사용자 탈퇴
@@ -37,8 +37,8 @@ const withdrawal = asyncHandler(async (req, res) => {
 //*사용자 찜 목록 조회
 const getWishListByType = asyncHandler(async (req, res) => {
    const userId = req.user._id;
-   const query = req.query;
-   const result = await userService.getWishListByType(userId, query);
+   const { cursorId, page, perPage, type } = req.query;
+   const result = await userService.getWishListByType(userId, { cursorId, page, perPage, type });
    res.status(200).json(result);
 });
 //* 사용자 찜 추가
@@ -75,8 +75,8 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 //* 기본 로그인
 const login = asyncHandler(async (req, res) => {
-   const data = req.body;
-   const result = await userService.login(data);
+   const { id, pw } = req.body;
+   const result = await userService.login({ id, pw });
    res.cookie('jwtToken', result, { httpOnly: true });
    res.status(200).json({ message: '로그인 성공' });
 });
