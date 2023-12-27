@@ -1,6 +1,5 @@
 const asyncHandler = require('express-async-handler');
 const diyRecipeService = require('../services/diyRecipeService');
-const { UnauthorizedError } = require('../utils/customError');
 const verifyUserToken = require('../utils/verifyUserToken');
 
 //* DIY 레시피 목록 조회
@@ -24,7 +23,7 @@ const createDiyRecipe = asyncHandler(async (req, res) => {
   //유저 정보 
   const userId = req.user._id;
   const { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, } = req.body;
-  await diyRecipeService.createDiyRecipe(userId, { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, },);
+  await diyRecipeService.createDiyRecipe(userId,{ name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, },);
   res.status(201).json({ message: '레시피 등록이 완료되었습니다!' });
 });
 
