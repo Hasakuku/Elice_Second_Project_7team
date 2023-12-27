@@ -234,9 +234,8 @@ const diyRecipeService = {
   },
   //* 사용자의 레시피 목록 조회
   async getDiyRecipeListByUser(userId, query) {
-    const { cursorId, cursorValue, page, perPage } = query;
+    const { cursorId, page, perPage } = query;
     const { skip, limit } = setParameter(perPage, page);
-    const cursorValues = Number(cursorValue);
     const dateFromId = cursorId ? new Date(parseInt(cursorId.substring(0, 8), 16) * 1000) : null;
 
     const matchData = {
