@@ -1,6 +1,6 @@
 const { Bar } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const setParameter = require('../utils/setParameter');
 
@@ -45,7 +45,7 @@ const barService = {
       const foundBar = await Bar.findById(barId).lean();
       if (!foundBar) throw new NotFoundError('바 정보 없음');
       let image;
-      if (data.newImageNames) {
+      if (data.newImageNames.length !== 0) {
          const imagePath = path.join(__dirname, '../images', foundBar.image);
          fs.unlink(imagePath, (err) => {
             if (err.code !== 'ENOENT') {
@@ -79,7 +79,6 @@ const barService = {
             throw new InternalServerError('이미지 삭제 실패');
          }
       });
-
 
       const result = await Bar.deleteOne({ _id: barId });
       if (result.deletedCount === 0) throw new InternalServerError("바 삭제 실패");
