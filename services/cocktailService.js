@@ -194,12 +194,6 @@ const cocktailService = {
       const foundCocktail = await Cocktail.findById(id).lean();
       if (!foundCocktail) throw new NotFoundError('칵테일 정보 없음');
 
-      const dataKeys = Object.keys(rest);
-      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
-
-      if (isSame) {
-         throw new ConflictError('같은 내용 수정');
-      }
       // 이미지
       let image;
       if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
@@ -237,7 +231,12 @@ const cocktailService = {
          recipes.push(recipe);
       }
 
+      const dataKeys = Object.keys({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour });
+      const isSame = dataKeys.map(key => foundCocktail[key] === data[key]).every(value => value === true);
 
+      if (isSame) {
+         throw new ConflictError('같은 내용 수정');
+      }
       const updateCocktail = await Cocktail.updateOne(
          { _id: id },
          { name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour },

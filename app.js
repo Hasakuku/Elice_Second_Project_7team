@@ -7,6 +7,10 @@ const cookieParser = require('cookie-parser');
 const connectMongoDB = require('./db');
 const config = require('./config');
 const router = require('./routes');
+const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const YAML = require('yamljs');
+const path = require('path');
 
 connectMongoDB(); // 몽고DB 연결
 
@@ -32,6 +36,10 @@ app.use(cookieParser());
 app.use('/images', express.static('images'));
 
 app.use("/api", router);
+
+//스웨거
+const swaggerDocument = YAML.load(path.join(__dirname, './docs/swagger.yaml'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // error handler
 app.use(function (err, req, res, next) {
