@@ -81,6 +81,7 @@ const reviewService = {
                const { likes, ...rest } = item;
                return {
                   ...rest,
+                  likeCount: likes.length,
                   isLiked: Array.isArray(likes) && likes.map(like => like.toString()).includes(userId),
                };
             });
