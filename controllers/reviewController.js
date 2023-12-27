@@ -18,8 +18,8 @@ const getUserReviewList = asyncHandler(async (req, res) => {
 //* 리뷰 목록 조회
 const getReviewList = asyncHandler(async (req, res) => {
    const user = verifyUserToken(req);
-   const { perPage, page, id } = req.query;
-   const result = await reviewService.getReviewList(user, { perPage, page, id } );
+   const { perPage, page, id, cursorId } = req.query;
+   const result = await reviewService.getReviewList(user.id, { cursorId, perPage, page, id });
    res.status(200).json(result);
 });
 //* 리뷰 등록

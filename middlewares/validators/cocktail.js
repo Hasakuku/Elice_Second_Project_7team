@@ -40,10 +40,10 @@ exports.createCocktail = [
       .notEmpty().withMessage('필수로 입력해야 합니다.')
       .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.')
       .trim(),
-   body('newImageNames')
+   body('newImageNames.*')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),
-   body('recipeImageNames')
+   body('recipeImageNames.*')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),
    body('ingredient')
@@ -75,10 +75,10 @@ exports.updateCocktail = [
       .optional()
       .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.')
       .trim(),
-   body('newImageNames')
+   body('newImageNames.*')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),
-   body('recipeImageNames')
+   body('recipeImageNames.*')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),
    body('abv')
