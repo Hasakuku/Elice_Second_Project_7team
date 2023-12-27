@@ -149,15 +149,19 @@ const cocktailService = {
    },
    //* 칵테일 상세 조회
    async getCocktail(user, id) {
-      const cocktails = await Cocktail.findById(id).populate({ path: 'base', select: 'name' }).populate({ path: 'reviews', options: { limit: 2 } }).lean();
+      const cocktails = await Cocktail.findById(id).populate({ path: 'base', select: 'name' }).populate({ path: 'reviews', options: { limit: 2 }, populate: { path: 'user', select: 'nickname' } }).lean();
       if (!cocktails) throw new NotFoundError('칵테일 없음');
       let userId = user ? user.id.toString() : '';
       cocktails.isWished = Array.isArray(cocktails.wishes) && cocktails.wishes.map(wish => wish.toString()).includes(userId);
-      cocktails.reviews = cocktails.reviews.map(review => ({
-         ...review,
-         isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
-         likeCount: review.likes.length || 0,
-      }));
+      cocktails.reviews = cocktails.reviews.map(review => {
+         const { user, ...rest } = review;
+         return {
+            ...rest,
+            nickname: review.user.nickname,
+            isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
+            likeCount: review.likes.length || 0,
+         };
+      });
       return cocktails;
    },
    //* 칵테일 등록
