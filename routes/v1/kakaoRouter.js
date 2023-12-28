@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const kakaoController = require('../../controllers/kakaoController');
-// const { validateKakao } = require('../../middlewares/validators');
 
 router.get('/kakao/user',  kakaoController.loginKakao);
 router.get('/kakao/withdrawal',  kakaoController.withdrawalKakao);

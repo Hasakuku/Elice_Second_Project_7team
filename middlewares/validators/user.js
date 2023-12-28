@@ -2,7 +2,7 @@ const { body, query } = require('express-validator');
 
 exports.validationGetUserList = [
     query('keyword')
-        .optional()
+        .optional().trim()
         .isLength({ max: 24 }).withMessage('검색어는 24글자 제한이 있습니다.'),
     query('perPage')
         .optional().trim()
