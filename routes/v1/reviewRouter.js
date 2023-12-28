@@ -5,7 +5,7 @@ const checkUser = require('../../middlewares/checkUser');
 const checkAdmin = require('../../middlewares/checkAdmin');
 const checkWrite = require('../../middlewares/checkWrite');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
-const { validator, review } = require('../../middlewares/validators');
+const { validator, review, params } = require('../../middlewares/validators');
 
 router.route('/search')
    .get( //* 리뷰 검색(관리자)
@@ -40,16 +40,19 @@ router.route('/create/:id')
 router.route('/:id/likes')
    .post( //* 좋아요 추가
       checkUser,
+      validator(params.params),
       reviewController.addLike
    )
    .delete( //* 좋아요 삭제
       checkUser,
+      validator(params.params),
       reviewController.deleteLike
    );
 
 router.route('/:id')
    .get( //* 리뷰 상세 조회
       checkUser,
+      validator(params.params),
       reviewController.getReview
    )
    .put( //* 리뷰 수정
@@ -63,6 +66,7 @@ router.route('/:id')
    .delete( //* 리뷰 삭제
       checkUser,
       checkAdmin,
+      validator(params.params),
       reviewController.deleteReview
    );
    

@@ -240,7 +240,7 @@ const userService = {
    },
    //* 기본 로그인
    async login({ id, pw }) {
-      if(!id || !pw) throw new BadRequestError('id 와 pw를 입력해주세요');
+      if (!id || !pw) throw new BadRequestError('id 와 pw를 입력해주세요');
       const user = await User.findOne({ id: id, pw: pw });
       if (!user) throw new NotFoundError('없어여');
       const result = setToken(user);
@@ -254,7 +254,8 @@ const userService = {
       if (!['sweet', 'sour', 'bitter'].includes(taste) || !['1', '2', '3'].includes(level)) {
          throw new BadRequestError('올바른 정보로 요청 해주세요');
       }
-      if (base && await Base.find({ name: base }).select('_id').lean()) throw new NotFoundError('Base 값 오류');
+      const result = await Base.find({ name: base }).select('_id').lean();
+      if (base && result.length === 0) throw new NotFoundError('Base 값 오류');
       user.custom = {
          base: base || undefined,
          abv: abv,

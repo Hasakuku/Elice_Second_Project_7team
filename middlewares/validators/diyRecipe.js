@@ -1,4 +1,4 @@
-const { body, query } = require('express-validator');
+const { body, query, param } = require('express-validator');
 
 exports.validationGetDiyRecipeList = [
    query('base')
@@ -81,6 +81,9 @@ exports.validationCreateDiyRecipe =[
 ];
 
 exports.validationUpdateDiyRecipe = [
+   param('id')
+      .trim()
+      .isMongoId().withMessage('유효한 MongoDB ID 가 아닙니다.'),
    body('name')
       .optional(),
    body('base')

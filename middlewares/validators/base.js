@@ -1,6 +1,9 @@
-const { body, query } = require('express-validator');
+const { body, query, param } = require('express-validator');
 
 exports.validationUpdateBase = [
+  param('id')
+    .trim()
+    .isMongoId().withMessage('유효한 MongoDB ID 가 아닙니다.'),
   body('name')
     .optional()
     .isString().withMessage('칵테일 베이스 이름은 문자여야 합니다.'),

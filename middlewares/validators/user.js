@@ -36,16 +36,16 @@ exports.validationGetWishListByType = [
 ];
 
 exports.validationUpdateUserCustom = [
-    query('base')
+    body('base')
         .optional().trim()
         .isString().withMessage('문자열을 입력해주세요'),
-    query('taste')
+    body('taste')
         .notEmpty().withMessage('taste를 입력 해야합니다.')
         .isIn(['sweet', 'bitter', 'sour']).withMessage('맛은 sweet, bitter, sour 중 하나여야 합니다.'),
-    query('cursorId')
+    body('cursorId')
         .optional().trim()
         .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.'),
-    query('level')
+    body('level')
         .optional().trim()
         .isIn(['1', '2', '3']).withMessage('level 1~3 이여야 합니다.'),
 ];
