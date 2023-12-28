@@ -1218,6 +1218,26 @@ paths:
                     type: number
                   likeCount:
                     type: number
+    delete:
+      tags:
+        - Reviews
+      summary: 리뷰 삭제(관리자)
+      security:
+        - JwtToken: []
+      parameters:
+        - name: JwtToken
+          in: cookies
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
   /reviews/:id/users:
     delete:
       tags:
@@ -1409,27 +1429,6 @@ paths:
       tags:
         - Reviews
       summary: 리뷰 좋아요 삭제
-      security:
-        - JwtToken: []
-      parameters:
-        - name: JwtToken
-          in: cookies
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: No Content
-  /reviews/:id:
-    delete:
-      tags:
-        - Reviews
-      summary: 리뷰 삭제(관리자)
       security:
         - JwtToken: []
       parameters:
