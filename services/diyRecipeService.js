@@ -91,13 +91,14 @@ const diyRecipeService = {
   async getDiyRecipe(user, id) {
     const diyRecipe = await DiyRecipe.findById(id)
       .populate({ path: 'base', select: 'name' })
-      .populate({ path: 'reviews', options: { limit: 2 } })
+      .populate({ path: 'reviews', options: { limit: 2 }, populate: { path: 'user', select: 'nickname' } })
       .lean(); //id에 맞는 레시피 찾아 리뷰정보랑 같이 반환 limit은 2
     if (!diyRecipe) throw new NotFoundError('DIY 레시피 없습니다.');
     let userId = user ? user.id.toString() : '';
     diyRecipe.isWished = Array.isArray(diyRecipe.wishes) && diyRecipe.wishes.map(wish => wish.toString()).includes(userId);
     diyRecipe.reviews = diyRecipe.reviews.map((review) => ({
       ...review,
+      nickname: review.user.nickname,
       isLiked: Array.isArray(review.likes) && review.likes.map(like => like.toString()).includes(userId),
       likeCount: review.likes.length || 0,
     }));

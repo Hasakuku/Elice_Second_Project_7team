@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 const UserSchema = new Schema({
    kakaoId: { type: Number, unique: true },
    email: { type: String, required: true, unique: true },
+   image: { type: String },
    nickname: { type: String, },
    custom: {
       base: { type: String, },
