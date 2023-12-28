@@ -187,8 +187,59 @@ const searchService = {
          }
       }
       return results;
-   }
+   },
+   async keywordAutoCompletion({ keyword, page, perPage }) {
+      const { skip, limit } = setParameter(perPage, page);
+      const base = await Base.find({ name: { $regex: keyword, $options: 'i' } }).select('_id').lean();
+      const baseIds = base.map(base => base._id);
 
+      const matchData = {
+         $or: [
+            { name: { $regex: new RegExp(keyword, 'i') } },
+            { base: { $in: baseIds } }
+         ]
+      };
+
+      const pipelineData = [
+         { $match: matchData },
+         { $sort: { name: 1 } },
+         { $project: { name: 1 } }
+      ];
+
+      const runPipeline = async (Model) => {
+         let data = await Model.aggregate(pipelineData);
+         return data.map(item => item.name);
+      };
+
+      const types = ['cocktail', 'diyRecipe'];
+      let results = [];
+
+      for (let item of types) {
+         let Model;
+         if (item === 'cocktail') {
+            Model = Cocktail;
+         } else if (item === 'diyRecipe') {
+            Model = DiyRecipe;
+         }
+
+         if (Model) {
+            const modelResults = await runPipeline(Model);
+            results.push(...modelResults);
+         }
+      }
+      results.sort((a, b) => {
+         const aStartsByKeyword = a.startsWith(keyword);
+         const bStartsByKeyword = b.startsWith(keyword);
+
+         if (aStartsByKeyword && !bStartsByKeyword) return -1;
+         else if (!aStartsByKeyword && bStartsByKeyword) return 1;
+         else return a.length - b.length;
+      });
+      if (page) results = results.slice(skip);
+      results = results.slice(0, limit);
+
+      return results;
+   }
 };
 
 module.exports = searchService;
