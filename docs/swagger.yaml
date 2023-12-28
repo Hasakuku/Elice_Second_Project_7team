@@ -1405,7 +1405,6 @@ paths:
       responses:
         '201':
           description: Created
-  /reviews/:id/likes:
     delete:
       tags:
         - Reviews
