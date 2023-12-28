@@ -327,7 +327,7 @@ paths:
           description: 사용자 찜 삭제 성공
   /users/login:
     post:
-      tags: 
+      tags:
         - Users
       summary: 테스트용 로그인
       requestBody:
@@ -336,12 +336,12 @@ paths:
             schema:
               type: object
               properties:
-                id: 
+                id:
                   type: string
-                  example: 의연
+                  example: admin
                 pw:
                   type: string
-                  example: 의연
+                  example: admin
       responses:
         '201':
           description: 로그인 성공
@@ -1058,7 +1058,7 @@ paths:
                     time: 18:00 - 02:00
                     x: 127
                     y: 37.4979
-      
+
     post:
       tags:
         - Bars
@@ -1078,8 +1078,8 @@ paths:
               type: object
               properties:
                 image:
-                    type: string
-                    example: MSG_8031703352165894.png
+                  type: string
+                  example: MSG_8031703352165894.png
           application/json:
             schema:
               type: object
@@ -1182,7 +1182,7 @@ paths:
                   type: number
     delete:
       tags:
-      - Bars
+        - Bars
       summary: 바 정보 삭제
       security:
         - jwtToken: []
@@ -1656,12 +1656,38 @@ paths:
               schema:
                 type: object
                 properties:
-                  cocktail:
-                    type: number
-                  diyRecipe:
-                    type: number
-                  total:
-                    type: number
+                  item:
+                    type: string
+  /search/auto-complete:
+    get:
+      tags:
+        - Search
+      summary: 검색 자동 완성
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: perPage
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 검색 자동 완성 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  properties:
+                    name:
+                      type: string
 components:
   schemas:
     Bar:
