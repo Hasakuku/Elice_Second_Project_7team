@@ -1001,30 +1001,37 @@ paths:
           in: query
           schema:
             type: number
+            example: 0
         - name: x2
           in: query
           schema:
             type: number
+            example: 200
         - name: y1
           in: query
           schema:
             type: number
+            example: 0
         - name: y2
           in: query
           schema:
             type: number
+            example: 200
         - name: keyword
           in: query
           schema:
             type: string
+          example: 바
         - name: perPage
           in: query
           schema:
             type: number
+            example: 2
         - name: page
           in: query
           schema:
             type: number
+            example: 1
       responses:
         '200':
           description: 지도에서 바 목록 조회 성공
@@ -1050,15 +1057,20 @@ paths:
                   y:
                     type: number
                 example:
-                  - _id: 658168a64b2f58b3b093d737
-                    name: 원식바1
-                    image: MSG_8031703352165894.png
-                    address: 서울특별시 강남구1
-                    tel: 02-1234-5678
-                    time: 18:00 - 02:00
-                    x: 127
-                    y: 37.4979
-
+                  total: 1
+                  bars:
+                    - _id: 658168a64b2f58b3b093d737
+                      name: 원식바1
+                      image: MSG_8031703352165894.png
+                      address: 서울특별시 강남구1
+                      tel: 02-1234-5678
+                      time: 18:00 - 02:00
+                      x: 127
+                      y: 37.4979
+        '400':
+          description: 입력 데이터 오류
+        '500':
+          description: 서버 오류
     post:
       tags:
         - Bars
@@ -1077,19 +1089,13 @@ paths:
             schema:
               type: object
               properties:
-                image:
+                images:
                   type: string
+                  format: binary
                   example: MSG_8031703352165894.png
-          application/json:
-            schema:
-              type: object
-              properties:
                 name:
                   type: string
                   example: 원식바1
-                image:
-                  type: string
-                  example: MSG_8031703352165894.png
                 address:
                   type: string
                   example: 서울특별시 강남구1
@@ -1108,6 +1114,12 @@ paths:
       responses:
         '201':
           description: 바 등록 성공
+        '400':
+          description: 입력 데이터 오류
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류
   /bars/:id:
     get:
       tags:
@@ -1143,6 +1155,21 @@ paths:
                     type: number
                   y:
                     type: number
+                example:
+                  _id: 658168a64b2f58b3b093d737
+                  name: 원식바1
+                  image: MSG_8031703352165894.png
+                  address: 서울특별시 강남구1
+                  tel: 02-1234-5678
+                  time: 18:00 - 02:00
+                  x: 127
+                  y: 37.4979
+        '400':
+          description: 입력 데이터 오류
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류                                      
     put:
       tags:
         - Bars
@@ -1180,6 +1207,17 @@ paths:
                   type: number
                 y:
                   type: number
+      responses:
+        '201':
+          description: 바 수정 성공                  
+        '400':
+          description: 입력 데이터 오류
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류                  
     delete:
       tags:
         - Bars
@@ -1200,6 +1238,12 @@ paths:
       responses:
         '204':
           description: 바 정보 삭제 성공
+        '400':
+          description: 입력 데이터 오류
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류          
   /reviews/:id:
     put:
       tags:
@@ -1555,28 +1599,34 @@ paths:
           in: query
           schema:
             type: string
+          example: 진
         - name: type
           in: query
           schema:
             type: string
             enum: [cocktails, recipes]
+            example: null
         - name: sort
           in: query
           schema:
             type: string
             enum: [rating, review]
+            example: rating
         - name: cursorId
           in: query
           schema:
             type: string
+          example: 6585064859ab0ce782365340
         - name: cursorValue
           in: query
           schema:
             type: number
+          example: 5
         - name: perPage
           in: query
           schema:
             type: number
+          example: 2
         - name: page
           in: query
           schema:
@@ -1591,10 +1641,13 @@ paths:
                 properties:
                   total:
                     type: number
+                    example: 5
                   cocktailSize:
                     type: number
+                    example: 3
                   diyRecipeSize:
                     type: number
+                    example: 2
                   cocktails:
                     type: array
                     items:
@@ -1602,14 +1655,23 @@ paths:
                       properties:
                         _id:
                           type: string
+                          example: 65828c5287834f1ddccc2c48
                         name:
                           type: string
+                          example: 마가리타1
                         images:
                           type: string
+                          example: /images/1703335018573.png
                         avgRating:
                           type: number
+                          example: 3
                         reviewCount:
                           type: number
+                          example: 4
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: 2023-12-20T06:40:18.375Z
                   diyRecipes:
                     type: array
                     items:
@@ -1617,14 +1679,23 @@ paths:
                       properties:
                         _id:
                           type: string
+                          example: 658d74c23df0c5678e7d26b2
                         name:
                           type: string
+                          example: 실버 불렛
                         images:
                           type: string
+                          example: /images/diyRecipe_Silver Bullet_6431703769282840.jpg
                         avgRating:
                           type: number
+                          example: 0
                         reviewCount:
                           type: number
+                          example: 0
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: 2023-12-20T06:40:18.375Z
   /search/admin:
     get:
       tags:

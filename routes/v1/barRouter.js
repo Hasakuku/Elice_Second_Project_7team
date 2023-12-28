@@ -4,10 +4,11 @@ const barController = require('../../controllers/barController');
 const checkUser = require('../../middlewares/checkUser');
 const checkAdmin = require('../../middlewares/checkAdmin');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
-const { validator, bar } = require('../../middlewares/validators');
+const { validator, bar, params } = require('../../middlewares/validators');
 
 router.route('/:id')
    .get( //* 바 상세 조회
+      validator(params.params),
       barController.getBar
    )
    .put( //* 바 수정
@@ -21,6 +22,7 @@ router.route('/:id')
    .delete( //* 바 삭제
       checkUser,
       checkAdmin,
+      validator(params.params),
       barController.deleteBar
    );
 

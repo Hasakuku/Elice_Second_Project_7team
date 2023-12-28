@@ -4,7 +4,7 @@ const diyRecipeController = require('../../controllers/diyRecipeController');
 const checkUser = require('../../middlewares/checkUser');
 const checkWrite = require('../../middlewares/checkWrite');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
-const { validator, diyRecipe } = require('../../middlewares/validators');
+const { validator, diyRecipe, params } = require('../../middlewares/validators');
 
 router.route('/users')
    .get( //* 사용자의 레시피 목록 조회
@@ -15,6 +15,7 @@ router.route('/users')
 
 router.route('/:id')
    .get( //* DIY 레시피 상세 조회
+      validator(params.params),
       diyRecipeController.getDiyRecipe
    )
    .put( //* DIY 레시피 수정
@@ -27,6 +28,7 @@ router.route('/:id')
    )
    .delete( //* DIY 레시피 삭제
       checkUser,
+      validator(params.params),
       diyRecipeController.deleteDiyRecipe
    );
 

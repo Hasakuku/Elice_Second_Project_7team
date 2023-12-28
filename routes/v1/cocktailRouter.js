@@ -4,7 +4,7 @@ const cocktailController = require('../../controllers/cocktailController');
 const checkUser = require('../../middlewares/checkUser');
 const checkAdmin = require('../../middlewares/checkAdmin');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
-const { validator, cocktail } = require('../../middlewares/validators');
+const { validator, cocktail, params } = require('../../middlewares/validators');
 
 router.route('/custom')
    .get( //* 맞춤 추천 칵테일
@@ -14,6 +14,7 @@ router.route('/custom')
 
 router.route('/:id')
    .get( //* 칵테일 상세 조회
+      validator(params.params),
       cocktailController.getCocktail
    )
    .put( //* 칵테일 수정
@@ -27,6 +28,7 @@ router.route('/:id')
    .delete( //* 칵테일 삭제
       checkUser,
       checkAdmin,
+      validator(params.params),
       cocktailController.deleteCocktail
    );
 

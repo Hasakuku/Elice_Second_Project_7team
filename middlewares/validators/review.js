@@ -1,4 +1,4 @@
-const { body, query } = require('express-validator');
+const { body, query, param } = require('express-validator');
 
 exports.checkGetReviewListByKeyword = [
    query('page')
@@ -37,6 +37,9 @@ exports.checkGetUserReviewList = [
       .isInt().withMessage('perPage는 숫자여야 합니다.'),
 ];
 exports.checkUpdateReview = [
+   param('id')
+      .trim()
+      .isMongoId().withMessage('유효한 MongoDB ID 가 아닙니다.'),
    body('newImageNames.*.imageName')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),
@@ -48,6 +51,9 @@ exports.checkUpdateReview = [
       .isInt({ min: 1, max: 5 }).withMessage('평점은 0에서 5 사이의 정수 값이어야 합니다'),
 ];
 exports.checkCreateReview = [
+   param('id')
+      .trim()
+      .isMongoId().withMessage('유효한 MongoDB ID 가 아닙니다.'),
    body('newImageNames.*.imageName')
       .optional()
       .matches(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|bmp|BMP|psd|PSD)$/).withMessage('유효한 이미지 파일 형식이 아닙니다.'),

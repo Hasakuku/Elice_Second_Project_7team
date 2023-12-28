@@ -9,7 +9,7 @@ const cocktailService = {
    //* 맞춤 추천 칵테일
    async getCustomCocktail(user) {
       const userCustom = await User.findById(user._id).select('custom -_id').lean();
-      if (Object.keys(userCustom)) throw new BadRequestError('설문조사를 하세요');
+      if (!Object.keys(userCustom)) throw new BadRequestError('설문조사를 하세요');
       const { abv, base, sweet, sour, bitter } = userCustom.custom;
 
       let foundBase;
@@ -41,11 +41,14 @@ const cocktailService = {
       if (sour) tasteQuery.sour = { $gt: sour };
       if (bitter) tasteQuery.bitter = { $gt: bitter };
 
+      const userWishes = await User.findById(user._id).select('wishes.cocktails').lean();
+
       const cocktails = await Cocktail.find({
+         _id: { $nin: userWishes.wishes.cocktails },
          base: { $in: foundBase },
          abv: abvRange,
          ...tasteQuery
-      }).sort({ 'reviews.length': -1 }).populate('reviews').populate('base').limit(3).lean();
+      }).sort({ 'reviews.length': -1 }).select('_id name image abv sweet bitter sour avgRating').populate('reviews').populate('base').limit(3).lean();
 
       if (cocktails.length === 0) throw new NotFoundError('조건에 맞는 칵테일 없음');
 
@@ -55,9 +58,9 @@ const cocktailService = {
          const avgRating = (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1);
          return {
             ...rest,
+            avgRating: avgRating,
             base: rest.base.name,
             reviewCount: reviews.length,
-            avgRating: avgRating,
          };
       });
       return result;
