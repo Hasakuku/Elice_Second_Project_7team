@@ -209,7 +209,7 @@ const reviewService = {
       if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
          for (let i = 0; i < newImageNames.length; i++) {
             if (foundReview.images && foundReview.images[i]) {
-               const imagePath = path.join(__dirname, '../images', foundReview.images[i]);
+               const imagePath = path.join(__dirname, '../', foundReview.images[i]);
                await fs.unlink(imagePath).catch(err => {
                   if (err.code !== 'ENOENT') {
                      throw new InternalServerError('이미지 삭제 실패');
@@ -273,7 +273,7 @@ const reviewService = {
       else cocktailReview = await CocktailReview.findById(reviewId).lean();
       if (cocktailReview) {
          for (let image of cocktailReview.images) {
-            const imagePath = path.join(__dirname, '../images', image);
+            const imagePath = path.join(__dirname, '../', image);
             await fs.unlink(imagePath).catch(err => {
                if (err.code !== 'ENOENT') {
                   throw new InternalServerError('이미지 삭제 실패');
@@ -308,7 +308,7 @@ const reviewService = {
       diyRecipeReview = await DiyRecipeReview.findOne({ _id: reviewId, user: user._id });
       if (diyRecipeReview) {
          for (let image of diyRecipeReview.images) {
-            const imagePath = path.join(__dirname, '../images', image);
+            const imagePath = path.join(__dirname, '../', image);
             await fs.unlink(imagePath).catch(err => {
                if (err.code !== 'ENOENT') {
                   throw new InternalServerError('이미지 삭제 실패');
