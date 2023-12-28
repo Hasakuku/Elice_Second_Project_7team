@@ -36,7 +36,7 @@ const imageHandler = asyncHandler(async (req, res, next) => {
          const newFilePath = path.join('images/', newFileName);
          await fs.rename(file.path, newFilePath);
 
-         return { imageName: newFileName };
+         return { imageName: `/images/${newFileName}` };
       }));
    }
    if (req.files.recipeImages) {
@@ -45,7 +45,7 @@ const imageHandler = asyncHandler(async (req, res, next) => {
          const newFilePath = path.join('images/', newFileName);
          await fs.rename(file.path, newFilePath);
 
-         return { imageName: newFileName };
+         return { imageName: `/images/${newFileName}` };
       }));
    }
    req.body.newImageNames = filenames;
