@@ -9,7 +9,6 @@ const { validator, user, params } = require('../../middlewares/validators');
 router.route('/mypage')
    .get( //* 사용자 정보 조회
       checkUser,
-      validator(params.params),
       userController.getUser
    )
    .put( //* 사용자 정보 수정
