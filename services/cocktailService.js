@@ -55,10 +55,8 @@ const cocktailService = {
       // 가장 인기있는 칵테일 선택
       const result = cocktails.map((item) => {
          const { reviews, wishes, ...rest } = item;
-         const avgRating = (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1);
          return {
             ...rest,
-            avgRating: avgRating,
             base: rest.base.name,
             reviewCount: reviews.length,
          };
