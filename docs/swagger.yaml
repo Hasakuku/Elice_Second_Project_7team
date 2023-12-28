@@ -848,7 +848,7 @@ paths:
                     type: number
                   avgrating:
                     type: number
-  /diy-recipes/{id}:
+  /diy-recipes/:id:
     get:
       tags:
         - DiyRecipes
@@ -1058,7 +1058,7 @@ paths:
       responses:
         '201':
           description: Created
-  /bars/{id}:
+  /bars/:id:
     get:
       tags:
         - Bars
@@ -1153,7 +1153,7 @@ paths:
       responses:
         '204':
           description: No Content
-  /reviews/{id}:
+  /reviews/:id:
     put:
       tags:
         - Reviews
@@ -1188,7 +1188,7 @@ paths:
       responses:
         '200':
           description: Successful operation
-  /reviews/{id}/users:
+  /reviews/:id/users:
     delete:
       tags:
         - Reviews
@@ -1209,7 +1209,7 @@ paths:
       responses:
         '204':
           description: No Content
-  /reviews/create/{id}:
+  /reviews/create/:id:
     post:
       tags:
         - Reviews
@@ -1244,7 +1244,7 @@ paths:
       responses:
         '201':
           description: Created
-  /reviews/{id}:
+  /reviews/:id:
     get:
       tags:
         - Reviews
@@ -1385,7 +1385,7 @@ paths:
                         createdAt:
                           type: string
                           format: date
-  /reviews/{id}/likes:
+  /reviews/:id/likes:
     post:
       tags:
         - Reviews
@@ -1406,7 +1406,7 @@ paths:
       responses:
         '201':
           description: Created
-  /reviews/{id}/likes:
+  /reviews/:id/likes:
     delete:
       tags:
         - Reviews
@@ -1427,7 +1427,7 @@ paths:
       responses:
         '204':
           description: No Content
-  /reviews/{id}:
+  /reviews/:id:
     delete:
       tags:
         - Reviews
