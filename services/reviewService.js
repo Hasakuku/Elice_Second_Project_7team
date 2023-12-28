@@ -263,8 +263,8 @@ const reviewService = {
       });
       avgRating /= reviews.length;
       let reviewCount = reviews.length;
-      if (type === 'cocktails') await Cocktail.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
-      if (type === 'recipes') await DiyRecipe.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(2), reviewCount: reviewCount });
+      if (type === 'cocktails') await Cocktail.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(1), reviewCount: reviewCount });
+      if (type === 'recipes') await DiyRecipe.updateOne({ _id: itemId }, { avgRating: avgRating.toFixed(1), reviewCount: reviewCount });
    },
    //* 리뷰 삭제
    async deleteReview(user, reviewId) {

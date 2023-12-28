@@ -1,18 +1,26 @@
 openapi: 3.0.0
 info:
-  title: 술사와
-  description: 술사화 API
+  title: 세상의 모든 칵테일 COKTAIL
+  url: http://kdt-sw-7-team07.elicecoding.com
+  description: COK API 문서
   version: 1.0.0
   contact:
-    name: 술사와 개발팀
-    email: support@sulsawa.com
+    name: COK 공식 사이트
+    email: seodnjstlr@gmail.com
     url: http://kdt-sw-7-team07.elicecoding.com
+externalDocs:
+  description: COK 개발팀 관련 정보
+  url: https://kdt-gitlab.elice.io/sw_track/class_07/web_project_2/team7
 servers:
   - url: http://kdt-sw-7-team07.elicecoding.com:3000/api/v1
+    description: COK API 서버
   - url: http://localhost:3000/api/v1
+    description: 로컬 API 서버
 tags:
   - name: KaKao
     description: 카카오 소셜 로그인을 통한 사용자 인증 및 관리
+  - name: Search
+    description: 술, 칵테일, 술집 등에 대한 검색 기능
   - name: Bars
     description: 지도를 통한 술집에 대한 정보
   - name: Bases
@@ -23,10 +31,18 @@ tags:
     description: 사용자가 직접 만들고, 술 레시피 및 제조 방법에 대한 정보 공유
   - name: Reviews
     description: 사용자들이 남긴 DIY레시피, 칵테일에 대한 리뷰
-  - name: Search
-    description: 술, 칵테일, 술집 등에 대한 검색 기능
   - name: Users
     description: 사용자 계정 관리
+
+components:
+  securitySchemes:
+    oauthScheme:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://kauth.kakao.com/oauth/authorize?client_id=88d72187bb965ec392372175279752c1&redirect_uri=http://localhost:3000/api-docs&response_type=code&scope=profile_nickname,account_email
+          scopes:
+            read: 카카오 로그인
 
 paths:
   /auth/kakao:
@@ -34,6 +50,8 @@ paths:
       tags:
         - KaKao
       summary: 카카오 로그인
+      security:
+        - oauthScheme: []
       responses:
         '201':
           description: 쿠키에 jwtToken
@@ -42,7 +60,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  JwtToken:
+                  jwtToken:
                     type: string
         '500':
           description: 서버 오류 입니다.
@@ -52,10 +70,10 @@ paths:
         - KaKao
       summary: 카카오 연결 해제-탈퇴
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -71,10 +89,10 @@ paths:
         - Users
       summary: 사용자 목록 조회(관리자)
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -112,10 +130,10 @@ paths:
         - Users
       summary: 글쓰기, 리뷰 쓰기 권한 수정(관리자)
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -133,8 +151,8 @@ paths:
         - Users
       summary: 사용자 삭제(관리자)
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -152,8 +170,8 @@ paths:
         - Users
       summary: 사용자 커스텀 설정
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -166,8 +184,8 @@ paths:
         - Users
       summary: 사용자 정보 조회
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -196,8 +214,8 @@ paths:
         - Users
       summary: 사용자 정보 수정
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -220,8 +238,8 @@ paths:
         - Users
       summary: 사용자 로그 아웃
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -232,10 +250,10 @@ paths:
     get:
       tags:
         - Users
-      summary: 사용자 찜목록 조회(커서)
+      summary: 사용자 찜목록 조회
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -286,8 +304,8 @@ paths:
         - Users
       summary: 사용자 찜 추가
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -304,8 +322,8 @@ paths:
         - Users
       summary: 사용자 찜 삭제
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -317,6 +335,26 @@ paths:
       responses:
         '204':
           description: 사용자 찜 삭제 성공
+  /users/login:
+    post:
+      tags: 
+        - Users
+      summary: 테스트용 로그인
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id: 
+                  type: string
+                  example: 의연
+                pw:
+                  type: string
+                  example: 의연
+      responses:
+        '201':
+          description: 로그인 성공
 
   /bases:
     get:
@@ -344,8 +382,8 @@ paths:
         - Bases
       summary: 베이스 등록
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -381,8 +419,8 @@ paths:
         - Bases
       summary: 베이스 삭제
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -399,8 +437,8 @@ paths:
         - Bases
       summary: 베이스 수정
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -429,8 +467,8 @@ paths:
         - Cocktails
       summary: 개인 맞춤 추천 칵테일 조회(회원)
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           schema:
             type: string
       responses:
@@ -463,7 +501,7 @@ paths:
     get:
       tags:
         - Cocktails
-      summary: 칵테일 목록 조회/정렬기능(커서)
+      summary: 칵테일 목록 조회/정렬기능
       parameters:
         - name: base
           in: query
@@ -472,9 +510,8 @@ paths:
         - name: sort
           in: query
           schema:
-            type: array
-            items:
-              type: string
+            type: string
+            enum: [review, rating]
         - name: abv
           in: query
           schema:
@@ -532,8 +569,8 @@ paths:
         - Cocktails
       summary: 칵테일 등록
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -620,8 +657,8 @@ paths:
         - Cocktails
       summary: 칵테일 수정
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -664,8 +701,8 @@ paths:
         - Cocktails
       summary: 칵테일 삭제
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -690,9 +727,8 @@ paths:
         - name: sort
           in: query
           schema:
-            type: array
-            items:
-              type: string
+            type: string
+            enum: [review, rating]
         - name: abv
           in: query
           schema:
@@ -767,10 +803,10 @@ paths:
         - DiyRecipes
       summary: 레시피 생성
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -809,10 +845,10 @@ paths:
         - DiyRecipes
       summary: 사용자의 레시피 목록 조회
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -904,10 +940,10 @@ paths:
         - DiyRecipes
       summary: 레시피 수정
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -950,10 +986,10 @@ paths:
         - DiyRecipes
       summary: 레시피 삭제
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1001,7 +1037,7 @@ paths:
             type: number
       responses:
         '200':
-          description: Successful operation
+          description: 지도에서 바 목록 조회 성공
           content:
             application/json:
               schema:
@@ -1023,41 +1059,65 @@ paths:
                     type: number
                   y:
                     type: number
+                example:
+                  - _id: 658168a64b2f58b3b093d737
+                    name: 원식바1
+                    image: MSG_8031703352165894.png
+                    address: 서울특별시 강남구1
+                    tel: 02-1234-5678
+                    time: 18:00 - 02:00
+                    x: 127
+                    y: 37.4979
+      
     post:
       tags:
         - Bars
       summary: 바 등록
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
       requestBody:
         content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                    type: string
+                    example: MSG_8031703352165894.png
           application/json:
             schema:
               type: object
               properties:
                 name:
                   type: string
-                newImageNames:
+                  example: 원식바1
+                image:
                   type: string
+                  example: MSG_8031703352165894.png
                 address:
                   type: string
+                  example: 서울특별시 강남구1
                 tel:
                   type: string
+                  example: 02-1234-5678
                 time:
                   type: string
+                  example: 18:00 - 02:00
                 x:
                   type: number
+                  example: 127
                 y:
                   type: number
+                  example: 37.4979
       responses:
         '201':
-          description: Created
+          description: 바 등록 성공
   /bars/:id:
     get:
       tags:
@@ -1071,7 +1131,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Successful operation
+          description: 바 정보 조회 성공
           content:
             application/json:
               schema:
@@ -1098,10 +1158,10 @@ paths:
         - Bars
       summary: 바 정보 수정
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1130,18 +1190,15 @@ paths:
                   type: number
                 y:
                   type: number
-      responses:
-        '200':
-          description: Successful operation
     delete:
       tags:
       - Bars
       summary: 바 정보 삭제
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1152,17 +1209,17 @@ paths:
             type: string
       responses:
         '204':
-          description: No Content
+          description: 바 정보 삭제 성공
   /reviews/:id:
     put:
       tags:
         - Reviews
       summary: 리뷰 수정
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1187,7 +1244,7 @@ paths:
                   type: number
       responses:
         '200':
-          description: Successful operation
+          description: 리뷰 수정 성공
     get:
       tags:
         - Reviews
@@ -1200,7 +1257,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Successful operation
+          description: 리뷰 상세 조회 성공
           content:
             application/json:
               schema:
@@ -1223,10 +1280,10 @@ paths:
         - Reviews
       summary: 리뷰 삭제(관리자)
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1237,17 +1294,17 @@ paths:
             type: string
       responses:
         '204':
-          description: No Content
+          description: 리뷰 삭제 성공
   /reviews/:id/users:
     delete:
       tags:
         - Reviews
       summary: 리뷰 삭제
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1258,17 +1315,58 @@ paths:
             type: string
       responses:
         '204':
-          description: No Content
+          description: 리뷰 삭제 성공
+  /reviews/:id/likes:
+    post:
+      tags:
+        - Reviews
+      summary: 리뷰 좋아요 추가
+      security:
+        - jwtToken: []
+      parameters:
+        - name: jwtToken
+          in: cookie
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: 리뷰 좋아요 추가 성공
+    delete:
+      tags:
+        - Reviews
+      summary: 리뷰 좋아요 삭제
+      security:
+        - jwtToken: []
+      parameters:
+        - name: jwtToken
+          in: cookie
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 리뷰 좋아요 삭제 성공
   /reviews/create/:id:
     post:
       tags:
         - Reviews
       summary: 리뷰 등록
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1293,7 +1391,7 @@ paths:
                   type: number
       responses:
         '201':
-          description: Created
+          description: 리뷰 등록 성공
   /reviews/list:
     get:
       tags:
@@ -1318,7 +1416,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Successful operation
+          description: 상품 리뷰 목록 조회 성공
           content:
             application/json:
               schema:
@@ -1345,10 +1443,10 @@ paths:
         - Reviews
       summary: 유저의 리뷰 목록 조회
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1375,7 +1473,7 @@ paths:
             type: number
       responses:
         '200':
-          description: Successful operation
+          description: 유저의 리뷰 목록 조회 성공
           content:
             application/json:
               schema:
@@ -1404,57 +1502,16 @@ paths:
                         createdAt:
                           type: string
                           format: date
-  /reviews/:id/likes:
-    post:
-      tags:
-        - Reviews
-      summary: 리뷰 좋아요 추가
-      security:
-        - JwtToken: []
-      parameters:
-        - name: JwtToken
-          in: cookies
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '201':
-          description: Created
-    delete:
-      tags:
-        - Reviews
-      summary: 리뷰 좋아요 삭제
-      security:
-        - JwtToken: []
-      parameters:
-        - name: JwtToken
-          in: cookies
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: No Content
   /reviews/search:
     get:
       tags:
         - Reviews
       summary: 리뷰 검색 조회(관리자)
       security:
-        - JwtToken: []
+        - jwtToken: []
       parameters:
-        - name: JwtToken
-          in: cookies
+        - name: jwtToken
+          in: cookie
           required: true
           schema:
             type: string
@@ -1477,7 +1534,7 @@ paths:
             type: number
       responses:
         '200':
-          description: Successful operation
+          description: 리뷰 검색 조회 성공
           content:
             application/json:
               schema:
@@ -1536,7 +1593,7 @@ paths:
             type: number
       responses:
         '200':
-          description: Successful operation
+          description: 검색 성공
           content:
             application/json:
               schema:
@@ -1582,7 +1639,7 @@ paths:
     get:
       tags:
         - Search
-      summary: 관리자용 칵테일,레시피 검색
+      summary: (관리자) 칵테일,레시피 검색
       parameters:
         - name: keyword
           in: query
@@ -1603,7 +1660,7 @@ paths:
             type: number
       responses:
         '200':
-          description: Successful operation
+          description: 검색 성공
           content:
             application/json:
               schema:
@@ -1615,5 +1672,37 @@ paths:
                     type: number
                   total:
                     type: number
+components:
+  schemas:
+    Bar:
+      type: object
+      required:
+        - name
+        - address
+        - time
+      properties:
+        name:
+          type: string
+        image:
+          type: string
+        address:
+          type: string
+        tel:
+          type: string
+        time:
+          type: string
+        x:
+          type: number
+        y:
+          type: number
 
-  
+    Base:
+      type: object
+      required:
+        - name
+        - image
+      properties:
+        name:
+          type: string
+        image:
+          type: string

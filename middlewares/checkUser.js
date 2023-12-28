@@ -6,7 +6,6 @@ const { NotFoundError, UnauthorizedError } = require('../utils/customError');
 
 // 사용자 인증 체크 미들웨어
 module.exports = asyncHandler(async (req, res, next) => {
-   
    const jwtToken = req.cookies.jwtToken;
    if (!jwtToken) {
       throw new UnauthorizedError("쿠키에 토큰 없음");
