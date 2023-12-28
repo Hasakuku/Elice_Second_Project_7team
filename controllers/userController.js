@@ -78,6 +78,6 @@ const login = asyncHandler(async (req, res) => {
    const { id, pw } = req.body;
    const result = await userService.login({ id, pw });
    res.cookie('jwtToken', result, { httpOnly: true });
-   res.status(200).json({ message: '로그인 성공' });
+   res.status(201).json({ message: '로그인 성공' });
 });
 module.exports = { getUser, logout, updateUser, withdrawal, getWishListByType, createWish, deleteWish, updateUserPermission, getUserList, deleteUser, login, updateUserCustom };

@@ -240,6 +240,7 @@ const userService = {
    },
    //* 기본 로그인
    async login({ id, pw }) {
+      if(!id || !pw) throw new BadRequestError('id 와 pw를 입력해주세요');
       const user = await User.findOne({ id: id, pw: pw });
       if (!user) throw new NotFoundError('없어여');
       const result = setToken(user);
