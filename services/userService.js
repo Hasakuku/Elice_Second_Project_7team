@@ -238,6 +238,7 @@ const userService = {
       const result = await User.deleteOne({ _id: userId });
       if (result.deletedCount === 0) throw new ConflictError('삭제 데이터 없음');
    },
+   //* 기본 로그인
    async login({ id, pw }) {
       const user = await User.findOne({ id: id, pw: pw });
       if (!user) throw new NotFoundError('없어여');
