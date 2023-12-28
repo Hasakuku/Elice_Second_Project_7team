@@ -1188,6 +1188,36 @@ paths:
       responses:
         '200':
           description: Successful operation
+    get:
+      tags:
+        - Reviews
+      summary: 리뷰 상세 조회
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  content:
+                    type: string
+                  images:
+                    type: array
+                    items:
+                      type: string
+                  rating:
+                    type: number
+                  likeCount:
+                    type: number
   /reviews/:id/users:
     delete:
       tags:
@@ -1244,37 +1274,6 @@ paths:
       responses:
         '201':
           description: Created
-  /reviews/:id:
-    get:
-      tags:
-        - Reviews
-      summary: 리뷰 상세 조회
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  content:
-                    type: string
-                  images:
-                    type: array
-                    items:
-                      type: string
-                  rating:
-                    type: number
-                  likeCount:
-                    type: number
   /reviews/list:
     get:
       tags:
