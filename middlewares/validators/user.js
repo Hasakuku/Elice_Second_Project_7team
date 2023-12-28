@@ -42,10 +42,7 @@ exports.validationUpdateUserCustom = [
     body('taste')
         .notEmpty().withMessage('taste를 입력 해야합니다.')
         .isIn(['sweet', 'bitter', 'sour']).withMessage('맛은 sweet, bitter, sour 중 하나여야 합니다.'),
-    body('cursorId')
-        .optional().trim()
-        .isMongoId().withMessage('유효한 MongoDB ID가 아닙니다.'),
     body('level')
         .optional().trim()
-        .isIn(['1', '2', '3']).withMessage('level 1~3 이여야 합니다.'),
+        .isIn([1, 2, 3]).withMessage('level 1~3 이여야 합니다.'),
 ];

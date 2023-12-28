@@ -251,9 +251,7 @@ const userService = {
       const user = await User.findById(userId);
       if (!user) throw new NotFoundError('유저 정보 없음');
       if (!abv || !taste || !level) throw new BadRequestError('도수,맛,단계를 입력하세요');
-      if (!['sweet', 'sour', 'bitter'].includes(taste) || !['1', '2', '3'].includes(level)) {
-         throw new BadRequestError('올바른 정보로 요청 해주세요');
-      }
+
       const result = await Base.find({ name: base }).select('_id').lean();
       if (base && result.length === 0) throw new NotFoundError('Base 값 오류');
       user.custom = {

@@ -4,7 +4,7 @@ const { BadRequestError, NotFoundError } = require('../utils/customError');
 //* 사용자 커스텀 설정
 const updateUserCustom = asyncHandler(async (req, res) => {
    const userId = req.user._id;
-   const { base, abv, taste, level } = req.query;
+   const { base, abv, taste, level } = req.body;
    await userService.updateUserCustom(userId, { base, abv, taste, level });
    res.status(200).json({ message: '커스텀 설정 성공' });
 });
