@@ -155,7 +155,7 @@ const diyRecipeService = {
     //이미지
     let image;
     if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
-      const imagePath = path.join(__dirname, '../images', foundDiyRecipe.image);
+      const imagePath = path.join(__dirname, '../', foundDiyRecipe.image);
       await fs.unlink(imagePath).catch(err => {
         if (err.code !== 'ENOENT') {
           throw new InternalServerError('이미지 삭제 실패');
@@ -176,7 +176,7 @@ const diyRecipeService = {
 
       if (recipeImageNames && recipeImageNames[i]) {
         if (foundDiyRecipe.recipes && foundDiyRecipe.recipes[i] && foundDiyRecipe.recipes[i].image) {
-          const imagePath = path.join(__dirname, '../images', foundDiyRecipe.recipes[i].image);
+          const imagePath = path.join(__dirname, '../', foundDiyRecipe.recipes[i].image);
           await fs.unlink(imagePath).catch(err => {
             if (err.code !== 'ENOENT') {
               throw new InternalServerError('레시피 이미지 삭제 실패');
@@ -213,7 +213,7 @@ const diyRecipeService = {
 
     if (!diyRecipe) throw new NotFoundError('DIY 레시피 정보 없습니다.');
     //이미지
-    const imagePath = path.join(__dirname, '../images', diyRecipe.image);
+    const imagePath = path.join(__dirname, '../', diyRecipe.image);
     await fs.unlink(imagePath).catch(err => {
       if (err.code !== 'ENOENT') {
         throw new InternalServerError('이미지 삭제 실패');
@@ -222,7 +222,7 @@ const diyRecipeService = {
 
     for (let i = 0; i < diyRecipe.recipes.length; i++) {
       if (diyRecipe.recipes && diyRecipe.recipes[i] && diyRecipe.recipes[i].image) {
-        const imagePath = path.join(__dirname, '../images', diyRecipe.recipes[i].image);
+        const imagePath = path.join(__dirname, '../', diyRecipe.recipes[i].image);
         await fs.unlink(imagePath).catch(err => {
           if (err.code !== 'ENOENT') {
             throw new InternalServerError('레시피 이미지 삭제 실패');

@@ -1,6 +1,6 @@
 const { Base, } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const setParameter = require('../utils/setParameter');
 
@@ -43,7 +43,7 @@ const baseService = {
       }
       let image;
       if (newImageNames.length !== 0) {
-         const imagePath = path.join(__dirname, '../images', foundBase.image);
+         const imagePath = path.join(__dirname, '../', foundBase.image);
          fs.unlink(imagePath, (err) => {
             if (err.code !== 'ENOENT') {
                throw new InternalServerError('이미지 삭제 실패');
@@ -63,7 +63,7 @@ const baseService = {
       const foundBase = await Base.findById(baseId).lean();
       if (!foundBase) throw new NotFoundError('Base 정보 없음');
       // 이미지 파일 삭제
-      const imagePath = path.join(__dirname, '../images', foundBase.image);
+      const imagePath = path.join(__dirname, '../', foundBase.image);
       await fs.unlink(imagePath).catch(err => {
          if (err.code !== 'ENOENT') {
             throw new InternalServerError('이미지 삭제 실패');

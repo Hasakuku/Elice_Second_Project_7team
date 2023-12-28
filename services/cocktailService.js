@@ -205,7 +205,7 @@ const cocktailService = {
       // 이미지
       let image;
       if (newImageNames.length !== 0 && Array.isArray(newImageNames)) {
-         const imagePath = path.join(__dirname, '../images', foundCocktail.image);
+         const imagePath = path.join(__dirname, '../', foundCocktail.image);
          await fs.unlink(imagePath).catch(err => {
             if (err.code !== 'ENOENT') {
                throw new InternalServerError('이미지 삭제 실패');
@@ -226,7 +226,7 @@ const cocktailService = {
 
          if (recipeImageNames && recipeImageNames[i]) {
             if (foundCocktail.recipes && foundCocktail.recipes[i] && foundCocktail.recipes[i].image) {
-               const imagePath = path.join(__dirname, '../images', foundCocktail.recipes[i].image);
+               const imagePath = path.join(__dirname, '../', foundCocktail.recipes[i].image);
                await fs.unlink(imagePath).catch(err => {
                   if (err.code !== 'ENOENT') {
                      throw new InternalServerError('레시피 이미지 삭제 실패');
@@ -257,7 +257,7 @@ const cocktailService = {
       const cocktail = await Cocktail.findById(id).lean();
       if (!cocktail) throw new NotFoundError('칵테일 정보 없음');
       //이미지
-      const imagePath = path.join(__dirname, '../images', cocktail.image);
+      const imagePath = path.join(__dirname, '../', cocktail.image);
       await fs.unlink(imagePath).catch(err => {
          if (err.code !== 'ENOENT') {
             throw new InternalServerError('이미지 삭제 실패');
@@ -266,7 +266,7 @@ const cocktailService = {
 
       for (let i = 0; i < cocktail.recipes.length; i++) {
          if (cocktail.recipes && cocktail.recipes[i] && cocktail.recipes[i].image) {
-            const imagePath = path.join(__dirname, '../images', cocktail.recipes[i].image);
+            const imagePath = path.join(__dirname, '../', cocktail.recipes[i].image);
             await fs.unlink(imagePath).catch(err => {
                if (err.code !== 'ENOENT') {
                   throw new InternalServerError('레시피 이미지 삭제 실패');
