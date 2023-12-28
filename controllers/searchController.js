@@ -16,5 +16,10 @@ const searchForAdmin = asyncHandler(async (req, res) => {
    const result = await searchService.searchForAdmin({ keyword, perPage, page, type });
    res.status(200).json(result);
 });
+const keywordAutoCompletion = asyncHandler(async (req, res) => {
+   const { keyword, perPage, page } = req.query;
+   const result = await searchService.keywordAutoCompletion({ keyword, perPage, page });
+   res.status(200).json(result);
+});
 
-module.exports = { searchByKeyword, searchForAdmin };
+module.exports = { searchByKeyword, searchForAdmin, keywordAutoCompletion };
