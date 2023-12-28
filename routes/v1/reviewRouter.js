@@ -6,18 +6,64 @@ const checkAdmin = require('../../middlewares/checkAdmin');
 const checkWrite = require('../../middlewares/checkWrite');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
 const { validator, review } = require('../../middlewares/validators');
-// const { validateCocktailReview } = require('../../middlewares/validators');
 
-router.get('/search', checkUser, checkAdmin, reviewController.getReviewListByKeyword);
-router.get('/users', checkUser, validator(review.checkGetUserReviewList), reviewController.getUserReviewList);
-router.get('/list', validator(review.checkGetReviewList), reviewController.getReviewList);
-router.get('/:id', checkUser, reviewController.getReview);
+router.route('/search')
+   .get( //* 리뷰 검색(관리자)
+      checkUser,
+      checkAdmin,
+      reviewController.getReviewListByKeyword
+   );
 
-router.put('/:id', checkUser, checkWrite, uploadImage, imageHandler, validator(review.checkUpdateReview), reviewController.updateReview);
-router.post('/create/:id', checkUser, checkWrite, uploadImage, imageHandler, validator(review.checkCreateReview), reviewController.createReview);
-router.post('/:id/likes', checkUser, reviewController.addLike);
+router.route('/users')
+   .get( //* 사용자의 리뷰 목록 조회
+      checkUser,
+      validator(review.checkGetUserReviewList),
+      reviewController.getUserReviewList
+   );
 
-router.delete('/:id/likes', checkUser, reviewController.deleteLike);
-router.delete('/:id', checkUser, checkAdmin, reviewController.deleteReview);
+router.route('/list')
+   .get( //* 리뷰 목록 조회
+      validator(review.checkGetReviewList),
+      reviewController.getReviewList
+   );
 
+router.route('/create/:id')
+   .post( //* 리뷰 등록
+      checkUser,
+      checkWrite,
+      uploadImage,
+      imageHandler,
+      validator(review.checkCreateReview),
+      reviewController.createReview
+   );
+
+router.route('/:id/likes')
+   .post( //* 좋아요 추가
+      checkUser,
+      reviewController.addLike
+   )
+   .delete( //* 좋아요 삭제
+      checkUser,
+      reviewController.deleteLike
+   );
+
+router.route('/:id')
+   .get( //* 리뷰 상세 조회
+      checkUser,
+      reviewController.getReview
+   )
+   .put( //* 리뷰 수정
+      checkUser,
+      checkWrite,
+      uploadImage,
+      imageHandler,
+      validator(review.checkUpdateReview),
+      reviewController.updateReview
+   )
+   .delete( //* 리뷰 삭제
+      checkUser,
+      checkAdmin,
+      reviewController.deleteReview
+   );
+   
 module.exports = router;

@@ -5,12 +5,38 @@ const checkUser = require('../../middlewares/checkUser');
 const checkAdmin = require('../../middlewares/checkAdmin');
 // const { validateBar } = require('../../middlewares/validators');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
-const { validationGetBars, validationPostBars, validationPutBars } = require('../../middlewares/validators/bar');
+const { validator, bar } = require('../../middlewares/validators');
 
-router.get('/:id',  barController.getBar);
-router.get('/',  barController.getBarList);
-router.post('/', checkUser, checkAdmin,  uploadImage, imageHandler,  barController.createBar);
-router.put('/:id', checkUser, checkAdmin,  uploadImage, imageHandler,  barController.updateBar);
-router.delete('/:id', checkUser, checkAdmin, barController.deleteBar);
+router.route('/:id')
+   .get( //* 바 상세 조회
+      barController.getBar
+   )
+   .put( //* 바 수정
+      checkUser,
+      checkAdmin,
+      uploadImage,
+      imageHandler,
+      validator(bar.validationUpdateBar),
+      barController.updateBar
+   )
+   .delete( //* 바 삭제
+      checkUser,
+      checkAdmin,
+      barController.deleteBar
+   );
+
+router.route('/')
+   .get( //* 바 목록 조회
+      validator(bar.validationGetBarList),
+      barController.getBarList
+   )
+   .post( //* 바 등록
+      checkUser,
+      checkAdmin,
+      uploadImage,
+      imageHandler,
+      validator(bar.validationCreateBar),
+      barController.createBar
+   );
 
 module.exports = router;

@@ -2,7 +2,7 @@ const { BadRequestError } = require("./customError");
 
 // type, perPage, page를 처리 후 반환
 module.exports = (perPage, page, type) => {
-   const limit = perPage === undefined || perPage === null || !perPage ? 10 : Number(perPage);
+   const limit = perPage === undefined || perPage === null || perPage === '0' || !perPage ? 10 : Number(perPage);
    const skip = page ? Number(page - 1) * limit : 0;
    const types = (type === 'cocktails' ? ['CocktailReview']
       : type === 'recipes' ? ['DiyRecipeReview']

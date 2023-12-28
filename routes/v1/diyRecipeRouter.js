@@ -6,13 +6,42 @@ const checkWrite = require('../../middlewares/checkWrite');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
 const { validator, diyRecipe } = require('../../middlewares/validators');
 
-router.get('/users', checkUser, validator(diyRecipe.validationGetDiyRecipeListByUser), diyRecipeController.getDiyRecipeListByUser); // 사용자의 레시피 목록 조회
-router.get('/:id', diyRecipeController.getDiyRecipe); // DIY 레시피 상세 조회
-router.get('/', validator(diyRecipe.validationGetDiyRecipeList), diyRecipeController.getDiyRecipeList); // DIY 레시피 목록 조회
+router.route('/users')
+   .get( //* 사용자의 레시피 목록 조회
+      checkUser,
+      validator(diyRecipe.validationGetDiyRecipeListByUser),
+      diyRecipeController.getDiyRecipeListByUser
+   );
 
-router.post('/', checkUser, checkWrite, uploadImage, imageHandler,
-   validator(diyRecipe.validationCreateDiyRecipe), diyRecipeController.createDiyRecipe); // DIY 레시피 등록
-router.put('/:id', checkUser, checkWrite, uploadImage, imageHandler, validator(diyRecipe.validationUpdateDiyRecipe), diyRecipeController.updateDiyRecipe); // DIY 레시피 수정
-router.delete('/:id', checkUser, diyRecipeController.deleteDiyRecipe); // DIY 레시피 삭제
+router.route('/:id')
+   .get( //* DIY 레시피 상세 조회
+      diyRecipeController.getDiyRecipe
+   )
+   .put( //* DIY 레시피 수정
+      checkUser,
+      checkWrite,
+      uploadImage,
+      imageHandler,
+      validator(diyRecipe.validationUpdateDiyRecipe),
+      diyRecipeController.updateDiyRecipe
+   )
+   .delete( //* DIY 레시피 삭제
+      checkUser,
+      diyRecipeController.deleteDiyRecipe
+   );
+
+router.route('/')
+   .get( //* DIY 레시피 목록 조회
+      validator(diyRecipe.validationGetDiyRecipeList),
+      diyRecipeController.getDiyRecipeList
+   )
+   .post( //* DIY 레시피 등록
+      checkUser,
+      checkWrite,
+      uploadImage,
+      imageHandler,
+      validator(diyRecipe.validationCreateDiyRecipe),
+      diyRecipeController.createDiyRecipe
+   );
 
 module.exports = router;

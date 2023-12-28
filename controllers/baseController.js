@@ -7,7 +7,7 @@ const getBaseList = asyncHandler(async (req, res) => {
    const result = await baseService.getBaseList({ perPage, page });
    res.status(200).json(result);
 });
-//* 베이스 조회
+//* 베이스 상세 조회
 const getBase = asyncHandler(async (req,res) => {
    const id = req.params.id;
    const result = await baseService.getBase(id);

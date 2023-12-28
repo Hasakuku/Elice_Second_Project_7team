@@ -8,7 +8,7 @@ const getReviewListByKeyword = asyncHandler(async (req, res) => {
    const result = await reviewService.getReviewListByKeyword({ keyword, type, perPage, page });
    res.status(200).json(result);
 });
-//* 유저 리뷰 목록 조회
+//* 사용자의 리뷰 목록 조회
 const getUserReviewList = asyncHandler(async (req, res) => {
    const userId = req.user._id;
    const { cursorId, type, perPage, page } = req.query;
