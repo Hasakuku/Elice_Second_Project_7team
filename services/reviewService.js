@@ -296,7 +296,7 @@ const reviewService = {
                }
             ]);
 
-            cocktail.avgRating = result[0] ? result[0].avgRating : 0;
+            cocktail.avgRating = result[0] ? result[0].avgRating.toFixed(1) : 0;
             cocktail.reviewCount = result[0] ? result[0].reviewCount : 0;
             await cocktail.save();
             return;
@@ -330,7 +330,7 @@ const reviewService = {
                }
             ]);
 
-            diyRecipe.avgRating = result[0] ? result[0].avgRating : 0;
+            diyRecipe.avgRating = result[0] ? result[0].avgRating.toFixed(1) : 0;
             diyRecipe.reviewCount = result[0] ? result[0].reviewCount : 0;
             await diyRecipe.save();
          }
