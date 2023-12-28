@@ -40,30 +40,27 @@ const barService = {
       if (!result) throw new InternalServerError('등록 안됨');
    },
    //* 바 수정
-   async updateBar(barId, data) {
-      const { name, address, operationTime, map } = data;
+   async updateBar(barId, { name, address, time, tel, x, y, newImageNames }) {
       const foundBar = await Bar.findById(barId).lean();
       if (!foundBar) throw new NotFoundError('바 정보 없음');
       let image;
-      if (data.newImageNames.length !== 0) {
+      if (newImageNames.length !== 0) {
          const imagePath = path.join(__dirname, '../images', foundBar.image);
          fs.unlink(imagePath, (err) => {
             if (err.code !== 'ENOENT') {
                throw new InternalServerError('이미지 삭제 실패');
             }
          });
-         image = data.newImageNames[0].imageName;
+         image = newImageNames[0].imageName;
       }
 
-      const dataKeys = Object.keys(data);
-      const isSame = dataKeys.map(key => foundBar[key] === data[key]).every(value => value === true);
+      const dataKeys = Object.keys({ name, address, time, tel, x, y, image });
+      const isSame = dataKeys.map(key => foundBar[key] === { name, address, time, tel, x, y, image }[key]).every(value => value === true);
 
-      if (isSame) {
-         throw new ConflictError('같은 내용 수정');
-      }
+      if (isSame) throw new ConflictError('같은 내용 수정');
       const updateBar = await Bar.updateOne(
          { _id: barId },
-         { name, image, address, operationTime, map },
+         { name, image, address, time, tel, x, y, },
          { runValidators: true }
       );
       if (updateBar.modifiedCount === 0) throw new ConflictError('바 수정 실패');
