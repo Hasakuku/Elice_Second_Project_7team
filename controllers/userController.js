@@ -55,7 +55,7 @@ const deleteWish = asyncHandler(async (req, res) => {
    await userService.deleteWish(userId, id);
    res.status(204).json('');
 });
-//* 사용자 권한 수정
+//* 사용자 권한 수정(관리자)
 const updateUserPermission = asyncHandler(async (req, res) => {
    const userId = req.params.id;
    await userService.updateUserPermission(userId);

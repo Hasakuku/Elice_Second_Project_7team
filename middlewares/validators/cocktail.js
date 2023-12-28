@@ -3,7 +3,7 @@ const { body, query } = require('express-validator');
 exports.checkGetCocktailList = [
    query('base')
       .optional().trim()
-      .isIn(['진', '럼', '데킬라', '보드카', '리큐르', '위스키', '맥주']).withMessage('존재하지 않는 베이스입니다.'),
+      .isString().withMessage('문자열을 입력해주세요'),
    query('sort')
       .optional().trim()
       .isIn(['rating', 'review']).withMessage('rating이나 review 또는 입력값이 없어야 합니다.'),
