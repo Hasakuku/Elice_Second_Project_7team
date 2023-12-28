@@ -34,16 +34,6 @@ tags:
   - name: Users
     description: 사용자 계정 관리
 
-components:
-  securitySchemes:
-    oauthScheme:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: https://kauth.kakao.com/oauth/authorize?client_id=88d72187bb965ec392372175279752c1&redirect_uri=http://localhost:3000/api-docs&response_type=code&scope=profile_nickname,account_email
-          scopes:
-            read: 카카오 로그인
-
 paths:
   /auth/kakao:
     get:

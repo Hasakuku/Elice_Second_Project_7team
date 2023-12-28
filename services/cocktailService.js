@@ -149,7 +149,9 @@ const cocktailService = {
    },
    //* 칵테일 상세 조회
    async getCocktail(user, id) {
-      const cocktails = await Cocktail.findById(id).populate({ path: 'base', select: 'name' }).populate({ path: 'reviews', options: { limit: 2 }, populate: { path: 'user', select: 'nickname' } }).lean();
+      const cocktails = await Cocktail.findById(id)
+         .populate({ path: 'base', select: 'name' })
+         .populate({ path: 'reviews', options: { limit: 2 }, populate: { path: 'user', select: 'nickname' } }).lean();
       if (!cocktails) throw new NotFoundError('칵테일 없음');
       let userId = user ? user.id.toString() : '';
       cocktails.isWished = Array.isArray(cocktails.wishes) && cocktails.wishes.map(wish => wish.toString()).includes(userId);
