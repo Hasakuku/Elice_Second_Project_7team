@@ -1,4 +1,4 @@
-const validate = require('./validate');
+const validator = require('./validator');
 const cocktail = require('./cocktail');
 const diyRecipe = require('./diyRecipe');
 const review = require('./review');
@@ -7,4 +7,4 @@ const user = require('./user');
 const bar = require('./bar');
 const base = require('./base');
 
-module.exports = { validate, cocktail, diyRecipe, review, search, user, bar, base };
+module.exports = { validator, cocktail, diyRecipe, review, search, user, bar, base };
