@@ -20,7 +20,6 @@ const getDiyRecipe = asyncHandler(async (req, res) => {
 
 //* DIY 레시피 등록
 const createDiyRecipe = asyncHandler(async (req, res) => {
-  //유저 정보 
   const userId = req.user._id;
   const { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, } = req.body;
   await diyRecipeService.createDiyRecipe(userId,{ name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, },);

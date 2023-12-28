@@ -70,7 +70,7 @@ const reviewService = {
             { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
             { $unwind: '$item' },
             { $unwind: '$user' },
-            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', nickname: '$user.nickname', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
+            { $project: { _id: 1, type: type === 'CocktailReview' ? 'cocktail' : 'diyRecipe', name: '$item.name', nickname: '$user.nickname', userImage: '$user.image', rating: 1, content: 1, images: 1, createdAt: 1, likes: 1 } },
             { $skip: skip },
             { $limit: limit - totalFetched },
          ];

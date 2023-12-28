@@ -184,6 +184,12 @@ const cocktailService = {
             recipe.image = recipeImageNames[i].imageName;
             recipes.push(recipe);
          }
+      } else {
+         for (let i = 0; i < content.length; i++) {
+            let recipe = {};
+            recipe.content = content[i];
+            recipes.push(recipe);
+         }
       }
       const newCocktail = new Cocktail({ name, base, image, description, ingredient, tags, recipes, abv, sweet, bitter, sour });
       const result = await newCocktail.save();
