@@ -3,7 +3,6 @@ const router = express.Router();
 const barController = require('../../controllers/barController');
 const checkUser = require('../../middlewares/checkUser');
 const checkAdmin = require('../../middlewares/checkAdmin');
-// const { validateBar } = require('../../middlewares/validators');
 const { uploadImage, imageHandler } = require('../../middlewares/imageHandler');
 const { validator, bar } = require('../../middlewares/validators');
 

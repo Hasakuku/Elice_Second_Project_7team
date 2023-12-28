@@ -1,6 +1,6 @@
 const { Bar } = require('../models');
 const { NotFoundError, InternalServerError, ConflictError, BadRequestError } = require('../utils/customError');
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 const setParameter = require('../utils/setParameter');
 

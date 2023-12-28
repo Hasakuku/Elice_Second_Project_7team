@@ -8,7 +8,7 @@ router.get('/auto-complete', //* 자동 완성 목록
    searchController.keywordAutoCompletion
 );
 router.get('/admin', //* 검색(관리자)
-   validator(search.validationSearchForAdmin),
+   validator(search.validationSearchFosrAdmin),
    searchController.searchForAdmin
 );
 router.get('/', //* 검색

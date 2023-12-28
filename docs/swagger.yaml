@@ -1635,19 +1635,24 @@ paths:
           in: query
           schema:
             type: string
+            example: 마
         - name: type
           in: query
           schema:
             type: string
             enum: [cocktails, recipes]
+            example: cocktails
         - name: perPage
           in: query
           schema:
-            type: number
+            type: integer
+            example: 3
         - name: page
           in: query
           schema:
-            type: number
+            type: integer
+            example: 1
+
       responses:
         '200':
           description: 검색 성공
@@ -1656,8 +1661,30 @@ paths:
               schema:
                 type: object
                 properties:
-                  item:
-                    type: string
+                  cocktailSize:
+                    type: integer
+                    example: 9
+                  cocktails:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        name:
+                          type: string
+                        createdAt:
+                          type: string
+                      example:
+                        - _id: '6584f93e46ab6e13c78e53e7'
+                          name: '마가리타8'
+                          createdAt: '2023-12-22T02:49:30.375Z'
+                        - _id: '6584f93646ab6e13c78e53e6'
+                          name: '마가리타7'
+                          createdAt: '2023-12-22T02:49:26.375Z'
+                        - _id: '6584f92d46ab6e13c78e53e5'
+                          name: '마가리타6'
+                          createdAt: '2023-12-22T02:49:17.375Z'
   /search/auto-complete:
     get:
       tags:
@@ -1668,14 +1695,17 @@ paths:
           in: query
           schema:
             type: string
+            example: 마
         - name: perPage
           in: query
           schema:
             type: number
+            example: 3
         - name: page
           in: query
           schema:
             type: number
+            example: 1
       responses:
         '200':
           description: 검색 자동 완성 성공
@@ -1683,11 +1713,16 @@ paths:
             application/json:
               schema:
                 type: array
+                example:
+                  - 마가리타1
+                  - 마가리타2
+                  - 마가리타3
                 items:
                   type: string
                   properties:
                     name:
                       type: string
+
 components:
   schemas:
     Bar:
