@@ -106,7 +106,7 @@ const diyRecipeService = {
   },
   //* DIY 레시피 등록
   async createDiyRecipe(user, { name, base, newImageNames, recipeImageNames, description, ingredient, tags, content, abv, sweet, bitter, sour, }) {
-    //피드백 받았던대로 따로 가져옴
+
     const foundDiyRecipe = await DiyRecipe.findOne({ name: name }).lean();
     if (foundDiyRecipe) throw new ConflictError('이미 등록된 DIY 레시피 입니다.');
     //이미지
@@ -122,8 +122,13 @@ const diyRecipeService = {
         recipe.image = recipeImageNames[i].imageName;
         recipes.push(recipe);
       }
+    } else {
+      for (let i = 0; i < content.length; i++) {
+        let recipe = {};
+        recipe.content = content[i];
+        recipes.push(recipe);
+      }
     }
-
     const newDiyRecipe = new DiyRecipe({
       name,
       user,
