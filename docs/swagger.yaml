@@ -49,18 +49,25 @@ components:
       properties:
         name:
           type: string
+          description: 바 이름
         image:
           type: string
+          description: 바 이미지
         address:
           type: string
+          description: 바 주소
         tel:
           type: string
+          description: 바 전화번호(핸드폰)
         time:
           type: string
+          description: 운영 시간 
         x:
           type: number
+          description: 경도
         y:
           type: number
+          description: 위도
 
     Base:
       type: object
@@ -70,8 +77,10 @@ components:
       properties:
         name:
           type: string
+          description: 베이스 술 이름
         image:
           type: string
+          description: 베이스 술 이미지
     User:
       type: object
       required:
@@ -80,41 +89,59 @@ components:
         kakaoId:
           type: number
           unique: true
+          description: 카카오ID 번호
         email:
           type: string
           required: true
           unique: true
+          description: 이메일
         image:
           type: string
+          description: 프로필 이미지
         nickname:
           type: string
+          description: 닉네임
         custom:
-          base:
-            type: string
-          abv:
-            type: number
-          sweet:
-            type: number
-          sour:
-            type: number
-          bitter:
-            type: number
+          description: 설문조사 결과 저장
+          type: object
+          properties:
+            base:
+              type: string
+              description: 베이스 술
+            abv:
+              type: number
+              description: 도수
+            sweet:
+              type: number
+              description: 단맛
+            sour:
+              type: number
+              description: 신맛
+            bitter:
+              type: number
+              description: 쓴맛
         wishes:
+          description: 찜 목록
           cocktails:
             type: mongoose.Schema.Types.ObjectId
             ref: 'Cocktail'
+            description: 칵테일 MongoDB ID
           diyRecipes:
             type: mongoose.Schema.Types.ObjectId
             ref: 'DiyRecipe'
+            description: DIY 레시피 MongoDB ID
         isAdmin:
           type: Boolean
           default: false
+          description: 관리자 여부
         isWrite:
           type: Boolean
           default: true
+          description: 글쓰기 권한 여부
         deletedAt:
           type: Date
           default: null
+          description: 유저 삭제 여부(실제 삭제는 관리자만 가능)
     Cocktail:
       type: object
       required:
@@ -129,66 +156,81 @@ components:
         name:
           type: string
           example: 데킬라
+          description: 칵테일 이름
         base:
           type: mongoose.Schema.Types.ObjectId
           ref: 'Base'
           example: 657c40723d11af1efa276da5
+          description: 베이스 MongoDB ID
         image:
           type: string
           example: /images/1703335017251.png
+          description: 칵테일 이미지
         description:
           type: string
           example: 프레시한 라임의 향과 테킬라의 깊은 맛이 어우러진 칵테일
+          description: 칵테일 설명
         ingredient:
           type: string
           example: 테킬라, 라임 주스, 오렌지 리큐어
+          description: 칵테일 재료
         tags:
+          description: 태그
           type: string
           example:
             - 프레시
             - 라임
         recipes:
-          image:
-            type: string
-            example: /images/margarita_step1.jpg
-          content:
-            type: string
-            example: 모든 재료를 셰이커에 넣습니다
+          description: 제조 방법
+          type: Array
+            - image:
+              type: string
+              example: /images/margarita_step1.jpg
+            content:
+              type: string
+              example: 모든 재료를 셰이커에 넣습니다
         abv:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 도수 
         sweet:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 단맛
         bitter:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 쓴맛
         sour:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 신맛
         reviews:
           type: mongoose.Schema.Types.ObjectId
           ref: 'CocktailReview'
+          description: 칵테일 리뷰 MongoDB ID
         wishes:
           type: mongoose.Schema.Types.ObjectId
           ref: 'User'
+          description: 칵테일 찜 목록 유저 MongoDB ID
         avgRating:
           type: number
           default: 0
           example: 4
+          description: 평균 별점
         reviewCount:
-          type: number
+          type: integer
           default: 0
           example: 4
+          description: 리뷰 숫자
     DiyRecipe:
       type: object
       required:
         - name
-        - user
         - base
         - ingredient
         - abv
@@ -199,65 +241,77 @@ components:
         name:
           type: string
           example: 데킬라
+          description: 칵테일 이름
         base:
           type: mongoose.Schema.Types.ObjectId
           ref: 'Base'
           example: 657c40723d11af1efa276da5
-        user:
-          type: mongoose.Schema.Types.ObjectId
-          ref: 'User'
-          example: 65831910bf223cde0aab7ea0
+          description: 베이스 MongoDB ID
         image:
           type: string
           example: /images/1703335017251.png
+          description: 칵테일 이미지
         description:
           type: string
           example: 프레시한 라임의 향과 테킬라의 깊은 맛이 어우러진 칵테일
+          description: 칵테일 설명
         ingredient:
           type: string
           example: 테킬라, 라임 주스, 오렌지 리큐어
+          description: 칵테일 재료
         tags:
+          description: 태그
           type: string
           example:
             - 프레시
             - 라임
         recipes:
-          image:
-            type: string
-            example: /images/margarita_step1.jpg
-          content:
-            type: string
-            example: 모든 재료를 셰이커에 넣습니다
+          description: 제조 방법
+          type: Array
+            - image:
+                type: string
+                example: /images/margarita_step1.jpg
+              content:
+                type: string
+                example: 모든 재료를 셰이커에 넣습니다
         abv:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 도수
         sweet:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 단맛
         bitter:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 쓴맛
         sour:
-          type: number
+          type: integer
           min: 1
           max: 5
+          description: 신맛
         reviews:
           type: mongoose.Schema.Types.ObjectId
-          ref: 'CocktailReview'
+          ref: 'DiyRecipeReview'
+          description: DIY레시피 리뷰 MongoDB ID
         wishes:
           type: mongoose.Schema.Types.ObjectId
           ref: 'User'
+          description: DIY레시피 찜 목록 유저 MongoDB ID
         avgRating:
           type: number
           default: 0
           example: 4
+          description: 평균 별점
         reviewCount:
-          type: number
+          type: integer
           default: 0
           example: 4
+          description: 리뷰 숫자
     CocktailReview:
       type: object
       required:
@@ -270,24 +324,76 @@ components:
           type: mongoose.Schema.Types.ObjectId
           ref: 'User'
           example: 658483ca8c493751548540cb
+          description: 리뷰 작성자
         cocktail: 
           type: mongoose.Schema.Types.ObjectId
           ref: 'Cocktail'
           example: 657a6d3613c09f7d6b5f8819
+          description: 칵테일
         content: 
           type: string
           example: 이거 클스마스때 해서 드셔보세묭 아주 좋아요
+          description: 리뷰 내용
         images: 
-          - type: string
-
+          type: string
+          description: 리뷰 이미지
+          example:
+            - aaa.png
+            - bbb.png
         rating: 
           type: integer
           required: true
+          description: 별점
           example: 5
         likes: 
-          - type: mongoose.Schema.Types.ObjectId
-            ref: 'User'
-            required: true
+          description: 좋아요
+          type: Array
+            - type: mongoose.Schema.Types.ObjectId
+              ref: 'User'
+              required: true
+          example:
+            - 658483ca8c493751548540cb
+    DiyRecipeReview:
+      type: object
+      required:
+        - user
+        - cocktail
+        - content
+        - rating
+      properties:
+        user: 
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'User'
+          example: 658483ca8c493751548540cb
+          description: 리뷰 작성자
+        cocktail: 
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'DiyRecipe'
+          example: 657a6d3613c09f7d6b5f8819
+          description: 칵테일
+        content: 
+          type: string
+          example: 이거 클스마스때 해서 드셔보세묭 아주 좋아요
+          description: 리뷰 내용
+        images: 
+          type: string
+          description: 리뷰 이미지
+          example:
+            - aaa.png
+            - bbb.png
+        rating: 
+          type: integer
+          required: true
+          description: 별점
+          example: 5
+        likes: 
+          description: 좋아요
+          type: Array
+            - type: mongoose.Schema.Types.ObjectId
+              ref: 'User'
+              required: true
+          example:
+            - 658483ca8c493751548540cb
 
 paths:
   /auth/kakao:
@@ -364,6 +470,14 @@ paths:
                   updatedAt:
                     type: string
                     format: date
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '500':
+          description: 서버 오류                    
   /users/:id/permissions:
     put:
       tags:
@@ -385,6 +499,18 @@ paths:
       responses:
         '200':
           description: 권한 수정 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류          
 
   /users/:id/delete:
     delete:
@@ -407,6 +533,16 @@ paths:
       responses:
         '204':
           description: 사용자 삭제 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류          
   /user/custom:
     put:
       tags:
@@ -423,6 +559,14 @@ paths:
       responses:
         '200':
           description: 사용자 커스텀 설정 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류          
   /users/mypage:
     get:
       tags:
@@ -456,18 +600,18 @@ paths:
                   updatedAt:
                     type: string
                     format: date
+        '401':
+          description: 인증 오류   	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류                    
     put:
       tags:
         - Users
       summary: 사용자 정보 수정
       security:
         - cookieAuth: []
-      parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
       requestBody:
         content:
           application/json:
@@ -481,6 +625,16 @@ paths:
       responses:
         '200':
           description: 사용자 정보 수정 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류    
   /users/logout:
     delete:
       tags:
@@ -490,7 +644,9 @@ paths:
         - cookieAuth: []
       responses:
         '204':
-          description: 사용자 로그 아웃 성공
+          description: 사용자 로그 아웃 성공    	
+        '500':
+          description: 서버 오류          
   /users/wishlist:
     get:
       tags:
@@ -540,6 +696,12 @@ paths:
                   updatedAt:
                     type: string
                     format: date
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류  	
+        '500':
+          description: 서버 오류                 
   /users/wishlist/:id:
     post:
       tags:
@@ -556,6 +718,16 @@ paths:
       responses:
         '201':
           description: 사용자 찜 추가 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류     
     delete:
       tags:
         - Users
@@ -571,6 +743,14 @@ paths:
       responses:
         '204':
           description: 사용자 찜 삭제 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류 	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류      
   /users/login:
     post:
       tags:
@@ -591,6 +771,12 @@ paths:
       responses:
         '201':
           description: 로그인 성공
+        '400':
+          description: 입력 데이터 오류 	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류        
 
   /bases:
     get:
@@ -613,6 +799,8 @@ paths:
                       type: string
                     images:
                       type: string
+        '500':
+          description: 서버 오류                      
     post:
       tags:
         - Bases
@@ -632,6 +820,16 @@ paths:
       responses:
         '201':
           description: 베이스 등록 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류
   /bases/:id:
     get:
       tags:
@@ -646,6 +844,13 @@ paths:
       responses:
         '200':
           description: 베이스 상세 조회 성공
+        '400':
+          description: 입력 데이터 오류  	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류      
+        
     delete:
       tags:
         - Bases
@@ -661,6 +866,16 @@ paths:
       responses:
         '204':
           description: 베이스 삭제 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류       
     put:
       tags:
         - Bases
@@ -686,6 +901,18 @@ paths:
       responses:
         '200':
           description: 베이스 수정 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류        
 
   /cocktails/custom:
     get:
@@ -720,6 +947,14 @@ paths:
                     type: number
                   wishCount:
                     type: number
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류  	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류              
   /cocktails:
     get:
       tags:
@@ -787,6 +1022,10 @@ paths:
                       type: number
                     reviewCount:
                       type: string
+        '400':
+          description: 입력 데이터 오류 	
+        '500':
+          description: 서버 오류                   
     post:
       tags:
         - Cocktails
@@ -822,6 +1061,16 @@ paths:
       responses:
         '201':
           description: 칵테일 등록 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류
   /cocktails/:id:
     get:
       tags:
@@ -871,6 +1120,12 @@ paths:
                     type: number
                   avgRating:
                     type: number
+        '400':
+          description: 입력 데이터 오류 	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류                    
     put:
       tags:
         - Cocktails
@@ -912,6 +1167,18 @@ paths:
       responses:
         '200':
           description: 칵테일 수정 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류          
     delete:
       tags:
         - Cocktails
@@ -927,6 +1194,16 @@ paths:
       responses:
         '204':
           description: 칵테일 삭제 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류          
   /diy-recipes:
     get:
       tags:
@@ -1006,11 +1283,15 @@ paths:
                                 type: number
                               likeCount:
                                 type: number
-                              avgrating:
+                              avgRating:
                                 type: number
                         date:
                           type: string
                           format: date
+        '400':
+          description: 입력 데이터 오류	
+        '500':
+          description: 서버 오류                          
     post:
       tags:
         - DiyRecipes
@@ -1046,6 +1327,14 @@ paths:
       responses:
         '201':
           description: 레시피 생성 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류 	
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류          
   /diy-recipes/users:
     get:
       tags:
@@ -1086,6 +1375,12 @@ paths:
                     type: number
                   avgrating:
                     type: number
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류   	
+        '500':
+          description: 서버 오류                    
   /diy-recipes/:id:
     get:
       tags:
@@ -1135,8 +1430,14 @@ paths:
                     type: number
                   likeCount:
                     type: number
-                  avgrating:
+                  avgRating:
                     type: number
+        '400':
+          description: 입력 데이터 오류  	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류                    
     put:
       tags:
         - DiyRecipes
@@ -1178,6 +1479,18 @@ paths:
       responses:
         '200':
           description: 레시피 수정 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류          
     delete:
       tags:
         - DiyRecipes
@@ -1193,6 +1506,16 @@ paths:
       responses:
         '204':
           description: 레시피 삭제 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류          
   /bars:
     get:
       tags:
@@ -1312,6 +1635,10 @@ paths:
           description: 바 등록 성공
         '400':
           description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
         '409':
           description: 중복 오류
         '500':
@@ -1403,6 +1730,10 @@ paths:
           description: 바 수정 성공
         '400':
           description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
         '404':
           description: 요청한 리소스 찾을 수 없음
         '409':
@@ -1426,6 +1757,10 @@ paths:
           description: 바 정보 삭제 성공
         '400':
           description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
         '404':
           description: 요청한 리소스 찾을 수 없음
         '500':
@@ -1460,52 +1795,18 @@ paths:
       responses:
         '200':
           description: 리뷰 수정 성공
-    get:
-      tags:
-        - Reviews
-      summary: 리뷰 상세 조회
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 리뷰 상세 조회 성공
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                  content:
-                    type: string
-                  images:
-                    type: array
-                    items:
-                      type: string
-                  rating:
-                    type: number
-                  likeCount:
-                    type: number
-    delete:
-      tags:
-        - Reviews
-      summary: 리뷰 삭제(관리자)
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 리뷰 삭제 성공
-  /reviews/:id/users:
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류          
     delete:
       tags:
         - Reviews
@@ -1521,6 +1822,17 @@ paths:
       responses:
         '204':
           description: 리뷰 삭제 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '404':
+          description: 요청한 리소스 찾을 수 없음
+        '500':
+          description: 서버 오류          
+
   /reviews/:id/likes:
     post:
       tags:
@@ -1582,6 +1894,16 @@ paths:
       responses:
         '201':
           description: 리뷰 등록 성공
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류
+        '403':
+          description: 접근 제한    	
+        '409':
+          description: 중복 오류
+        '500':
+          description: 서버 오류          
   /reviews/list:
     get:
       tags:
@@ -1627,6 +1949,10 @@ paths:
                   createdAt:
                     type: string
                     format: date
+        '400':
+          description: 입력 데이터 오류 	
+        '500':
+          description: 서버 오류                    
   /reviews/users:
     get:
       tags:
@@ -1687,6 +2013,12 @@ paths:
                         createdAt:
                           type: string
                           format: date
+        '400':
+          description: 입력 데이터 오류
+        '401':
+          description: 인증 오류 	
+        '500':
+          description: 서버 오류                          
   /reviews/search:
     get:
       tags:
@@ -1735,6 +2067,10 @@ paths:
                   createdAt:
                     type: string
                     format: date
+        '400':
+          description: 입력 데이터 오류
+        '500':
+          description: 서버 오류                    
   /search:
     get:
       tags:
@@ -1842,6 +2178,10 @@ paths:
                           type: string
                           format: date-time
                           example: 2023-12-20T06:40:18.375Z
+        '400':
+          description: 입력 데이터 오류
+        '500':
+          description: 서버 오류                          
   /search/admin:
     get:
       tags:
@@ -1902,6 +2242,10 @@ paths:
                         - _id: '6584f92d46ab6e13c78e53e5'
                           name: '마가리타6'
                           createdAt: '2023-12-22T02:49:17.375Z'
+        '400':
+          description: 입력 데이터 오류
+        '500':
+          description: 서버 오류                          
   /search/auto-complete:
     get:
       tags:
@@ -1939,3 +2283,7 @@ paths:
                   properties:
                     name:
                       type: string
+        '400':
+          description: 입력 데이터 오류
+        '500':
+          description: 서버 오류
