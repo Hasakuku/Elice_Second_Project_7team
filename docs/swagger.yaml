@@ -33,6 +33,261 @@ tags:
     description: 사용자들이 남긴 DIY레시피, 칵테일에 대한 리뷰
   - name: Users
     description: 사용자 계정 관리
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JwtToken
+  schemas:
+    Bar:
+      type: object
+      required:
+        - name
+        - address
+        - time
+      properties:
+        name:
+          type: string
+        image:
+          type: string
+        address:
+          type: string
+        tel:
+          type: string
+        time:
+          type: string
+        x:
+          type: number
+        y:
+          type: number
+
+    Base:
+      type: object
+      required:
+        - name
+        - image
+      properties:
+        name:
+          type: string
+        image:
+          type: string
+    User:
+      type: object
+      required:
+        - email
+      properties:
+        kakaoId:
+          type: number
+          unique: true
+        email:
+          type: string
+          required: true
+          unique: true
+        image:
+          type: string
+        nickname:
+          type: string
+        custom:
+          base:
+            type: string
+          abv:
+            type: number
+          sweet:
+            type: number
+          sour:
+            type: number
+          bitter:
+            type: number
+        wishes:
+          cocktails:
+            type: mongoose.Schema.Types.ObjectId
+            ref: 'Cocktail'
+          diyRecipes:
+            type: mongoose.Schema.Types.ObjectId
+            ref: 'DiyRecipe'
+        isAdmin:
+          type: Boolean
+          default: false
+        isWrite:
+          type: Boolean
+          default: true
+        deletedAt:
+          type: Date
+          default: null
+    Cocktail:
+      type: object
+      required:
+        - name
+        - base
+        - ingredient
+        - abv
+        - sweet
+        - bitter
+        - sour
+      properties:
+        name:
+          type: string
+          example: 데킬라
+        base:
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'Base'
+          example: 657c40723d11af1efa276da5
+        image:
+          type: string
+          example: /images/1703335017251.png
+        description:
+          type: string
+          example: 프레시한 라임의 향과 테킬라의 깊은 맛이 어우러진 칵테일
+        ingredient:
+          type: string
+          example: 테킬라, 라임 주스, 오렌지 리큐어
+        tags:
+          type: string
+          example:
+            - 프레시
+            - 라임
+        recipes:
+          image:
+            type: string
+            example: /images/margarita_step1.jpg
+          content:
+            type: string
+            example: 모든 재료를 셰이커에 넣습니다
+        abv:
+          type: number
+          min: 1
+          max: 5
+        sweet:
+          type: number
+          min: 1
+          max: 5
+        bitter:
+          type: number
+          min: 1
+          max: 5
+        sour:
+          type: number
+          min: 1
+          max: 5
+        reviews:
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'CocktailReview'
+        wishes:
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'User'
+        avgRating:
+          type: number
+          default: 0
+          example: 4
+        reviewCount:
+          type: number
+          default: 0
+          example: 4
+    DiyRecipe:
+      type: object
+      required:
+        - name
+        - user
+        - base
+        - ingredient
+        - abv
+        - sweet
+        - bitter
+        - sour
+      properties:
+        name:
+          type: string
+          example: 데킬라
+        base:
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'Base'
+          example: 657c40723d11af1efa276da5
+        user:
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'User'
+          example: 65831910bf223cde0aab7ea0
+        image:
+          type: string
+          example: /images/1703335017251.png
+        description:
+          type: string
+          example: 프레시한 라임의 향과 테킬라의 깊은 맛이 어우러진 칵테일
+        ingredient:
+          type: string
+          example: 테킬라, 라임 주스, 오렌지 리큐어
+        tags:
+          type: string
+          example:
+            - 프레시
+            - 라임
+        recipes:
+          image:
+            type: string
+            example: /images/margarita_step1.jpg
+          content:
+            type: string
+            example: 모든 재료를 셰이커에 넣습니다
+        abv:
+          type: number
+          min: 1
+          max: 5
+        sweet:
+          type: number
+          min: 1
+          max: 5
+        bitter:
+          type: number
+          min: 1
+          max: 5
+        sour:
+          type: number
+          min: 1
+          max: 5
+        reviews:
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'CocktailReview'
+        wishes:
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'User'
+        avgRating:
+          type: number
+          default: 0
+          example: 4
+        reviewCount:
+          type: number
+          default: 0
+          example: 4
+    CocktailReview:
+      type: object
+      required:
+        - user
+        - cocktail
+        - content
+        - rating
+      properties:
+        user: 
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'User'
+          example: 658483ca8c493751548540cb
+        cocktail: 
+          type: mongoose.Schema.Types.ObjectId
+          ref: 'Cocktail'
+          example: 657a6d3613c09f7d6b5f8819
+        content: 
+          type: string
+          example: 이거 클스마스때 해서 드셔보세묭 아주 좋아요
+        images: 
+          - type: string
+
+        rating: 
+          type: integer
+          required: true
+          example: 5
+        likes: 
+          - type: mongoose.Schema.Types.ObjectId
+            ref: 'User'
+            required: true
 
 paths:
   /auth/kakao:
@@ -79,13 +334,8 @@ paths:
         - Users
       summary: 사용자 목록 조회(관리자)
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: perPage
           in: query
           schema:
@@ -120,7 +370,7 @@ paths:
         - Users
       summary: 글쓰기, 리뷰 쓰기 권한 수정(관리자)
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
         - name: jwtToken
           in: cookie
@@ -135,11 +385,14 @@ paths:
       responses:
         '200':
           description: 권한 수정 성공
+
   /users/:id/delete:
     delete:
       tags:
         - Users
       summary: 사용자 삭제(관리자)
+      security:
+        - cookieAuth: []
       parameters:
         - name: jwtToken
           in: cookie
@@ -159,6 +412,8 @@ paths:
       tags:
         - Users
       summary: 사용자 커스텀 설정
+      security:
+        - cookieAuth: []
       parameters:
         - name: jwtToken
           in: cookie
@@ -173,6 +428,8 @@ paths:
       tags:
         - Users
       summary: 사용자 정보 조회
+      security:
+        - cookieAuth: []
       parameters:
         - name: jwtToken
           in: cookie
@@ -203,6 +460,8 @@ paths:
       tags:
         - Users
       summary: 사용자 정보 수정
+      security:
+        - cookieAuth: []
       parameters:
         - name: jwtToken
           in: cookie
@@ -227,12 +486,8 @@ paths:
       tags:
         - Users
       summary: 사용자 로그 아웃
-      parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
+      security:
+        - cookieAuth: []
       responses:
         '204':
           description: 사용자 로그 아웃 성공
@@ -241,12 +496,9 @@ paths:
       tags:
         - Users
       summary: 사용자 찜목록 조회
+      security:
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: type
           in: query
           schema:
@@ -293,12 +545,9 @@ paths:
       tags:
         - Users
       summary: 사용자 찜 추가
+      security:
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -311,12 +560,9 @@ paths:
       tags:
         - Users
       summary: 사용자 찜 삭제
+      security:
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -371,12 +617,8 @@ paths:
       tags:
         - Bases
       summary: 베이스 등록
-      parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
+      security:
+        - cookieAuth: []
       requestBody:
         content:
           application/json:
@@ -408,12 +650,9 @@ paths:
       tags:
         - Bases
       summary: 베이스 삭제
+      security:
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -426,12 +665,9 @@ paths:
       tags:
         - Bases
       summary: 베이스 수정
+      security:
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -456,11 +692,8 @@ paths:
       tags:
         - Cocktails
       summary: 개인 맞춤 추천 칵테일 조회(회원)
-      parameters:
-        - name: jwtToken
-          in: cookie
-          schema:
-            type: string
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: 개인 맞춤 추천 칵테일 조회 성공
@@ -558,12 +791,8 @@ paths:
       tags:
         - Cocktails
       summary: 칵테일 등록
-      parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
+      security:
+        - cookieAuth: []
       requestBody:
         content:
           application/json:
@@ -646,12 +875,9 @@ paths:
       tags:
         - Cocktails
       summary: 칵테일 수정
+      security:
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -690,12 +916,9 @@ paths:
       tags:
         - Cocktails
       summary: 칵테일 삭제
+      security:
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -793,13 +1016,7 @@ paths:
         - DiyRecipes
       summary: 레시피 생성
       security:
-        - jwtToken: []
-      parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
+        - cookieAuth: []
       requestBody:
         content:
           application/json:
@@ -835,13 +1052,8 @@ paths:
         - DiyRecipes
       summary: 사용자의 레시피 목록 조회
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: perPage
           in: query
           schema:
@@ -930,13 +1142,8 @@ paths:
         - DiyRecipes
       summary: 레시피 수정
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -976,13 +1183,8 @@ paths:
         - DiyRecipes
       summary: 레시피 삭제
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1076,13 +1278,7 @@ paths:
         - Bars
       summary: 바 등록
       security:
-        - jwtToken: []
-      parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
+        - cookieAuth: []
       requestBody:
         content:
           multipart/form-data:
@@ -1169,19 +1365,14 @@ paths:
         '404':
           description: 요청한 리소스 찾을 수 없음
         '500':
-          description: 서버 오류                                      
+          description: 서버 오류
     put:
       tags:
         - Bars
       summary: 바 정보 수정
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1209,7 +1400,7 @@ paths:
                   type: number
       responses:
         '201':
-          description: 바 수정 성공                  
+          description: 바 수정 성공
         '400':
           description: 입력 데이터 오류
         '404':
@@ -1217,19 +1408,14 @@ paths:
         '409':
           description: 중복 오류
         '500':
-          description: 서버 오류                  
+          description: 서버 오류
     delete:
       tags:
         - Bars
       summary: 바 정보 삭제
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1243,20 +1429,15 @@ paths:
         '404':
           description: 요청한 리소스 찾을 수 없음
         '500':
-          description: 서버 오류          
+          description: 서버 오류
   /reviews/:id:
     put:
       tags:
         - Reviews
       summary: 리뷰 수정
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1314,13 +1495,8 @@ paths:
         - Reviews
       summary: 리뷰 삭제(관리자)
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1335,13 +1511,8 @@ paths:
         - Reviews
       summary: 리뷰 삭제
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1356,13 +1527,8 @@ paths:
         - Reviews
       summary: 리뷰 좋아요 추가
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1376,13 +1542,8 @@ paths:
         - Reviews
       summary: 리뷰 좋아요 삭제
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1397,13 +1558,8 @@ paths:
         - Reviews
       summary: 리뷰 등록
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: id
           in: path
           required: true
@@ -1477,13 +1633,8 @@ paths:
         - Reviews
       summary: 유저의 리뷰 목록 조회
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: type
           in: query
           schema:
@@ -1542,13 +1693,8 @@ paths:
         - Reviews
       summary: 리뷰 검색 조회(관리자)
       security:
-        - jwtToken: []
+        - cookieAuth: []
       parameters:
-        - name: jwtToken
-          in: cookie
-          required: true
-          schema:
-            type: string
         - name: keyword
           in: query
           schema:
@@ -1793,38 +1939,3 @@ paths:
                   properties:
                     name:
                       type: string
-
-components:
-  schemas:
-    Bar:
-      type: object
-      required:
-        - name
-        - address
-        - time
-      properties:
-        name:
-          type: string
-        image:
-          type: string
-        address:
-          type: string
-        tel:
-          type: string
-        time:
-          type: string
-        x:
-          type: number
-        y:
-          type: number
-
-    Base:
-      type: object
-      required:
-        - name
-        - image
-      properties:
-        name:
-          type: string
-        image:
-          type: string
