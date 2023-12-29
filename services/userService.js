@@ -14,8 +14,6 @@ const userService = {
    async getUser(userId) {
       const user = await User.findOne({ _id: userId, deletedAt: null }).select('_id email nickname createdAt updatedAt isAdmin isWrite').lean();
       if (!user) throw new NotFoundError("사용자 정보 없음");
-      const colorType = ['#B2EEFF', '#FFB6B5', '#CBEDB0', '#FFE99A', '#E4D7FF'];
-      user.profileColor = colorType[Math.floor(Math.random() * colorType.length)];
       return user;
    },
    //* 사용자 정보 수정

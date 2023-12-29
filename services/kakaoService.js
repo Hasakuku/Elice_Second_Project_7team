@@ -35,6 +35,8 @@ const kakaoService = {
       let checkUser = await User.findOne({ kakaoId: user.data.id, }).lean();
       // DB에 유저가 없다면 회원가입
       if (!checkUser) {
+         const colorType = ['#B2EEFF', '#FFB6B5', '#CBEDB0', '#FFE99A', '#E4D7FF'];
+         data.profileColor = colorType[Math.floor(Math.random() * colorType.length)];
          const newUser = new User(data);
          checkUser = await newUser.save();
       } else if (checkUser.deletedAt !== null) { // 사용자가 있지만 deletedAt이 null이 아닌 경우
