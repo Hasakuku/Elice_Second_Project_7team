@@ -7,6 +7,7 @@ const UserSchema = new Schema({
    email: { type: String, required: true, unique: true },
    image: { type: String },
    nickname: { type: String, },
+   profileColor: { type: String, enum: ['#B2EEFF', '#FFB6B5', '#CBEDB0', '#FFE99A', '#E4D7FF'], default: '#CBEDB0' },
    custom: {
       base: { type: String, },
       abv: { type: Number, },
