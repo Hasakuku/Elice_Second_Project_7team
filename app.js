@@ -8,7 +8,6 @@ const connectMongoDB = require('./db');
 const config = require('./config');
 const router = require('./routes');
 const swaggerUi = require('swagger-ui-express');
-const fs = require('fs');
 const YAML = require('yamljs');
 const path = require('path');
 

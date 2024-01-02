@@ -180,7 +180,7 @@ const cocktailService = {
       }
       let recipes = [];
       if (recipeImageNames.length !== 0 && Array.isArray(recipeImageNames)) {
-         for (let i = 0; i < recipes.length; i++) {
+         for (let i = 0; i < recipeImageNames.length; i++) {
             let recipe = {};
             recipe.content = content[i];
             recipe.image = recipeImageNames[i].imageName;
